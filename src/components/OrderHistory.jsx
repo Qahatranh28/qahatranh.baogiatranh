@@ -22,9 +22,18 @@ const COMPONENT_LABELS = {
   giayBo: 'Giấy bo',
   satXi: 'Sắt xi',
   son: 'Sơn',
+  dongGoi: 'Đóng gói',
 }
 
 function selectedComponentTags(item) {
+  // Nếu là chế độ Moebe, hiển thị chi tiết Kính và Ruột
+  if (item.mode === 'moebe' && item.selections) {
+    const labels = []
+    if (item.selections.micaKinhId) labels.push(`Kính/Mica: ${item.selections.micaKinhId}`)
+    if (item.selections.ruotMaterialId) labels.push(`Ruột: ${item.selections.ruotMaterialId}`)
+    return labels
+  }
+
   if (!item.toggles) return []
   return Object.entries(item.toggles)
     .filter(([, v]) => v)
@@ -32,16 +41,11 @@ function selectedComponentTags(item) {
     .filter(Boolean)
 }
 
-// Bảng "Bảng định mức giá thành" chi tiết cho 1 sản phẩm trong đơn — dùng lại
-// đúng dữ liệu (materialRows/laborRows) đã được tính & lưu tại thời điểm báo
-// giá, để số liệu không đổi kể cả khi đơn giá mặc định sau này bị chỉnh sửa.
 function ItemCostBreakdown({ item }) {
   const cb = item.costBreakdown
   if (!cb) return null
   const isStandard = item.mode === 'simple'
   const isNhom = isNhomType(item.selections?.khungType)
-  // Khung tiêu chuẩn: không hiển thị dòng "Sắt xi" (không áp dụng cho khung
-  // tiêu chuẩn); dòng "Bộ ke góc" chỉ hiển thị khi Loại khung là khung nhôm.
   const allRows = [...(cb.materialRows ?? []), ...(cb.laborRows ?? [])].filter((row) => {
     if (isStandard && row.label.startsWith('Sắt xi')) return false
     if (row.label.startsWith('Ke góc') && !isNhom) return false
@@ -115,7 +119,7 @@ function ItemCostBreakdown({ item }) {
   )
 }
 
-export default function OrderHistory({ orders, onDelete, isAdmin }) {
+export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus }) {
   const [expandedId, setExpandedId] = useState(null)
   const [expandedItemId, setExpandedItemId] = useState(null)
 
@@ -163,7 +167,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin }) {
             Lịch sử báo giá
           </h2>
           <p className="text-sm text-blueprint/60">
-            Chỉ lưu trên trình duyệt này. {filteredOrders.length} đơn hàng.
+            Lưu trữ đơn hàng hệ thống. {filteredOrders.length} đơn hàng.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -213,15 +217,16 @@ export default function OrderHistory({ orders, onDelete, isAdmin }) {
 
       <div className="space-y-3">
         {filteredOrders.map((order) => {
+          console.log("Dữ liệu của đơn hàng này là:", order);
           const isOpen = expandedId === order.id
-          const isLowMargin = order.margin < 15
+          const isLowMargin = order.margin < 55
           return (
             <div key={order.id} className="border border-line rounded-lg overflow-hidden">
-              <button
-                onClick={() => setExpandedId(isOpen ? null : order.id)}
-                className="w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-left hover:bg-paper transition-colors"
-              >
-                <div className="min-w-0">
+              <div className="w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-white hover:bg-paper transition-colors">
+                <button
+                  onClick={() => setExpandedId(isOpen ? null : order.id)}
+                  className="flex-1 min-w-0 text-left cursor-pointer"
+                >
                   <p className="font-medium text-blueprint truncate">
                     {order.customerName || 'Khách lẻ'}
                   </p>
@@ -229,9 +234,33 @@ export default function OrderHistory({ orders, onDelete, isAdmin }) {
                     {new Date(order.createdAt).toLocaleDateString('vi-VN')} ·{' '}
                     {order.items.length} sản phẩm
                   </p>
-                </div>
+                </button>
+
+                {/* Phần điều khiển trạng thái & mở rộng */}
                 <div className="flex items-center gap-4 shrink-0">
-                  <div className="text-right">
+                  {/* Dropdown trạng thái Đã chốt / Chưa chốt đồng bộ DB */}
+                  <select
+                    value={order.status === 'da_chot' ? 'da_chot' : 'chua_chot'}
+                    onChange={(e) => {
+                      const newStatus = e.target.value // 1️⃣ Khai báo biến trước
+                      if (onUpdateStatus) {
+                        onUpdateStatus(order.id_oder, newStatus) // 2️⃣ Sử dụng biến sau
+                      }
+                    }}
+                    className={`px-2.5 py-1 rounded-md font-mono text-xs uppercase tracking-wider font-semibold cursor-pointer outline-none transition-colors ${
+                      order.status === 'da_chot'
+                        ? 'bg-green-100 text-green-800 border border-green-300'
+                        : 'bg-amber-100 text-amber-800 border border-amber-300'
+                    }`}
+                  >
+                    <option value="chua_chot">⏳ Chưa chốt</option>
+                    <option value="da_chot">✅ Đã chốt</option>
+                  </select>
+
+                  <div 
+                    onClick={() => setExpandedId(isOpen ? null : order.id)}
+                    className="text-right cursor-pointer"
+                  >
                     <p className="font-mono text-sm text-blueprint">
                       {formatVND(order.itemsTotal)}
                     </p>
@@ -245,9 +274,14 @@ export default function OrderHistory({ orders, onDelete, isAdmin }) {
                       </p>
                     )}
                   </div>
-                  <span className="text-blueprint/40">{isOpen ? '▲' : '▼'}</span>
+                  <button
+                    onClick={() => setExpandedId(isOpen ? null : order.id)}
+                    className="text-blueprint/40 cursor-pointer p-1"
+                  >
+                    {isOpen ? '▲' : '▼'}
+                  </button>
                 </div>
-              </button>
+              </div>
 
               {isOpen && (
                 <div className="border-t border-line px-4 py-4 bg-paper">
@@ -291,7 +325,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin }) {
                                   <button
                                     onClick={() => setExpandedItemId(itemOpen ? null : itemKey)}
                                     aria-label="Xem chi tiết giá vốn"
-                                    className="text-blueprint/40 hover:text-amber transition-colors"
+                                    className="text-blueprint/40 hover:text-amber transition-colors cursor-pointer"
                                   >
                                     {itemOpen ? '▲' : '▼'}
                                   </button>
@@ -352,7 +386,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin }) {
 
                   <button
                     onClick={() => onDelete(order.id)}
-                    className="text-xs text-red-600 hover:underline"
+                    className="text-xs text-red-600 hover:underline cursor-pointer"
                   >
                     Xoá đơn hàng này
                   </button>

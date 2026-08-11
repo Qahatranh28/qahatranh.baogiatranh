@@ -3,21 +3,21 @@
 // này; chúng chỉ được tính lại thành bảng chi tiết khi nhập chiều dài/chiều rộng.
 export const defaultFrameSettings = {
   // Đơn giá vật tư (lấy theo mức giá phổ biến nhất trong bảng làm mặc định)
-  khungPerM: 35000, // VND/m 
-  tranhInPerM2: 398131, // VND/m² (giữ nguyên theo mẫu cũ của bạn)
-  micaPerM2: 193160, // VND/m² (Lấy theo giá Mica Trong 2 ly)
-  kinhPerM2: 85000, // VND/m² (Lấy theo bảng giá Kính)
-  vanPerM2: 38632, // VND/m² (Lấy theo giá Ván 4 ly)
-  giayBoPerM2: 32771, // VND/m² (Lấy theo giá Giấy bo trắng 0.8 ly)
-  satXiPerM: 10000, // VND/m
-  keGocPerBo: 4500, // VND/bộ
-  mocTreoPerCai: 500, // VND/cái
-  dayTreoPerM: 500, // VND/m
-  dinhGhimPerCai: 60, // VND/cái
-  peCuonPerKg: 45000, // VND/kg
-  xopBongKhiPerCay: 380000, // VND/cây
-  cartonPerKg: 5000, // VND/kg
-  bangKeoPerCay: 90000, // VND/cây
+  khungPerM: 0, // VND/m 
+  tranhInPerM2: 0, // VND/m² (giữ nguyên theo mẫu cũ của bạn)
+  micaPerM2: 0, // VND/m² (Lấy theo giá Mica Trong 2 ly)
+  kinhPerM2: 0, // VND/m² (Lấy theo bảng giá Kính)
+  vanPerM2: 0, // VND/m² (Lấy theo giá Ván 4 ly)
+  giayBoPerM2: 0, // VND/m² (Lấy theo giá Giấy bo trắng 0.8 ly)
+  satXiPerM: 0, // VND/m
+  keGocPerBo: 0, // VND/bộ
+  mocTreoPerCai: 0, // VND/cái
+  dayTreoPerM: 0, // VND/m
+  dinhGhimPerCai: 0, // VND/cái
+  peCuonPerKg: 0, // VND/kg
+  xopBongKhiPerCay: 0, // VND/cây
+  cartonPerKg: 0, // VND/kg
+  bangKeoPerCay: 0, // VND/cây
 
   // Nhân công & chi phí chung
   luongNhanCongPerGio: 40000, // VND/giờ
@@ -41,7 +41,7 @@ export const defaultFrameSettings = {
 }
 
 export const frameComponentToggles = [
-  { key: 'khung', label: 'Đóng khung', default: true },
+  { key: 'khung', label: 'Đóng khung', default: false },
   { key: 'tranhIn', label: 'In tranh', default: false },
   { key: 'micaKinh', label: 'Mica / Kính', default: false },
   { key: 'van', label: 'Ván lót', default: false },
@@ -73,27 +73,27 @@ export const isNhomType = (type) => (type || '').toLowerCase().includes('nhôm')
 // 2. CÁC TÙY CHỌN IN TRANH & GIÁ GỐC
 // ==========================================
 export const tranhInTypeOptions = [
-  'Tranh in giấy mỹ thuật',
-  'Tranh in 9 ly mờ',
-  'Tranh in 9 ly bóng',
-  'Tranh in 5 ly mờ',
-  'Tranh in formex 10 ly bóng',
-  'Tranh in formex 10 ly mờ',
-  'Tranh in canvas đúng size',
-  'Tranh in canvas căng khung tràn viền',
-  'Tranh in canvas căng khung nổi hoàn thiện'
-]
+  { value: 'tranh_in_giay_my_thuat', label: 'Tranh in giấy mỹ thuật' },
+  { value: 'tranh_in_canvas_dung_size', label: 'Tranh in canvas đúng size' },
+  { value: 'tranh_in_canvas_cang_khung_tran_vien', label: 'Tranh in canvas căng khung tràn viền' },
+  { value: 'tranh_in_canvas_cang_khung_noi_hoan_thien', label: 'Tranh in canvas căng khung nổi hoàn thiện' },
+  { value: 'tranh_in_formex_10ly_bong', label: 'Tranh in formex 10 ly bóng' },
+  { value: 'tranh_in_formex_10ly_mo', label: 'Tranh in formex 10 ly mờ' },
+  { value: 'tranh_in_5ly_mo', label: 'Tranh in 5 ly mờ' },
+  { value: 'tranh_in_9ly_bong', label: 'Tranh in 9 ly bóng' },
+  { value: 'tranh_in_9ly_mo', label: 'Tranh in 9 ly mờ' },
+];
 
 export const tranhInTypeRates = {
-  'Tranh in giấy mỹ thuật': 255399,
-  'Tranh in 9 ly mờ': 358598,
-  'Tranh in 9 ly bóng': 402823,
-  'Tranh in 5 ly mờ': 302787,
-  'Tranh in formex 10 ly bóng': 552984,
-  'Tranh in formex 10 ly mờ': 529657,
-  'Tranh in canvas đúng size': 237272,
-  'Tranh in canvas căng khung tràn viền': 527510,
-  'Tranh in canvas căng khung nổi hoàn thiện': 975271,
+  'Tranh in giấy mỹ thuật': 0,
+  'Tranh in 9 ly mờ': 0,
+  'Tranh in 9 ly bóng': 0,
+  'Tranh in 5 ly mờ': 0,
+  'Tranh in formex 10 ly bóng': 0,
+  'Tranh in formex 10 ly mờ': 0,
+  'Tranh in canvas đúng size': 0,
+  'Tranh in canvas căng khung tràn viền': 0,
+  'Tranh in canvas căng khung nổi hoàn thiện': 0,
 }
 
 export function getTranhInTypeRate(tranhInType, fallbackRate) {
@@ -117,10 +117,10 @@ export const isKinhType = (type) => (type || '').toLowerCase().includes('kính')
 export const micaKinhLyOptions = ['1,5 ly', '2 ly', '3 ly', '4 ly']
 
 export const micaTypeRates = {
-  '1,5 ly': 184538,
-  '2 ly': 193160,
-  '3 ly': 277479,
-  '4 ly': 370196,
+  '1,5 ly': 0,
+  '2 ly': 0,
+  '3 ly': 0,
+  '4 ly': 0,
 }
 
 
@@ -130,9 +130,9 @@ export const micaTypeRates = {
 export const vanLyOptions = ['2,5 ly', '4 ly', '8 ly']
 
 export const vanTypeRates = {
-  '2,5 ly': 26874,
-  '4 ly': 38632,
-  '8 ly': 45350,
+  '2,5 ly': 0,
+  '4 ly': 0,
+  '8 ly': 0,
 }
 
 
@@ -147,8 +147,8 @@ export const giayBoTypeOptions = [
 ]
 
 export const giayBoTypeRates = {
-  'Giấy bo màu 0.8 ly': 32771,
-  'Giấy bo trắng 0.8 ly': 32771,
-  'Giấy bo kem 1.4 ly': 72824,
-  'Giấy bo 2 ly': 84962,
+  'Giấy bo màu 0.8 ly': 0,
+  'Giấy bo trắng 0.8 ly': 0,
+  'Giấy bo kem 1.4 ly': 0,
+  'Giấy bo 2 ly': 0,
 }

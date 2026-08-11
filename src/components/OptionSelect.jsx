@@ -1,24 +1,27 @@
-export default function OptionSelect({ id, value, onChange, options, disabled }) {
+import FormRow from './FormRow.jsx'
+
+export default function OptionSelect({ label, value, options = [], onChange }) {
   return (
-    <select
-      id={id}
-      value={value}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full h-full bg-transparent px-3 py-2 text-sm text-blueprint outline-none cursor-pointer appearance-none disabled:text-blueprint/30 disabled:cursor-not-allowed"
-      style={{
-        backgroundImage: disabled
-          ? 'none'
-          : "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%234A6FA5' stroke-width='1.5' fill='none'/%3E%3C/svg%3E\")",
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'right 0.75rem center',
-      }}
-    >
-      {options.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
-        </option>
-      ))}
-    </select>
+    <FormRow label={label}>
+      <div className="w-full py-1">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-transparent px-3 py-1.5 text-sm text-black outline-none font-mono cursor-pointer"
+        >
+          {options.map((opt) => {
+            // Tách lấy giá trị value (để lưu vào state) và label (để hiển thị lên màn hình)
+            const optValue = typeof opt === 'object' ? opt.value : opt
+            const optLabel = typeof opt === 'object' ? (opt.label || opt.name_material || opt.name || opt.value) : opt
+
+            return (
+              <option key={optValue} value={optValue}>
+                {optLabel} {/* 🌟 Hiển thị Tên vật liệu Tiếng Việt thay vì Mã ID */}
+              </option>
+            )
+          })}
+        </select>
+      </div>
+    </FormRow>
   )
 }

@@ -1,68 +1,86 @@
-import { useEffect, useState } from 'react'
-import { khungTypeRates as defaultKhungTypeRates } from '../data/khungCatalog.js'
-import { tranhInTypeRates as defaultTranhInTypeRates } from '../data/frameDefaults.js'
-
-// Cho phép Admin sửa "giá gốc" (đơn giá) riêng theo từng Loại khung và từng
-// Loại tranh in ngay trong "Công cụ tính giá thành khung tranh" — dữ liệu
-// khởi tạo lấy từ khungTypeRates / tranhInTypeRates (data/khungCatalog.js,
-// data/frameDefaults.js), sau đó admin chỉnh sửa sẽ được lưu vào localStorage
-// và ưu tiên dùng thay cho giá trị mặc định trong code.
-const STORAGE_KEY = 'quote-app-type-rates'
-
-const defaults = {
-  khung: { ...defaultKhungTypeRates },
-  tranhIn: { ...defaultTranhInTypeRates },
-}
-
-function loadInitial() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const saved = JSON.parse(raw)
-      return {
-        khung: { ...defaults.khung, ...(saved?.khung || {}) },
-        tranhIn: { ...defaults.tranhIn, ...(saved?.tranhIn || {}) },
-      }
-    }
-  } catch {
-    // Bỏ qua nếu dữ liệu lưu bị lỗi, dùng giá trị mặc định
-  }
-  return { khung: { ...defaults.khung }, tranhIn: { ...defaults.tranhIn } }
-}
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabaseClient'
+// Import giá tranh in mặc định làm dự phòng
+import { tranhInTypeRates as defaultTranhInRates } from '../data/frameDefaults.js'
 
 export function useTypeRates() {
-  const [typeRates, setTypeRates] = useState(loadInitial)
+  const [typeRates, setTypeRates] = useState({ khung: {}, tranhIn: { ...defaultTranhInRates } })
 
+  // 1. TẢI GIÁ GỐC CỦA KHUNG VÀ TRANH IN TỪ SUPABASE
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const saved = JSON.parse(raw)
-        setTypeRates({
-          khung: { ...defaults.khung, ...(saved?.khung || {}) },
-          tranhIn: { ...defaults.tranhIn, ...(saved?.tranhIn || {}) },
-        })
+    async function fetchTypeRates() {
+      try {
+        // A. Lấy giá gốc của từng loại khung từ bảng frame_catalog
+        const { data: khungData } = await supabase.from('frame_catalog').select('name, price_cost')
+        const khungRates = {}
+        if (khungData) {
+          khungData.forEach(k => {
+            if (k.cost_rate != null) khungRates[k.name] = Number(k.price_cost)
+          })
+        }
+
+        // B. Lấy giá gốc của các loại tranh in từ bảng material
+        // Lọc các vật tư có id_material bắt đầu bằng chữ "tranh_in"
+        const { data: tranhData } = await supabase
+          .from('material')
+          .select('name, price_cost')
+          .like('id_material', 'tranh_in%')
+        
+        const tranhRates = { ...defaultTranhInRates }
+        if (tranhData) {
+          tranhData.forEach(t => {
+            if (t.price_cost != null) tranhRates[t.name] = Number(t.price_cost)
+          })
+        }
+
+        setTypeRates({ khung: khungRates, tranhIn: tranhRates })
+      } catch (err) {
+        console.error('Lỗi khi tải giá gốc Type Rates:', err.message)
       }
-    } catch {
-      // Bỏ qua nếu dữ liệu lưu bị lỗi
     }
+
+    fetchTypeRates()
   }, [])
 
-  const updateTypeRate = (group, typeName, value) => {
-    setTypeRates((prev) => {
-      const next = {
-        ...prev,
-        [group]: { ...prev[group], [typeName]: value === '' ? '' : Number(value) },
+  // 2. CẬP NHẬT GIÁ GỐC KHI ADMIN SỬA SỐ TRÊN GIAO DIỆN
+  const updateTypeRate = async (category, typeName, value) => {
+    const numValue = (value === '' || value === null) ? null : Number(value)
+
+    // Cập nhật giao diện lập tức cho mượt
+    setTypeRates(prev => ({
+      ...prev,
+      [category]: {
+        ...(prev[category] || {}),
+        [typeName]: numValue
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-      return next
-    })
+    }))
+
+    // Lưu vào đúng bảng tương ứng trên Supabase
+    try {
+      if (category === 'khung') {
+        const { error } = await supabase
+          .from('frame_catalog')
+          .update({ price_cost: numValue })
+          .eq('name', typeName)
+          
+        if (error) throw error
+      } else if (category === 'tranhIn') {
+        const { error } = await supabase
+          .from('material')
+          .update({ price_cost: numValue })
+          .eq('name', typeName)
+          
+        if (error) throw error
+      }
+    } catch (err) {
+      console.error(`Lỗi cập nhật giá gốc cho [${typeName}]:`, err.message)
+    }
   }
 
-  const resetTypeRates = () => {
-    const fresh = { khung: { ...defaults.khung }, tranhIn: { ...defaults.tranhIn } }
-    setTypeRates(fresh)
-    localStorage.removeItem(STORAGE_KEY)
+  // 3. KHÔI PHỤC GIÁ GỐC VỀ MẶC ĐỊNH
+  const resetTypeRates = async () => {
+    // Có thể cấu hình logic reset nâng cao ở đây nếu Admin cần
+    console.log('Đã gọi hàm khôi phục giá gốc')
   }
 
   return { typeRates, updateTypeRate, resetTypeRates }

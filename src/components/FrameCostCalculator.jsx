@@ -1,29 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { formatVND } from '../utils/format.js'
+import { supabase } from '../supabaseClient'
 import {
   frameComponentToggles,
-  khungTypeOptions,
-  tranhInTypeOptions,
   micaKinhTypeOptions,
   micaKinhLyOptions,
   vanLyOptions,
   giayBoTypeOptions,
   isNhomType,
   isKinhType,
-  getTranhInTypeRate,
   micaTypeRates,
   vanTypeRates,
   giayBoTypeRates,
 } from '../data/frameDefaults.js'
 import { computeFrameCost } from '../utils/frameCosting.js'
-import {
-  khungCategoryOptions,
-  khungTypesByCategory,
-  getStandardSizeOptions,
-  getKhungTypeRate,
-} from '../data/khungCatalog.js'
+import { useProductCatalog } from '../hooks/useProductCatalog.js'
+import { useStandardPrices } from '../hooks/useStandardPrices.js'
 
-// Đã ẩn đi 6 mục đầu (Khung, Tranh in, Mica, Kính, Ván, Giấy bo) theo yêu cầu
+// 🌟 CHỈ GIỮ LAI 9 MỤC VẬT TƯ CÓ TRÊN DATABASE (BẢNG material)
 const SETTING_LABELS = [
   ['satXiPerM', 'Đơn giá sắt xi (VND/m)'],
   ['keGocPerBo', 'Đơn giá bộ ke góc (VND/bộ)'],
@@ -34,38 +28,147 @@ const SETTING_LABELS = [
   ['xopBongKhiPerCay', 'Đơn giá xốp bóng khí (VND/cây)'],
   ['cartonPerKg', 'Đơn giá carton (VND/kg)'],
   ['bangKeoPerCay', 'Đơn giá băng keo trong (VND/cây)'],
-  ['luongNhanCongPerGio', 'Lương nhân công (VND/giờ)'],
-  ['tyLeSXC', 'Tỷ lệ chi phí SXC (%)'],
-  ['haoHutKhung_cm', 'Hao hụt khung (cm)'],
-  ['gioLam1mKhung', 'Số giờ làm 1m khung (giờ/m)'],
-  ['gioLam1m2MicaKinhVan', 'Số giờ làm 1m² mica/kính/ván (giờ/m²)'],
-  ['gioLam1m2GiayBo', 'Số giờ làm 1m² giấy bo (giờ/m²)'],
-  ['gioSon1mKhung', 'Số giờ sơn 1m khung tranh (giờ/m)'],
-  ['gioDongGoi1m2', 'Số giờ đóng gói (giờ/m²)'],
-  ['markupPercent', 'Tỷ lệ lợi nhuận cộng vào giá bán khách (%)'],
 ]
 
 export default function FrameCostCalculator({
   settings,
   updateSetting,
   resetSettings,
-  standardPrices,
-  updateStandardPrice,
-  resetStandardPrices,
   typeRates,
   updateTypeRate,
   resetTypeRates,
 }) {
+  const { standardPrices: initialPrices, resetStandardPrices } = useStandardPrices()
+
+  const [localPrices, setLocalPrices] = useState({})
+  const [savingPrices, setSavingPrices] = useState(false)
+  const [savingSettings, setSavingSettings] = useState(false)
+
+  useEffect(() => {
+    if (initialPrices) {
+      setLocalPrices(initialPrices)
+    }
+  }, [initialPrices])
+
+  const handleLocalChange = (type, sizeLabel, value) => {
+    const numValue = (value === '' || value === null || value === undefined) ? null : Number(value)
+    setLocalPrices((prev) => ({
+      ...prev,
+      [type]: {
+        ...(prev[type] || {}),
+        [sizeLabel]: numValue,
+      },
+    }))
+  }
+
+  // 🌟 HÀM LƯU 9 ĐƠN GIÁ VẬT TƯ TRỰC TIẾP LÊN BẢNG material TRÊN SUPABASE
+  const handleSaveSettingsToDB = async () => {
+    setSavingSettings(true)
+    try {
+      const materialMapping = [
+        { key: 'satXiPerM', id: 'sat_xi' },
+        { key: 'keGocPerBo', id: 'ke_goc' },
+        { key: 'mocTreoPerCai', id: 'moc_treo' },
+        { key: 'dayTreoPerM', id: 'day_treo' },
+        { key: 'dinhGhimPerCai', id: 'dinh_ghim' },
+        { key: 'peCuonPerKg', id: 'pe_cuon' },
+        { key: 'xopBongKhiPerCay', id: 'xop_bong_khi' },
+        { key: 'cartonPerKg', id: 'carton' },
+        { key: 'bangKeoPerCay', id: 'bang_keo' },
+      ]
+
+      const updatePromises = materialMapping.map(({ key, id }) => {
+        const val = Number(settings[key]) || 0
+        return supabase
+          .from('material')
+          .update({ price_cost: val })
+          .eq('id_material', id)
+      })
+
+      const results = await Promise.all(updatePromises)
+      const hasError = results.some((res) => res.error)
+
+      if (hasError) {
+        throw new Error('Có lỗi xảy ra khi lưu một số vật tư!')
+      }
+
+      setSyncStatus('Đã lưu vật tư ✓')
+      setTimeout(() => setSyncStatus(''), 2500)
+      alert('Đã lưu thành công các đơn giá vật tư lên cơ sở dữ liệu!')
+    } catch (err) {
+      console.error('Lỗi khi lưu đơn giá vật tư:', err.message)
+      alert('Lỗi khi lưu: ' + err.message)
+    } finally {
+      setSavingSettings(false)
+    }
+  }
+
+  const handleSaveAllToDB = async () => {
+    setSavingPrices(true)
+    try {
+      const { data: catalogData, error: catError } = await supabase
+        .from('frame_catalog')
+        .select('frame_id, name')
+
+      if (catError) throw catError
+
+      const nameToIdMap = {}
+      catalogData.forEach(item => {
+        nameToIdMap[item.name] = item.frame_id
+      })
+
+      const upsertRows = []
+      for (const [khungType, sizes] of Object.entries(localPrices)) {
+        const frameId = nameToIdMap[khungType]
+        if (!frameId) continue
+
+        for (const [sizeLabel, price] of Object.entries(sizes)) {
+          if (price !== null && price !== '' && price !== undefined) {
+            upsertRows.push({
+              frame_id: frameId,
+              size_name: sizeLabel,
+              price: Number(price)
+            })
+          }
+        }
+      }
+
+      if (upsertRows.length === 0) {
+        alert('Không có dữ liệu giá nào để lưu!')
+        setSavingPrices(false)
+        return
+      }
+
+      const { error: upsertError } = await supabase
+        .from('frame_size')
+        .upsert(upsertRows, { onConflict: ['frame_id', 'size_name'] })
+
+      if (upsertError) throw upsertError
+
+      alert('Đã lưu tất cả thay đổi bảng giá lên cơ sở dữ liệu thành công!')
+    } catch (err) {
+      console.error('Lỗi khi lưu bảng giá:', err.message)
+      alert('Lỗi khi lưu: ' + err.message)
+    } finally {
+      setSavingPrices(false)
+    }
+  }
+
   const [showSettings, setShowSettings] = useState(false)
   const [showStandardPrices, setShowStandardPrices] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState(khungCategoryOptions[0])
+  const [syncStatus, setSyncStatus] = useState('')
   
+  const { categories, typesByCategory, getStandardSizesForType,
+    rawCatalog,
+    updateFrameCostRate,
+   } = useProductCatalog()
+
+  const [selectedCategory, setSelectedCategory] = useState('')
   const [width, setWidth] = useState('80')
   const [height, setHeight] = useState('110')
   
-  // State quản lý chi tiết loại vật tư đang chọn
-  const [khungType, setKhungType] = useState(khungTypeOptions[0])
-  const [tranhInType, setTranhInType] = useState(tranhInTypeOptions[0])
+  const [khungType, setKhungType] = useState('')
+  const [tranhInType, setTranhInType] = useState('')
   const [micaKinhType, setMicaKinhType] = useState(micaKinhTypeOptions[0])
   const [micaKinhLy, setMicaKinhLy] = useState(micaKinhLyOptions[0])
   const [vanLy, setVanLy] = useState(vanLyOptions[0])
@@ -75,12 +178,44 @@ export default function FrameCostCalculator({
     Object.fromEntries(frameComponentToggles.map((t) => [t.key, t.default]))
   )
 
-  // Nhận diện tự động
-  const isNhom = isNhomType(khungType)
+  const allKhungTypes = Object.values(typesByCategory).flat()
+  const allTranhInTypes = Object.keys(typeRates?.tranhIn || {})
+
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategory) setSelectedCategory(categories[0])
+  }, [categories, selectedCategory])
+
+  useEffect(() => {
+    if (allKhungTypes.length > 0 && !khungType) setKhungType(allKhungTypes[0])
+  }, [allKhungTypes, khungType])
+
+  useEffect(() => {
+    if (allTranhInTypes.length > 0 && !tranhInType) setTranhInType(allTranhInTypes[0])
+  }, [allTranhInTypes, tranhInType])
+
+  const isNhom = khungType ? isNhomType(khungType) : false
   const isKinh = isKinhType(micaKinhType)
 
-  const khungRate = getKhungTypeRate(khungType, settings.khungPerM)
-  const tranhInRate = getTranhInTypeRate(tranhInType, settings.tranhInPerM2)
+  const khungRate = typeRates?.khung?.[khungType] ?? settings.khungPerM
+  const tranhInRate = typeRates?.tranhIn?.[tranhInType] ?? settings.tranhInPerM2
+
+  const syncMaterialToDatabase = async (materialId, priceValue) => {
+    try {
+      setSyncStatus('Đang lưu DB...')
+      const { error } = await supabase
+        .from('material')
+        .update({ price_cost: Number(priceValue) })
+        .eq('id_material', materialId)
+
+      if (error) throw error
+      setSyncStatus('Đã lưu DB ✓')
+      setTimeout(() => setSyncStatus(''), 2500)
+    } catch (err) {
+      console.error('Lỗi đồng bộ DB:', err.message)
+      setSyncStatus('Lỗi lưu DB!')
+      setTimeout(() => setSyncStatus(''), 2500)
+    }
+  }
 
   const result = computeFrameCost(
     width,
@@ -93,11 +228,29 @@ export default function FrameCostCalculator({
     isNhom,
     tranhInRate
   )
+  
   const allRows = [...result.materialRows, ...result.laborRows].filter(
     (row) => isNhom || !row.label.startsWith('Ke góc')
   )
 
-  // Component tiện ích để render thanh tiêu đề chứa Checkbox
+  const currentTypesForTable = typesByCategory[selectedCategory] || []
+  
+  const tableColumns = useMemo(() => {
+    if (currentTypesForTable.length === 0) return [];
+    const sizesMap = new Map();
+    
+    currentTypesForTable.forEach(type => {
+      const sizes = getStandardSizesForType(type) || [];
+      sizes.forEach(sizeObj => {
+        if (!sizesMap.has(sizeObj.label)) {
+          sizesMap.set(sizeObj.label, sizeObj);
+        }
+      });
+    });
+    
+    return Array.from(sizesMap.values());
+  }, [currentTypesForTable, getStandardSizesForType]);
+
   const renderToggleHeader = (key, label) => (
     <label className="bg-blueprint text-paper px-3 py-2.5 font-mono text-xs uppercase tracking-widest flex items-center gap-2 cursor-pointer select-none m-0 hover:bg-blueprint-light transition-colors">
       <input
@@ -121,28 +274,37 @@ export default function FrameCostCalculator({
             Công cụ tính giá thành khung tranh
           </h2>
         </div>
-        <button
-          onClick={() => setShowSettings((v) => !v)}
-          className="text-sm text-blueprint/60 hover:text-blueprint underline underline-offset-2"
-        >
-          {showSettings ? 'Ẩn cài đặt mặc định' : 'Cài đặt mặc định'}
-        </button>
+        <div className="flex items-center gap-3">
+          {syncStatus && (
+            <span className="text-xs font-mono text-amber animate-pulse">
+              {syncStatus}
+            </span>
+          )}
+          <button
+            onClick={() => setShowSettings((v) => !v)}
+            className="text-sm text-blueprint/60 hover:text-blueprint underline underline-offset-2"
+          >
+            {showSettings ? 'Ẩn cài đặt mặc định' : 'Cài đặt mặc định'}
+          </button>
+        </div>
       </div>
       <p className="text-sm text-blueprint-light mb-6">
         Chỉnh sửa các tùy chọn bên dưới để xem sự thay đổi giá vốn.
       </p>
 
+      {/* 🌟 PHẦN CÀI ĐẶT MẶC ĐỊNH ĐÃ ĐƯỢC LỌC CHỈ CÒN 9 MỤC CÓ TRÊN DATABASE */}
       {showSettings && (
         <div className="bg-paper rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <p className="text-xs uppercase tracking-widest text-blueprint/50">
-              Giá trị mặc định (chỉnh sửa nếu cần)
+              Đơn giá vật tư mặc định (lưu trực tiếp lên DB)
             </p>
             <button
-              onClick={resetSettings}
-              className="text-xs text-red-600 hover:underline"
+              onClick={handleSaveSettingsToDB}
+              disabled={savingSettings}
+              className="bg-amber text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-amber/90 transition-colors shadow-sm disabled:opacity-50"
             >
-              Khôi phục mặc định
+              {savingSettings ? 'Đang lưu lên DB...' : 'Lưu đơn giá vật tư lên DB'}
             </button>
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -154,7 +316,7 @@ export default function FrameCostCalculator({
                 <input
                   id={key}
                   type="number"
-                  value={settings[key]}
+                  value={settings[key] ?? ''}
                   onChange={(e) => updateSetting(key, Number(e.target.value))}
                   className="w-28 border border-line rounded-md px-2 py-1.5 text-sm outline-none focus:border-amber font-mono"
                 />
@@ -164,6 +326,7 @@ export default function FrameCostCalculator({
         </div>
       )}
 
+      {/* Bảng giá tiêu chuẩn */}
       <div className="flex items-center justify-between gap-4 mb-1 mt-8">
         <h3 className="font-display font-semibold text-base text-blueprint">
           Giá bán mặc định – Khung tiêu chuẩn
@@ -176,18 +339,14 @@ export default function FrameCostCalculator({
         </button>
       </div>
       <p className="text-sm text-blueprint-light mb-4">
-        Gán giá bán mặc định cho từng cặp Loại khung + Kích thước — dùng ở chế
-        độ "Khung tiêu chuẩn". Khi khách chọn đúng Loại khung + Kích thước đã
-        có giá ở đây, hệ thống lấy đúng giá này (bỏ qua công thức tính theo
-        chiều dài/chiều rộng ở trên). Để trống 1 ô nghĩa là ô đó tạm tính theo
-        công thức + % lợi nhuận như bình thường.
+        Gán giá bán mặc định cho từng cặp Loại khung + Kích thước — dùng ở chế độ "Khung tiêu chuẩn". Khi khách chọn đúng Loại khung + Kích thước đã có giá ở đây, hệ thống lấy đúng giá này.
       </p>
 
       {showStandardPrices && (
         <div className="bg-paper rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
             <div className="flex flex-wrap gap-2">
-              {khungCategoryOptions.map((category) => (
+              {categories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
@@ -201,51 +360,66 @@ export default function FrameCostCalculator({
                 </button>
               ))}
             </div>
+            
             <button
-              onClick={resetStandardPrices}
-              className="text-xs text-red-600 hover:underline"
+              onClick={handleSaveAllToDB}
+              disabled={savingPrices}
+              className="bg-amber text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-amber/90 transition-colors shadow-sm disabled:opacity-50"
             >
-              Khôi phục giá mặc định
+              {savingPrices ? 'Đang lưu lên DB...' : 'Lưu tất cả thay đổi lên DB'}
             </button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
+
+          <div className="overflow-x-auto relative border border-line rounded-lg max-h-[600px] shadow-sm">
+            <table className="w-full min-w-[640px] text-sm border-collapse">
               <thead>
                 <tr className="bg-blueprint/5 text-blueprint">
-                  <th className="text-left font-mono text-xs uppercase tracking-widest px-3 py-2">
+                  <th className="sticky left-0 z-20 bg-white text-left font-mono text-xs uppercase tracking-widest px-4 py-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] border-b border-line">
                     Loại khung
                   </th>
-                  {getStandardSizeOptions(
-                    (khungTypesByCategory[selectedCategory] || [])[0]
-                  ).map((size) => (
+                  {tableColumns.map((size) => (
                     <th
                       key={size.label}
-                      className="text-right font-mono text-xs uppercase tracking-widest px-3 py-2"
+                      className="text-right font-mono text-xs uppercase tracking-widest px-3 py-3 whitespace-nowrap border-b border-line"
                     >
                       {size.label}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
-                {(khungTypesByCategory[selectedCategory] || []).map((type) => (
-                  <tr key={type} className="border-t border-line">
-                    <td className="px-3 py-2 text-blueprint whitespace-nowrap">{type}</td>
-                    {getStandardSizeOptions(type).map((size) => (
-                      <td key={size.label} className="px-2 py-2 text-right">
-                        <input
-                          type="number"
-                          value={standardPrices?.[type]?.[size.label] ?? ''}
-                          onChange={(e) =>
-                            updateStandardPrice(type, size.label, e.target.value)
-                          }
-                          placeholder="—"
-                          className="w-24 border border-line rounded-md px-2 py-1.5 text-sm text-right outline-none focus:border-amber font-mono"
-                        />
+              <tbody className="bg-white">
+                {currentTypesForTable.map((type) => {
+                  const validSizes = getStandardSizesForType(type).map(s => s.label);
+
+                  return (
+                    <tr key={type} className="border-b border-line hover:bg-gray-50 transition-colors">
+                      <td className="sticky left-0 z-10 bg-white px-4 py-3 text-blueprint whitespace-nowrap font-medium shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)]">
+                        {type}
                       </td>
-                    ))}
-                  </tr>
-                ))}
+                      {tableColumns.map((size) => {
+                        const isValidSize = validSizes.includes(size.label);
+
+                        return (
+                          <td key={size.label} className="px-2 py-2 text-right">
+                            {isValidSize ? (
+                              <input
+                                type="number"
+                                value={localPrices?.[type]?.[size.label] ?? ''}
+                                onChange={(e) => handleLocalChange(type, size.label, e.target.value)}
+                                placeholder="—"
+                                className="w-24 border border-line rounded-md px-2 py-1.5 text-sm text-right outline-none focus:border-amber font-mono bg-white"
+                              />
+                            ) : (
+                              <div className="w-24 mx-auto text-gray-400 text-xs flex items-center justify-center bg-gray-50 h-8 rounded-md border border-transparent select-none">
+                                —
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -281,15 +455,12 @@ export default function FrameCostCalculator({
         <h3 className="font-display font-semibold text-base text-blueprint">
           Chi tiết vật tư & Giá gốc
         </h3>
-        <button
-          onClick={resetTypeRates}
-          className="text-xs text-red-600 hover:underline"
-        >
+        <button onClick={resetTypeRates} className="text-xs text-red-600 hover:underline">
           Khôi phục giá gốc mặc định
         </button>
       </div>
       <p className="text-sm text-blueprint-light mb-4">
-        Bật/tắt các thành phần bên dưới để xem chi tiết chi phí. Bạn có thể thay đổi loại vật tư và chỉnh sửa <strong>Giá gốc</strong> trực tiếp tại các ô bên dưới.
+        Bật/tắt các thành phần bên dưới để xem chi tiết chi phí. Nhập giá mới và bấm nút Lưu để cập nhật.
       </p>
 
       <div className="space-y-4 mb-8">
@@ -305,20 +476,40 @@ export default function FrameCostCalculator({
                   onChange={(e) => setKhungType(e.target.value)}
                   className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber"
                 >
-                  {khungTypeOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                  {allKhungTypes.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs text-blueprint/70 mb-1.5">
                   Giá gốc (VND/m){isNhom && <span className="text-amber"> · Nhôm</span>}
                 </label>
-                <input
-                  type="number"
-                  value={typeRates.khung[khungType] ?? ''}
-                  placeholder={String(settings.khungPerM)}
-                  onChange={(e) => updateTypeRate('khung', khungType, e.target.value)}
-                  className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber font-mono"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={
+                      rawCatalog.find((c) => c.name === khungType)?.price_cost ??
+                      typeRates?.khung?.[khungType] ??
+                      settings.khungPerM
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value
+                      updateTypeRate('khung', khungType, val)
+                    }}
+                    className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentVal = rawCatalog.find((c) => c.name === khungType)?.price_cost ?? typeRates?.khung?.[khungType] ?? settings.khungPerM
+                      updateFrameCostRate(khungType, currentVal)
+                      setSyncStatus('Đã lưu khung ✓')
+                      setTimeout(() => setSyncStatus(''), 2500)
+                    }}
+                    className="bg-amber text-white px-3 py-2 rounded text-xs font-medium hover:bg-amber/90 whitespace-nowrap"
+                  >
+                    Lưu
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -336,18 +527,29 @@ export default function FrameCostCalculator({
                   onChange={(e) => setTranhInType(e.target.value)}
                   className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber"
                 >
-                  {tranhInTypeOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                  {allTranhInTypes.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs text-blueprint/70 mb-1.5">Giá gốc (VND/m²)</label>
-                <input
-                  type="number"
-                  value={typeRates.tranhIn[tranhInType] ?? ''}
-                  placeholder={String(settings.tranhInPerM2)}
-                  onChange={(e) => updateTypeRate('tranhIn', tranhInType, e.target.value)}
-                  className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber font-mono"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={typeRates?.tranhIn?.[tranhInType] ?? ''}
+                    placeholder={String(settings.tranhInPerM2)}
+                    onChange={(e) => {
+                      updateTypeRate('tranhIn', tranhInType, e.target.value)
+                    }}
+                    className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => syncMaterialToDatabase('tranh_in', typeRates?.tranhIn?.[tranhInType] || settings.tranhInPerM2)}
+                    className="bg-amber text-white px-3 py-2 rounded text-xs font-medium hover:bg-amber/90 whitespace-nowrap"
+                  >
+                    Lưu
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -377,7 +579,6 @@ export default function FrameCostCalculator({
                     onChange={(e) => {
                       const val = e.target.value;
                       setMicaKinhLy(val);
-                      // Tự động cập nhật giá gốc tương ứng khi đổi Ly
                       if (micaTypeRates[val]) updateSetting('micaPerM2', micaTypeRates[val]);
                     }}
                     className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber"
@@ -389,12 +590,24 @@ export default function FrameCostCalculator({
 
               <div>
                 <label className="block text-xs text-blueprint/70 mb-1.5">Giá gốc (VND/m²)</label>
-                <input
-                  type="number"
-                  value={isKinh ? settings.kinhPerM2 : settings.micaPerM2}
-                  onChange={(e) => updateSetting(isKinh ? 'kinhPerM2' : 'micaPerM2', Number(e.target.value))}
-                  className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber font-mono"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={isKinh ? settings.kinhPerM2 : settings.micaPerM2}
+                    onChange={(e) => {
+                      const val = Number(e.target.value)
+                      updateSetting(isKinh ? 'kinhPerM2' : 'micaPerM2', val)
+                    }}
+                    className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => syncMaterialToDatabase(isKinh ? 'kinh' : 'mica', isKinh ? settings.kinhPerM2 : settings.micaPerM2)}
+                    className="bg-amber text-white px-3 py-2 rounded text-xs font-medium hover:bg-amber/90 whitespace-nowrap"
+                  >
+                    Lưu
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -412,7 +625,6 @@ export default function FrameCostCalculator({
                   onChange={(e) => {
                     const val = e.target.value;
                     setVanLy(val);
-                    // Tự động cập nhật giá gốc tương ứng khi đổi Ly
                     if (vanTypeRates[val]) updateSetting('vanPerM2', vanTypeRates[val]);
                   }}
                   className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber"
@@ -422,12 +634,24 @@ export default function FrameCostCalculator({
               </div>
               <div>
                 <label className="block text-xs text-blueprint/70 mb-1.5">Giá gốc (VND/m²)</label>
-                <input
-                  type="number"
-                  value={settings.vanPerM2}
-                  onChange={(e) => updateSetting('vanPerM2', Number(e.target.value))}
-                  className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber font-mono"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={settings.vanPerM2}
+                    onChange={(e) => {
+                      const val = Number(e.target.value)
+                      updateSetting('vanPerM2', val)
+                    }}
+                    className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => syncMaterialToDatabase('van_lot', settings.vanPerM2)}
+                    className="bg-amber text-white px-3 py-2 rounded text-xs font-medium hover:bg-amber/90 whitespace-nowrap"
+                  >
+                    Lưu
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -445,7 +669,6 @@ export default function FrameCostCalculator({
                   onChange={(e) => {
                     const val = e.target.value;
                     setGiayBoType(val);
-                    // Tự động cập nhật giá gốc tương ứng khi đổi Loại
                     if (giayBoTypeRates[val]) updateSetting('giayBoPerM2', giayBoTypeRates[val]);
                   }}
                   className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber"
@@ -455,18 +678,30 @@ export default function FrameCostCalculator({
               </div>
               <div>
                 <label className="block text-xs text-blueprint/70 mb-1.5">Giá gốc (VND/m²)</label>
-                <input
-                  type="number"
-                  value={settings.giayBoPerM2}
-                  onChange={(e) => updateSetting('giayBoPerM2', Number(e.target.value))}
-                  className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber font-mono"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={settings.giayBoPerM2}
+                    onChange={(e) => {
+                      const val = Number(e.target.value)
+                      updateSetting('giayBoPerM2', val)
+                    }}
+                    className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-amber font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => syncMaterialToDatabase('giay_bo', settings.giayBoPerM2)}
+                    className="bg-amber text-white px-3 py-2 rounded text-xs font-medium hover:bg-amber/90 whitespace-nowrap"
+                  >
+                    Lưu
+                  </button>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* SẮT XI, SƠN, ĐÓNG GÓI */}
+        {/* CÁC THÀNH PHẦN KHÁC */}
         <div className="rounded-lg border border-line overflow-hidden">
           {renderToggleHeader('satXi', 'Sắt xi')}
         </div>

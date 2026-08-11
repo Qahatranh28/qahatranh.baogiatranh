@@ -27,12 +27,12 @@ import {
 } from './framePrices.js'
 // giá cost của khung tính theo M
 export const khungTypeRates = {
-  'Khung nhựa 1,5x1,5': 5100,
-  'Khung nhựa 2x3': 9900,
-  'Khung gỗ tự nhiên 2x3': 15333,
-  'Khung gỗ tự nhiên vintage 2x3': 35000,
-  'Khung nhôm tròn': 28000,
-  'Khung nhôm vuông 0,5x2,5': 28000,
+  'Khung nhựa 1,5x1,5': 0,
+  'Khung nhựa 2x3': 0,
+  'Khung gỗ tự nhiên 2x3': 0,
+  'Khung gỗ tự nhiên vintage 2x3': 0,
+  'Khung nhôm tròn': 0,
+  'Khung nhôm vuông 0,5x2,5': 0,
   'Khung nhôm vuông Dày 0,5x3,5': 30000,
   'Khung gương': 148000,
 }

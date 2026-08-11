@@ -3,7 +3,7 @@ import { formatVND, formatPercent } from '../utils/format.js'
 export default function AdminPanel({ itemsCost, itemsTotal }) {
   const profit = itemsTotal - itemsCost
   const margin = itemsTotal > 0 ? (profit / itemsTotal) * 100 : 0
-  const isLowMargin = margin < 15 && itemsTotal > 0
+  const isLowMargin = margin < 55 && itemsTotal > 0
 
   return (
     <section
@@ -63,7 +63,7 @@ export default function AdminPanel({ itemsCost, itemsTotal }) {
         </p>
         {isLowMargin && (
           <p className="text-xs text-red-700 mt-2">
-            Biên lợi nhuận dưới 15% — cân nhắc giảm mức chiết khấu.
+            Biên lợi nhuận dưới 55% — cân nhắc giảm mức chiết khấu.
           </p>
         )}
       </div>

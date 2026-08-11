@@ -1,84 +1,99 @@
 import { useState } from 'react'
 
-export default function AdminLogin({ onLogin, onClose }) {
+export default function AdminLogin({ onLogin, onCancel }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const success = onLogin(username, password)
-    if (!success) {
-      setError('Sai tên đăng nhập hoặc mật khẩu.')
+    setErrorMsg('')
+    setLoading(true)
+    
+    // Gọi hàm login từ cha truyền xuống
+    const res = await onLogin(username, password)
+    
+    if (res && !res.success) {
+      // Nếu sai: Hiện lỗi
+      setErrorMsg(res.error) 
+    } else if (res && res.success) {
+      // 🌟 NẾU ĐÚNG: Đóng form đăng nhập lại
+      if (onCancel) {
+        onCancel();
+      }
     }
+    
+    setLoading(false)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-blueprint/40 px-4 pt-24 sm:pt-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-paper rounded-2xl border border-line p-6 shadow-xl"
-      >
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="font-display font-semibold text-lg text-blueprint">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl p-5 sm:p-6 max-w-sm w-full shadow-xl border border-line">
+        
+        {/* Header có nút X đóng */}
+        <div className="flex justify-between items-center mb-1">
+          <h3 className="font-display font-semibold text-lg text-blueprint">
             Đăng nhập Admin
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng"
-            className="text-blueprint-light hover:text-blueprint text-xl leading-none"
+          </h3>
+          <button 
+            onClick={onCancel}
+            className="text-blueprint/50 hover:text-blueprint text-xl font-medium leading-none"
           >
-            ×
+            &times;
           </button>
         </div>
-        <p className="text-sm text-blueprint-light mb-5">
+        <p className="text-sm text-blueprint/60 mb-5">
           Xem giá vốn và biên lợi nhuận chi tiết.
         </p>
 
-        <label
-          htmlFor="admin-username"
-          className="block font-mono text-xs uppercase tracking-widest text-blueprint-light mb-1"
-        >
-          Tên đăng nhập
-        </label>
-        <input
-          id="admin-username"
-          type="text"
-          autoComplete="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full border-2 border-line focus:border-amber rounded-md px-3 py-2 mb-4 outline-none transition-colors"
-        />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* 🌟 Hiển thị lỗi cực kỳ gọn gàng */}
+          {errorMsg && (
+            <div className="p-2.5 bg-red-50 text-red-600 text-xs rounded-md border border-red-100 font-medium">
+              {errorMsg}
+            </div>
+          )}
 
-        <label
-          htmlFor="admin-password"
-          className="block font-mono text-xs uppercase tracking-widest text-blueprint-light mb-1"
-        >
-          Mật khẩu
-        </label>
-        <input
-          id="admin-password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border-2 border-line focus:border-amber rounded-md px-3 py-2 mb-2 outline-none transition-colors"
-        />
+          <div>
+            <label className="block text-[11px] font-mono uppercase tracking-widest text-blueprint/70 mb-1.5">
+              Tên đăng nhập
+            </label>
+            <input
+              type="text"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-amber bg-white transition-colors"
+            />
+          </div>
 
-        {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
+          <div>
+            <label className="block text-[11px] font-mono uppercase tracking-widest text-blueprint/70 mb-1.5">
+              Mật khẩu
+            </label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-amber bg-white transition-colors"
+            />
+          </div>
 
-        <p className="text-xs text-blueprint-light/70 mb-5">
-          Demo: admin / admin123
-        </p>
+          <p className="text-xs text-blueprint/50">Demo: admin / admin123</p>
 
-        <button
-          type="submit"
-          className="w-full bg-blueprint text-paper font-medium rounded-md py-2.5 hover:bg-blueprint-light transition-colors"
-        >
-          Đăng nhập
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#1a1f2c] text-white py-2.5 rounded-lg text-sm font-medium hover:bg-[#1a1f2c]/90 transition-colors mt-2 disabled:opacity-50"
+          >
+            {loading ? 'Đang kiểm tra...' : 'Đăng nhập'}
+          </button>
+
+        </form>
+      </div>
     </div>
   )
 }

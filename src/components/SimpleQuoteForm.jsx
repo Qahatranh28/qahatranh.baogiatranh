@@ -1,18 +1,5 @@
 import OptionSelect from './OptionSelect.jsx'
 
-// Chế độ mặc định: dùng cho sản phẩm khung tranh tiêu chuẩn. Luồng chọn giờ
-// chia làm 3 bước:
-// 1) "Tên khung" — chọn nhóm/danh mục khung (ví dụ "Khung Composite").
-// 2) "Loại khung" — chỉ hiển thị các loại khung THUỘC đúng nhóm vừa chọn ở
-//    bước 1 (danh sách lọc theo categoryOptions/typeOptions truyền từ App).
-// 3) "Kích thước" — chọn kích thước có sẵn. Ứng với mỗi (Loại khung + Kích
-//    thước) admin đã gán sẵn 1 giá bán mặc định (xem data/khungCatalog.js +
-//    Admin > Công cụ tính giá thành > "Giá bán mặc định – Khung tiêu chuẩn").
-//    Khi cặp này đã có giá gán sẵn, hệ thống lấy đúng giá đó — không tính lại
-//    theo công thức chiều dài/chiều rộng.
-// Các sản phẩm bán lẻ khác loại (không phải khung tranh tiêu chuẩn) thì dùng
-// nút "Custom" ở trên để báo giá chi tiết hơn — Custom vẫn tính theo kích
-// thước x đơn giá khung như cũ.
 export default function SimpleQuoteForm({
   khungCategory,
   khungType,
@@ -25,9 +12,29 @@ export default function SimpleQuoteForm({
   onKhungTypeChange,
   onSizeChange,
   onQuantityChange,
+  onWidthChange,   // 👈 Thêm props cập nhật chiều rộng từ cha (nếu có)
+  onHeightChange,  // 👈 Thêm props cập nhật chiều dài từ cha (nếu có)
 }) {
   const selectWrapClass =
     'rounded-lg border-2 border-line focus-within:border-amber overflow-hidden bg-white transition-colors'
+
+  // 🌟 Hàm xử lý khi chọn kích thước tiêu chuẩn: Vừa cập nhật size, vừa tự bóc tách số điền vào width và height
+  const handleSizeSelect = (selectedSize) => {
+    onSizeChange(selectedSize);
+
+    if (selectedSize) {
+      // Chỉ lấy các con số đứng trước chữ "cm" hoặc 2 số đầu tiên để tránh bị dính chữ A5
+      const nums = selectedSize.match(/\d+/g);
+      if (nums && nums.length >= 2) {
+        // Lấy đúng số thứ 1 làm rộng, số thứ 2 làm dài
+        if (onWidthChange) onWidthChange(Number(nums[0]));   // -> 15
+        if (onHeightChange) onHeightChange(Number(nums[1]));  // -> 21
+      }
+    } else {
+      if (onWidthChange) onWidthChange(0);
+      if (onHeightChange) onHeightChange(0);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -36,7 +43,7 @@ export default function SimpleQuoteForm({
           htmlFor="khungCategory"
           className="block font-mono text-xs uppercase tracking-widest text-blueprint-light mb-2"
         >
-          Tên khung
+          Loại Khung
         </label>
         <div className={selectWrapClass}>
           <OptionSelect
@@ -53,7 +60,7 @@ export default function SimpleQuoteForm({
           htmlFor="khungType"
           className="block font-mono text-xs uppercase tracking-widest text-blueprint-light mb-2"
         >
-          Loại khung
+          Tên khung
         </label>
         <div className={selectWrapClass}>
           <OptionSelect
@@ -76,7 +83,7 @@ export default function SimpleQuoteForm({
           <OptionSelect
             id="khungSize"
             value={sizeLabel}
-            onChange={onSizeChange}
+            onChange={handleSizeSelect} // 👈 Dùng hàm bóc tách thông minh vừa viết
             options={sizeOptions.map((o) => o.label)}
           />
         </div>

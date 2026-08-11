@@ -1,53 +1,134 @@
-import { useEffect, useState } from 'react'
-import { defaultStandardPrices } from '../data/khungCatalog.js'
-
-const STORAGE_KEY = 'quote-app-standard-prices'
-
-// Gộp dữ liệu đã lưu (nếu có) với bảng giá mặc định trong code — giữ lại các
-// giá trị admin đã tự sửa, đồng thời vẫn thấy được các Loại khung mới thêm
-// vào defaultStandardPrices sau này.
-function mergeWithDefaults(saved) {
-  const merged = {}
-  for (const khungType of Object.keys(defaultStandardPrices)) {
-    merged[khungType] = {
-      ...defaultStandardPrices[khungType],
-      ...(saved?.[khungType] || {}),
-    }
-  }
-  for (const khungType of Object.keys(saved || {})) {
-    if (!merged[khungType]) merged[khungType] = { ...saved[khungType] }
-  }
-  return merged
-}
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabaseClient'
 
 export function useStandardPrices() {
-  const [prices, setPrices] = useState(() => mergeWithDefaults(null))
+  const [standardPrices, setStandardPrices] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) setPrices(mergeWithDefaults(JSON.parse(raw)))
-    } catch {
-      // Bỏ qua nếu dữ liệu lưu bị lỗi, dùng giá trị mặc định
+    async function fetchPrices() {
+      try {
+        const [catalogRes, sizeRes] = await Promise.all([
+          supabase.from('frame_catalog').select('frame_id, name'),
+          supabase.from('frame_size').select('*')
+        ])
+
+        if (catalogRes.error) throw catalogRes.error
+        if (sizeRes.error) throw sizeRes.error
+
+        const catalogData = catalogRes.data || []
+        const sizeData = sizeRes.data || []
+
+        const catalogMap = {}
+        catalogData.forEach(item => {
+          catalogMap[item.frame_id] = item.name 
+        })
+
+        const formattedPrices = {}
+
+        sizeData.forEach((item) => {
+          const frameName = catalogMap[item.frame_id]
+          const sizeName = item.size_name
+          const price = item.price != null ? Number(item.price) : null
+
+          if (frameName && sizeName) {
+            if (!formattedPrices[frameName]) formattedPrices[frameName] = {}
+            formattedPrices[frameName][sizeName] = price
+          }
+        })
+
+        setStandardPrices(formattedPrices)
+      } catch (err) {
+        console.error('Lỗi tải giá tiêu chuẩn:', err.message)
+      } finally {
+        setLoading(false)
+      }
     }
+    fetchPrices()
   }, [])
 
-  const updatePrice = (khungType, sizeLabel, value) => {
-    setPrices((prev) => {
-      const next = {
-        ...prev,
-        [khungType]: { ...prev[khungType], [sizeLabel]: value },
+  // Chỉ thay đổi trên giao diện (state cục bộ), không gọi DB ngay
+  const setLocalPrice = (khungType, sizeLabel, value) => {
+    const numValue = (value === '' || value === null || value === undefined) ? null : Number(value)
+    setStandardPrices((prev) => ({
+      ...prev,
+      [khungType]: {
+        ...(prev[khungType] || {}),
+        [sizeLabel]: numValue,
+      },
+    }))
+  }
+
+  // Hàm lưu toàn bộ bảng giá lên DB khi bấm nút bên ngoài
+  const saveAllPricesToDB = async () => {
+    setSaving(true)
+    try {
+      console.log('1. Bắt đầu lưu bảng giá...', standardPrices)
+
+      const { data: catalogData, error: catError } = await supabase
+        .from('frame_catalog')
+        .select('frame_id, name')
+
+      if (catError) {
+        console.error('Lỗi khi tải catalog:', catError)
+        throw catError
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-      return next
-    })
+
+      const nameToIdMap = {}
+      catalogData.forEach(item => {
+        nameToIdMap[item.name] = item.frame_id
+      })
+
+      const upsertRows = []
+      for (const [khungType, sizes] of Object.entries(standardPrices)) {
+        const frameId = nameToIdMap[khungType]
+        if (!frameId) {
+          console.warn(`Không tìm thấy frame_id cho tên: ${khungType}`)
+          continue
+        }
+
+        for (const [sizeLabel, price] of Object.entries(sizes)) {
+          if (price !== null && price !== '' && price !== undefined) {
+            upsertRows.push({
+              frame_id: frameId,
+              size_name: sizeLabel,
+              price: Number(price)
+            })
+          }
+        }
+      }
+
+      console.log('2. Dữ liệu chuẩn bị upsert:', upsertRows)
+
+      if (upsertRows.length === 0) {
+        alert('Không có dữ liệu giá nào để lưu!')
+        setSaving(false)
+        return
+      }
+
+      const { error: upsertError } = await supabase
+        .from('frame_size')
+        .upsert(upsertRows, { onConflict: ['frame_id', 'size_name'] })
+
+      if (upsertError) {
+        console.error('Lỗi Supabase upsert:', upsertError)
+        throw upsertError
+      }
+
+      console.log('3. Lưu thành công!')
+      alert('Đã lưu tất cả thay đổi bảng giá lên cơ sở dữ liệu thành công!')
+    } catch (err) {
+      console.error('Lỗi ngoại lệ khi lưu bảng giá:', err)
+      alert('Lỗi khi lưu: ' + (err.message || err))
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const resetPrices = () => {
-    const fresh = mergeWithDefaults(null)
-    setPrices(fresh)
-    localStorage.removeItem(STORAGE_KEY)
+  const resetStandardPrices = async () => {
+    setStandardPrices({})
   }
 
-  return { prices, updatePrice, resetPrices }
+  return { standardPrices, setLocalPrice, saveAllPricesToDB, resetStandardPrices, loading, saving }
 }
