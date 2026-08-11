@@ -38,7 +38,9 @@ export default function MoebeQuoteForm({
   tranhInTypeOptions = [],
   vanTypeOptions = [],
   getMaterialImage,
+  onToggleChange,
 }) {
+  console.log("Toggles nhận được:", toggles);
   return (
     <div className="space-y-6 animate-fade-in">
       {/* 1. Ô NHẬP TÊN SẢN PHẨM */}

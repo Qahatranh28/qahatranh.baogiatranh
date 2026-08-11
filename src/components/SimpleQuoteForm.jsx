@@ -43,7 +43,7 @@ export default function SimpleQuoteForm({
           htmlFor="khungCategory"
           className="block font-mono text-xs uppercase tracking-widest text-blueprint-light mb-2"
         >
-          Loại Khung
+          Loại khung
         </label>
         <div className={selectWrapClass}>
           <OptionSelect

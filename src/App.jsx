@@ -63,7 +63,7 @@ const simpleToggles = {
 
 const defaultSelections = {
   khungType: khungTypeOptions[0],
-  tranhInType: 'tranh_in_5ly_mo', // Tranh in 5 li mờ làm mặc định
+  tranhInType: 'tranh_in_5ly_mo', 
   micaKinhType: micaKinhTypeOptions[0],
   micaKinhLy: micaKinhLyOptions[0],
   vanLy: vanLyOptions[0],
@@ -87,7 +87,10 @@ export default function App() {
   const [innerHeight, setInnerHeight] = useState('12')
 
   const [quantity, setQuantity] = useState('1')
+  
+  // 🌟 KHAI BÁO STATE ĐỘC LẬP CHO CÁC FORM
   const [toggles, setToggles] = useState(defaultToggles)
+  const [moebeToggles, setMoebeToggles] = useState({ dongGoi: false })
   
   const [selections, setSelections] = useState(() => ({
     ...defaultSelections,
@@ -190,32 +193,51 @@ export default function App() {
   const productNameOptions = rawCatalog ? Array.from(new Set(rawCatalog.map(c => c.name))) : []
   const activeKhungType = mode === 'moebe' ? moebeSelections.khungType : selections.khungType
 
-  // 🌟 FIX LỖI CÚ PHÁP TOGGLES TẠI ĐÂY:
-  // 🌟 ĐỒNG BỘ TOGGLES CHO MOEBE MODE
+  // 🌟 CẬP NHẬT activeToggles ĐỂ SỬ DỤNG moebeToggles KHI Ở MODE MOEBE
   const activeToggles = useMemo(() => {
     if (mode === 'simple') return simpleToggles
     if (mode === 'moebe') {
       return {
-        ...toggles,
-        khung: true, // Moebe luôn bật khung
-        dongGoi: Boolean(toggles.dongGoi)// 🌟 Đọc chính xác trạng thái đóng gói
+        ...moebeToggles,
+        khung: true, 
+        dongGoi: Boolean(moebeToggles.dongGoi)
       }
     }
     return toggles
-  }, [mode, toggles])
+  }, [mode, toggles, moebeToggles])
 
   const isKinh = isKinhType(selections.micaKinhType)
   const isNhom = isNhomType(activeKhungType)
 
-  const currentSizes = useMemo(() => activeGetSizes(activeKhungType) || [], [activeGetSizes, activeKhungType])
+  const currentSizes = useMemo(() => {
+    let sizes = []
+    try {
+      if (typeof activeGetSizes === 'function') {
+        sizes = activeGetSizes(activeKhungType)
+      }
+    } catch (e) {
+      sizes = []
+    }
+    
+    if (!Array.isArray(sizes) || sizes.length === 0) {
+      return ['10 x 15 cm', '13 x 18 cm', '15 x 21 cm', '20 x 30 cm']
+    }
+    return sizes
+  }, [activeGetSizes, activeKhungType])
   
   const selectedPreset = useMemo(() => {
-    if (!currentSizes || currentSizes.length === 0) return { width: 0, height: 0, price: 0 }
-    return currentSizes.find((o) => (typeof o === 'object' ? o.label : o) === sizeLabel) || currentSizes[0]
+    if (!Array.isArray(currentSizes) || currentSizes.length === 0) {
+      return { width: 10, height: 15, price: 0, label: '10 x 15 cm' }
+    }
+    const found = currentSizes.find((o) => {
+      const lbl = typeof o === 'object' ? o.label : o
+      return lbl === sizeLabel
+    })
+    return found || currentSizes[0]
   }, [currentSizes, sizeLabel])
 
   useEffect(() => {
-    if (!sizeLabel && currentSizes.length > 0) {
+    if (!sizeLabel && Array.isArray(currentSizes) && currentSizes.length > 0) {
       const firstLabel = typeof currentSizes[0] === 'object' ? currentSizes[0].label : currentSizes[0]
       setSizeLabel(firstLabel)
     }
@@ -250,7 +272,7 @@ export default function App() {
 
   const isOversizeCustom = (mode === 'custom' || mode === 'moebe') && (activeWidth > 100 || activeHeight > 100)
   
-  const matchedStandardSize = (mode === 'custom' || mode === 'moebe') && !isOversizeCustom
+  const matchedStandardSize = (mode === 'custom' || mode === 'moebe') && !isOversizeCustom && Array.isArray(currentSizes)
     ? currentSizes.find(s => {
         const sw = typeof s === 'object' ? s.width : 0
         const sh = typeof s === 'object' ? s.height : 0
@@ -261,7 +283,6 @@ export default function App() {
   const pricingWidth = activeWidth
   const pricingHeight = activeHeight
 
-  // LẤY ĐƠN GIÁ MÉT KHUNG TỪ BẢNG FRAME_CATALOG
   const catalogItem = rawCatalog?.find(
     (c) => c.name?.trim().toLowerCase() === activeKhungType?.trim().toLowerCase()
   )
@@ -269,10 +290,9 @@ export default function App() {
     ? Number(catalogItem.price_cost) 
     : 0
 
-  // 🌟 FIX LỖI TRUYỀN ACTIVE_TRANH_IN_TYPE VÀO HÀM TÍNH GIÁ VỐN
   const glassMat = getGlassMicaDetail(selections.micaKinhType, dbMaterialsList)
   const activeTranhInType = mode === 'simple' ? 'tranh_in_5ly_mo' : selections.tranhInType
-  const tranhInMat = getTranhInDetail(activeTranhInType, dbMaterialsList) // 👈 Đã sửa dùng activeTranhInType chuẩn!
+  const tranhInMat = getTranhInDetail(activeTranhInType, dbMaterialsList)
   
   const vanMat = getVanDetail(selections.vanLy, dbMaterialsList)
   const giayBoMat = getGiayBoDetail(selections.giayBoType, dbMaterialsList)
@@ -289,7 +309,6 @@ export default function App() {
   const moebeCorePrice = moebeCoreMatInfo.price
   const moebeCoreLabel = moebeCoreMatInfo.label
 
-  // 🌟 TÍNH GIÁ VỐN (COST PRICE) SẢN PHẨM
   const costResult = useMemo(
     () =>
       computeFrameCost(
@@ -326,17 +345,14 @@ export default function App() {
     ]
   )
 
-  // 🌟 BÓC TÁCH GIÁ BÁN MẶC ĐỊNH THEO SIZE TRÊN DB CHO KHUNG TIÊU CHUẨN
   const standardPrice = useMemo(() => {
     if (mode !== 'simple') return null
 
-    // 1. Lấy từ preset size được chọn
     if (selectedPreset && typeof selectedPreset === 'object') {
       const p = Number(selectedPreset.price ?? selectedPreset.price_sell ?? selectedPreset.standard_price)
       if (!isNaN(p) && p > 0) return p
     }
 
-    // 2. Lấy từ hook standardPrices
     if (standardPrices && typeof standardPrices === 'object') {
       const keyType = `${activeKhungType}_${sizeLabel}`
       const keyCat = `${khungCategory}_${sizeLabel}`
@@ -348,13 +364,10 @@ export default function App() {
     return null
   }, [mode, selectedPreset, standardPrices, activeKhungType, khungCategory, sizeLabel])
 
-  // 🌟 CÔNG THỨC GIÁ BÁN & TỔNG TIỀN
   const { area, unitPrice, lineTotal } = useMemo(() => {
     const qty = parseInt(quantity, 10) || 0
     const customCalculatedSell = Math.round(costResult.grandTotal / 0.35)
 
-    // Khung tiêu chuẩn: Ưu tiên lấy giá niêm yết theo size từ DB (standardPrice).
-    // Nếu không có mới tính = Giá vốn / 0.35
     const sell = (mode === 'simple' && standardPrice && standardPrice > 0) 
       ? standardPrice 
       : customCalculatedSell
@@ -366,7 +379,6 @@ export default function App() {
     }
   }, [costResult, quantity, standardPrice, mode])
 
-  // GIÁ VỐN CHỈ HIỂN THỊ CHO ADMIN VỚI TẤT CẢ CÁC MODE
   const customCostDisplay = isAdmin ? costResult.grandTotal : null
   const customCostDisplayLabel = isAdmin ? 'Giá vốn' : 'Giá bán'
 
@@ -383,8 +395,13 @@ export default function App() {
     setProductName(name)
   }
 
+  // 🌟 TÁCH RIÊNG 2 HÀM XỬ LÝ SỰ KIỆN CHO 2 MODE
   const handleToggleChange = (key, value) => {
     setToggles((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handleMoebeToggleChange = (key, value) => {
+    setMoebeToggles((prev) => ({ ...prev, [key]: value }))
   }
 
   const handleSelectionChange = (key, value) => {
@@ -393,8 +410,8 @@ export default function App() {
     } else {
       setSelections((prev) => ({ ...prev, [key]: value }))
       if (key === 'khungType') {
-        const newSizeOptions = activeGetSizes(value)
-        if (newSizeOptions.length > 0) {
+        const newSizeOptions = (typeof activeGetSizes === 'function' ? activeGetSizes(value) : []) || []
+        if (Array.isArray(newSizeOptions) && newSizeOptions.length > 0) {
           const firstLabel = typeof newSizeOptions[0] === 'object' ? newSizeOptions[0].label : newSizeOptions[0]
           const hasCurrentLabel = newSizeOptions.some((o) => (typeof o === 'object' ? o.label : o) === sizeLabel)
           if (!hasCurrentLabel) {
@@ -423,8 +440,8 @@ export default function App() {
       setSelections((prev) => ({ ...prev, khungType: newKhungType }))
     }
     
-    const newSizeOptions = activeGetSizes(newKhungType)
-    if (newSizeOptions.length > 0) {
+    const newSizeOptions = (typeof activeGetSizes === 'function' ? activeGetSizes(newKhungType) : []) || []
+    if (Array.isArray(newSizeOptions) && newSizeOptions.length > 0) {
       const firstLabel = typeof newSizeOptions[0] === 'object' ? newSizeOptions[0].label : newSizeOptions[0]
       const hasCurrentLabel = newSizeOptions.some((o) => (typeof o === 'object' ? o.label : o) === sizeLabel)
       if (!hasCurrentLabel) {
@@ -469,14 +486,15 @@ export default function App() {
     setProductName('')
     setKhungCategory(nextCategory)
     
-    const defaultSizes = activeGetSizes(nextTypeForCategory)
-    if (defaultSizes.length > 0) {
+    const defaultSizes = (typeof activeGetSizes === 'function' ? activeGetSizes(nextTypeForCategory) : []) || []
+    if (Array.isArray(defaultSizes) && defaultSizes.length > 0) {
       const firstLabel = typeof defaultSizes[0] === 'object' ? defaultSizes[0].label : defaultSizes[0]
       setSizeLabel(firstLabel)
     }
 
     setQuantity('1')
     setToggles(defaultToggles)
+    setMoebeToggles({ dongGoi: false }) // 🌟 RESET LẠI STATE MOEBE KHI THÊM VÀO GIỎ HÀNG
     setSelections({
       ...defaultSelections,
       khungType: mode === 'simple' && nextTypeForCategory ? nextTypeForCategory : defaultSelections.khungType,
@@ -538,7 +556,10 @@ export default function App() {
     quantity,
     toggles: activeToggles,
     selections: mode === 'moebe' ? moebeSelections : selections,
-    onToggleChange: handleToggleChange,
+    
+    // 🌟 ĐIỀU HƯỚNG HÀM XỬ LÝ THEO TỪNG TRẠNG THÁI MODE
+    onToggleChange: mode === 'moebe' ? handleMoebeToggleChange : handleToggleChange,
+    
     productNameOptions,
     khungCategory,
     sizeLabel,
@@ -563,7 +584,6 @@ export default function App() {
     onInnerWidthChange: setInnerWidth,
     onInnerHeightChange: setInnerHeight,
     onQuantityChange: setQuantity,
-    
     onSelectionChange: handleSelectionChange,
     onKhungCategoryChange: handleKhungCategoryChange,
     onKhungTypeChange: (v) => handleSelectionChange('khungType', v),

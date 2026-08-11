@@ -2,9 +2,9 @@ import SimpleQuoteForm from './SimpleQuoteForm.jsx'
 import CustomQuoteForm from './CustomQuoteForm.jsx'
 import MoebeQuoteForm from './MoebeQuoteForm.jsx'
 import RequestQuoteForm from './RequestQuoteForm.jsx'
-import React, { useState, useMemo } from 'react'
+import React from 'react'
 
-export default function QuoteForm({ mode, onModeChange,onToggleChange, ...formProps }) {
+export default function QuoteForm({ mode, onModeChange, onToggleChange, toggles, ...formProps }) {
   // Tiêu đề và mô tả linh hoạt thay đổi theo từng tab
   const getHeaderInfo = () => {
     switch (mode) {
@@ -21,7 +21,6 @@ export default function QuoteForm({ mode, onModeChange,onToggleChange, ...formPr
   }
 
   const { title, desc } = getHeaderInfo()
-  const [toggles, setToggles] = useState(false);
 
   return (
     <section
@@ -69,24 +68,33 @@ export default function QuoteForm({ mode, onModeChange,onToggleChange, ...formPr
         {mode === 'simple' && (
           <SimpleQuoteForm 
             {...formProps} 
-            onWidthChange={formProps.setWidth}     
+            toggles={toggles}
+            onWidthChange={formProps.setWidth}    
             onHeightChange={formProps.height ? formProps.setHeight : undefined}
           />
         )}
         
         {mode === 'custom' && (
-          <CustomQuoteForm {...formProps} />
+          <CustomQuoteForm 
+            {...formProps} 
+            toggles={toggles}
+            onToggleChange={onToggleChange}
+          />
         )}
         
         {mode === 'moebe' && (
-          <MoebeQuoteForm {...formProps}
-          toggles={toggles}
-    onToggleChange={onToggleChange}
-           />
+          <MoebeQuoteForm 
+            {...formProps}
+            toggles={toggles}
+            onToggleChange={onToggleChange}
+          />
         )}
         
         {mode === 'request' && (
-          <RequestQuoteForm {...formProps} />
+          <RequestQuoteForm 
+            {...formProps} 
+            toggles={toggles}
+          />
         )}
       </div>
     </section>

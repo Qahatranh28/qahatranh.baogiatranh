@@ -1,27 +1,35 @@
-import FormRow from './FormRow.jsx'
-
 export default function OptionSelect({ label, value, options = [], onChange }) {
+  const safeOptions = Array.isArray(options) ? options : []
+
   return (
-    <FormRow label={label}>
-      <div className="w-full py-1">
+    <div className="w-full">
+      {label && (
+        <label className="block font-mono text-xs uppercase tracking-widest text-blueprint-light mb-2">
+          {label}
+        </label>
+      )}
+      <div className="w-full bg-white rounded-lg border-2 border-line focus-within:border-amber transition-colors px-3 py-2">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-transparent px-3 py-1.5 text-sm text-black outline-none font-mono cursor-pointer"
+          className="w-full bg-transparent text-sm text-black outline-none font-mono cursor-pointer"
         >
-          {options.map((opt) => {
-            // Tách lấy giá trị value (để lưu vào state) và label (để hiển thị lên màn hình)
-            const optValue = typeof opt === 'object' ? opt.value : opt
-            const optLabel = typeof opt === 'object' ? (opt.label || opt.name_material || opt.name || opt.value) : opt
+          {safeOptions.map((opt, index) => {
+            const optValue = typeof opt === 'object' && opt !== null ? opt.value : opt
+            const optLabel = typeof opt === 'object' && opt !== null 
+              ? (opt.label || opt.name_material || opt.name || opt.value) 
+              : opt
+
+            const uniqueKey = optValue !== undefined && optValue !== null ? `${optValue}-${index}` : index
 
             return (
-              <option key={optValue} value={optValue}>
-                {optLabel} {/* 🌟 Hiển thị Tên vật liệu Tiếng Việt thay vì Mã ID */}
+              <option key={uniqueKey} value={optValue}>
+                {optLabel}
               </option>
             )
           })}
         </select>
       </div>
-    </FormRow>
+    </div>
   )
 }

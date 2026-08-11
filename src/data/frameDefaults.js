@@ -49,6 +49,7 @@ export const frameComponentToggles = [
   { key: 'satXi', label: 'Sắt xi', default: false },
   { key: 'son', label: 'Sơn', default: false },
   { key: 'dongGoi', label: 'Đóng gói', default: false },
+  { key: 'dongGoi', label: 'Đóng gói sản phẩm', default: false },
 ]
 
 // ==========================================
