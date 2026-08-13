@@ -48,12 +48,36 @@ export default function CustomQuoteForm({
   // 🌟 Thumbnail vật liệu
   const renderCornerThumbnail = (show, materialKey) => {
     if (!show) return null
-    const imgUrl = getMaterialImage ? getMaterialImage(materialKey) : '/images/default.png'
+
+    // 🌟 1. Danh sách chặn: Định nghĩa đường dẫn ảnh local cho các mục không có trên DB
+    // Lưu ý: Đổi .jpg thành .png nếu đuôi ảnh thực tế trong folder của bạn là png
+    const localImages = {
+      'sat_xi': '/images/sat-xi.png', 
+      'son': '/images/son.jpg',
+      'dong_goi': '/images/dong-goi.jpg'
+    };
+
+    // 🌟 2. Ưu tiên kiểm tra trong local trước, nếu không có mới gọi Database
+    let imgUrl = localImages[materialKey];
+    if (!imgUrl) {
+      imgUrl = getMaterialImage ? getMaterialImage(materialKey) : '/images/default.png';
+    }
+
+    // Đề phòng trường hợp URL bị rỗng
+    if (!imgUrl) {
+      imgUrl = '/images/default.png';
+    }
+
     return (
       <img
         src={imgUrl}
         alt={materialKey}
-        className="pointer-events-none absolute -top-3 -right-3 z-10 w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-[3px] border-white object-cover shadow-lg"
+        className="pointer-events-none absolute -top-3 -right-3 z-10 w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-[3px] border-white object-cover shadow-lg bg-gray-50"
+        onError={(e) => {
+          // 🌟 3. Nếu gõ sai đuôi file hoặc ảnh không tồn tại, tự động hiện ảnh mặc định thay vì icon vỡ
+          e.target.onerror = null; 
+          e.target.src = '/images/default.png';
+        }}
       />
     )
   }
