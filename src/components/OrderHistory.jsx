@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState } from 'react'
 import { formatVND, formatPercent } from '../utils/format.js'
 import { exportOrdersToExcel } from '../utils/exportOrdersToExcel.js'
 import { isNhomType } from '../data/frameDefaults.js'
+import { useSalesUsers } from '../hooks/useSalesUsers.js'
 
 function monthKey(isoDate) {
   const d = new Date(isoDate)
@@ -122,6 +123,8 @@ function ItemCostBreakdown({ item }) {
 export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus }) {
   const [expandedId, setExpandedId] = useState(null)
   const [expandedItemId, setExpandedItemId] = useState(null)
+  // 🌟 Chỉ cần tải tên sale khi có quyền xem (admin/editor) — dùng để hiện "Người báo giá"
+  const { nameById } = useSalesUsers()
 
   const monthOptions = useMemo(() => {
     const keys = new Set(orders.map((o) => monthKey(o.createdAt)))
@@ -217,7 +220,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
 
       <div className="space-y-3">
         {filteredOrders.map((order) => {
-          console.log("Dữ liệu của đơn hàng này là:", order);
+          
           const isOpen = expandedId === order.id
           const isLowMargin = order.margin < 55
           return (
@@ -233,6 +236,9 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                   <p className="text-xs text-blueprint/50 font-mono">
                     {new Date(order.createdAt).toLocaleDateString('vi-VN')} ·{' '}
                     {order.items.length} sản phẩm
+                    {isAdmin && order.idUser != null && (
+                      <> · Sale: {nameById[order.idUser] || `#${order.idUser}`}</>
+                    )}
                   </p>
                 </button>
 
@@ -244,7 +250,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                     onChange={(e) => {
                       const newStatus = e.target.value // 1️⃣ Khai báo biến trước
                       if (onUpdateStatus) {
-                        onUpdateStatus(order.id_oder, newStatus) // 2️⃣ Sử dụng biến sau
+                        onUpdateStatus(order.id, newStatus) // 2️⃣ Sử dụng biến sau
                       }
                     }}
                     className={`px-2.5 py-1 rounded-md font-mono text-xs uppercase tracking-wider font-semibold cursor-pointer outline-none transition-colors ${

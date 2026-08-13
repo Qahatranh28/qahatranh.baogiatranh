@@ -7,10 +7,15 @@ import {
 
 const CATEGORY_LABELS = {
   composite_mong: 'Khung Composite Mỏng',
-  composite_day: 'Khung Composite Dày',
+  composite_2x3: 'Khung Composite 2x3',
   go_tu_nhien: 'Khung Gỗ Tự Nhiên',
   nhom: 'Khung Nhôm',
   khac: 'Khung Khác',
+  classic_silk: 'Khăn Lụa Khung Classic',
+  matboard_silk: 'Khăn Lụa Khung Matboard',
+  moebe_silk: 'Khăn Lụa Khung Moebe',
+  mirror_silk: 'Khăn Lụa Khung Mirror',
+  
 }
 
 export function useProductCatalog() {

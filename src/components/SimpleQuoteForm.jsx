@@ -16,7 +16,7 @@ export default function SimpleQuoteForm({
   onHeightChange,  // 👈 Thêm props cập nhật chiều dài từ cha (nếu có)
 }) {
   const selectWrapClass =
-    'rounded-lg border-2 border-line focus-within:border-amber overflow-hidden bg-white transition-colors'
+    'w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint shadow-sm'
 
   // 🌟 Hàm xử lý khi chọn kích thước tiêu chuẩn: Vừa cập nhật size, vừa tự bóc tách số điền vào width và height
   const handleSizeSelect = (selectedSize) => {

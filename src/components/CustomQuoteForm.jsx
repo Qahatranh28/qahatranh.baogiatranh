@@ -33,7 +33,7 @@ export default function CustomQuoteForm({
     return (
       <div className="w-16 shrink-0 flex items-center justify-start">
         {show ? (
-          <div className="w-14 h-14 bg-white border border-line rounded-lg overflow-hidden shadow-sm flex items-center justify-center">
+          <div className="w-30 h-30 bg-white border border-line rounded-lg overflow-hidden shadow-sm flex items-center justify-center">
             <img src={imgUrl} alt={materialKey} className="w-full h-full object-cover" />
           </div>
         ) : null}

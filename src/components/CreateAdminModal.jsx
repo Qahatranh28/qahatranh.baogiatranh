@@ -139,6 +139,7 @@ export default function CreateAdminModal({ isOpen, onClose }) {
               onChange={(e) => setRole(e.target.value)}
               className="w-full border border-line rounded px-3 py-2 text-sm outline-none focus:border-amber bg-white"
             >
+              <option value="sale">Sale (Chỉ tạo báo giá cho khách)</option>
               <option value="editor">Biên tập viên (Thêm/Xóa sản phẩm)</option>
               <option value="admin">Quản trị viên (Toàn quyền hệ thống)</option>
             </select>

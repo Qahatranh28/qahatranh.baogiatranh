@@ -74,7 +74,9 @@ export function useOrders() {
             profit: order.total_profit || 0,
             margin: order.profit_margin || 0,
             createdAt: orderDate,
-            date: orderDate // Đảm bảo hỗ trợ cả biến date nếu component cũ cần
+            date: orderDate, // Đảm bảo hỗ trợ cả biến date nếu component cũ cần
+            status: order.status || 'chua_chot',
+            idUser: order.id_user ?? null // 🌟 định danh sale đã tạo báo giá này
           }
         })
         
@@ -104,7 +106,8 @@ export function useOrders() {
           total_revenue: orderData.itemsTotal || 0,
           total_profit: orderData.profit || 0,
           profit_margin: orderData.margin || 0,
-          status: 'chua_chot'
+          status: 'chua_chot',
+          id_user: orderData.idUser ?? null // 🌟 gắn báo giá này với user (sale) đang đăng nhập
         }])
         .select()
         .single() 
@@ -156,12 +159,8 @@ export function useOrders() {
     }
   }
 
-  return { orders, saveOrder, deleteOrder, updateOrderStatus, loading, refreshOrders: fetchOrders }
-}
-
-// Thêm hàm updateOrderStatus vào hook useOrders.js
-const updateOrderStatus = async (orderId, newStatus) => {
-    // 🌟 Kiểm tra xem khi bấm, ID và Status nhận được là gì?
+  // 4. CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG (Đã chốt / Chưa chốt)
+  const updateOrderStatus = async (orderId, newStatus) => {
     console.log("👉 Đang gọi update với ID:", orderId, "và trạng thái mới:", newStatus);
 
     try {
@@ -184,7 +183,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
 
       setOrders((prevOrders) =>
         prevOrders.map((ord) =>
-          ord.id_oder === orderId ? { ...ord, status: newStatus } : ord
+          ord.id === orderId ? { ...ord, status: newStatus } : ord
         )
       )
       return true
@@ -193,4 +192,6 @@ const updateOrderStatus = async (orderId, newStatus) => {
       return false
     }
   }
-  
+
+  return { orders, saveOrder, deleteOrder, updateOrderStatus, loading, refreshOrders: fetchOrders }
+}

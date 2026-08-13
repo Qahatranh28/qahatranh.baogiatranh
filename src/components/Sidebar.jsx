@@ -2,6 +2,7 @@ export default function Sidebar({
   view,
   onViewChange,
   isAdmin,
+  canSeeCost,            // 👈 true nếu là admin/editor (không phải sale) - được xem giá vốn/lợi nhuận
   user,                  // 👈 Thêm prop user để nhận dữ liệu từ App.jsx
   isOpen,
   onClose,
@@ -48,9 +49,11 @@ export default function Sidebar({
               <span className={`inline-block mt-2 text-[10px] px-2 py-0.5 rounded font-medium ${
                 user?.role === 'admin' 
                   ? 'bg-amber text-white' 
+                  : user?.role === 'sale'
+                  ? 'bg-emerald-100 text-emerald-700'
                   : 'bg-blueprint/10 text-blueprint'
               }`}>
-                {user?.role === 'admin' ? 'Quản trị viên' : 'Biên tập viên'}
+                {user?.role === 'admin' ? 'Quản trị viên' : user?.role === 'sale' ? 'Sale' : 'Biên tập viên'}
               </span>
             </div>
           )}
@@ -98,8 +101,34 @@ export default function Sidebar({
             Lịch sử báo giá
           </button>
 
-          {/* Khu vực quản trị dành riêng cho người đã đăng nhập */}
+          {/* 🌟 Dashboard doanh số: hiện cho mọi người đã đăng nhập (sale chỉ xem doanh số của mình) */}
           {isAdmin && (
+            <button
+              onClick={() => {
+                onViewChange('dashboard')
+                onClose?.()
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                view === 'dashboard'
+                  ? 'bg-orange-500 text-white'
+                  : 'text-gray-600 hover:bg-orange-50 hover:text-orange-500'
+              }`}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                <path
+                  d="M3 15V9.5M9 15V3M15 15v-5.5"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Dashboard
+            </button>
+          )}
+
+          {/* Khu vực quản trị dành riêng cho admin/editor (KHÔNG bao gồm sale) */}
+          {canSeeCost && (
             <div className="mt-4 pt-4 border-t border-line space-y-1">
               <p className="px-3 text-[10px] font-medium uppercase tracking-widest text-blueprint/50 mb-1">
                 Quản trị sản phẩm

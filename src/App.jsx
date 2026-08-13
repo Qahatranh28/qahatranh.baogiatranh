@@ -15,6 +15,7 @@ import OrderHistory from './components/OrderHistory.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import QuoteHeader from './components/QuoteHeader.jsx'
 import FrameCostCalculator from './components/FrameCostCalculator.jsx'
+import SalesDashboard from './components/SalesDashboard.jsx'
 import { useAdminAuth } from './hooks/useAdminAuth.js'
 import { useOrders } from './hooks/useOrders.js'
 import { useProductCatalog } from './hooks/useProductCatalog.js'
@@ -22,6 +23,7 @@ import { useFrameSettings } from './hooks/useFrameSettings.js'
 import { useStandardPrices } from './hooks/useStandardPrices.js'
 import { useTypeRates } from './hooks/useTypeRates.js'
 import { formatVND } from './utils/format.js'
+import { getStaticFrameImage } from './utils/imageMapper.js'
 import {
   frameComponentToggles,
   khungTypeOptions,
@@ -157,6 +159,10 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const { user, isAdmin, login, logout } = useAdminAuth()
+  // 🌟 "sale" đăng nhập vẫn tính là isAdmin (để nhận diện đã đăng nhập, gắn tên vào báo giá),
+  // nhưng KHÔNG được xem giá vốn/lợi nhuận/quản trị sản phẩm — chỉ admin & editor mới được (canSeeCost)
+  const isSaleRole = isAdmin && user?.role === 'sale'
+  const canSeeCost = isAdmin && user?.role !== 'sale'
   const { orders, saveOrder, deleteOrder, updateOrderStatus } = useOrders()
   const { settings, updateSetting, resetSettings } = useFrameSettings()
   const { standardPrices, updateStandardPrice, resetStandardPrices } = useStandardPrices()
@@ -379,10 +385,10 @@ export default function App() {
     }
   }, [costResult, quantity, standardPrice, mode])
 
-  const customCostDisplay = isAdmin ? costResult.grandTotal : null
-  const customCostDisplayLabel = isAdmin ? 'Giá vốn' : 'Giá bán'
+  const customCostDisplay = canSeeCost ? costResult.grandTotal : null
+  const customCostDisplayLabel = canSeeCost ? 'Giá vốn' : 'Giá bán'
 
-  const previewImage = activeGetImage(mode === 'simple' ? khungCategory : null, activeKhungType, sizeLabel)
+  const previewImage = getStaticFrameImage(activeKhungType, sizeLabel) || activeGetImage(mode === 'simple' ? khungCategory : null, activeKhungType, sizeLabel)
 
   const hasAnyComponent = mode === 'moebe' ? true : Object.values(activeToggles).some(Boolean)
   const canAdd =
@@ -531,6 +537,7 @@ export default function App() {
       itemsCost,
       profit,
       margin,
+      idUser: user?.id ?? null, // 🌟 gắn báo giá này với user (sale) đang đăng nhập, nếu có
     })
     setExportMessage(
       `Đã lưu báo giá cho "${customerName.trim() || 'khách lẻ'}". Bắt đầu đơn mới.`
@@ -604,7 +611,7 @@ export default function App() {
     imageSrc: previewImage,
     costDisplay: customCostDisplay,
     costDisplayLabel: customCostDisplayLabel,
-    isAdmin,
+    isAdmin: canSeeCost,
     matchedStandardSizeLabel: (mode === 'simple' && matchedStandardSize) ? matchedStandardSize.label : null,
   }
 
@@ -614,6 +621,7 @@ export default function App() {
         view={view}
         onViewChange={setView}
         isAdmin={isAdmin}
+        canSeeCost={canSeeCost}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onLoginClick={() => setShowLogin(true)}
@@ -634,8 +642,17 @@ export default function App() {
             <OrderHistory 
               orders={orders} 
               onDelete={deleteOrder} 
-              isAdmin={isAdmin} 
+              isAdmin={canSeeCost} 
               onUpdateStatus={updateOrderStatus}
+            />
+          </div>
+        ) : view === 'dashboard' ? (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <SalesDashboard
+              orders={orders}
+              canSeeCost={canSeeCost}
+              currentUser={user}
+              isSaleRole={isSaleRole}
             />
           </div>
         ) : (
@@ -679,7 +696,7 @@ export default function App() {
               />
             </div>
 
-            {isAdmin && (
+            {canSeeCost && (
               <div className="max-w-5xl mx-auto px-4 sm:px-6">
                 <AdminPanel itemsCost={itemsCost} itemsTotal={itemsTotal} />
                 <FrameCostCalculator
