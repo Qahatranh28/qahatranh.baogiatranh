@@ -17,7 +17,14 @@ export default function CustomQuoteForm({
   onQuantityChange,
   onToggleChange,
   onSelectionChange,
-  khungTypeOptions = [],
+  khungTypeOptions = [], 
+  
+  // 🌟 CÁC BIẾN MỚI ĐƯỢC THÊM VÀO ĐỂ PHÂN NHÓM KHUNG
+  khungCategory,
+  onKhungCategoryChange,
+  categoryOptions = [],
+  typeOptions = [],
+  
   tranhInTypeOptions = [],
   vanTypeOptions = [],        
   giayBoTypeOptions = [],      
@@ -28,16 +35,26 @@ export default function CustomQuoteForm({
   giayBoYoutubeUrl,
   getMaterialImage,
 }) {
-  const renderLeftThumbnail = (show, materialKey) => {
+
+  // 🌟 Hàm rút gọn tên hiển thị (cắt bỏ các chữ tiếng Anh dài)
+  const formatDisplayName = (fullName) => {
+    if (!fullName) return '';
+    let shortName = fullName.replace('Matboard Silk Scarf Framing ', '');
+    shortName = shortName.replace('Classic Silk Scarf Framing ', '');
+    shortName = shortName.replace('Moebe Silk Scarf Framing ', '');
+    return shortName.trim();
+  };
+
+  // 🌟 Thumbnail vật liệu
+  const renderCornerThumbnail = (show, materialKey) => {
+    if (!show) return null
     const imgUrl = getMaterialImage ? getMaterialImage(materialKey) : '/images/default.png'
     return (
-      <div className="w-16 shrink-0 flex items-center justify-start">
-        {show ? (
-          <div className="w-30 h-30 bg-white border border-line rounded-lg overflow-hidden shadow-sm flex items-center justify-center">
-            <img src={imgUrl} alt={materialKey} className="w-full h-full object-cover" />
-          </div>
-        ) : null}
-      </div>
+      <img
+        src={imgUrl}
+        alt={materialKey}
+        className="pointer-events-none absolute -top-3 -right-3 z-10 w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-[3px] border-white object-cover shadow-lg"
+      />
     )
   }
 
@@ -84,85 +101,105 @@ export default function CustomQuoteForm({
           options={productNameOptions}
         />
       </div>
-  <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-3 shadow-md my-3">
-  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1">
-    Kích thước sản phẩm (cm)
-  </div>
+      
+      <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-3 shadow-md my-3">
+        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1">
+          Kích thước sản phẩm (cm)
+        </div>
 
-  <div className="space-y-2">
-    {/* Hàng Rộng */}
-    <div className="flex items-center justify-between bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
-      <span className="text-sm font-medium text-gray-800 px-3">
-        Kích thước ngoài - Rộng
-      </span>
-      <div className="w-1/2 bg-orange-500 flex items-center">
-        <input
-          type="number"
-          inputMode="decimal"
-          min="0"
-          step="0.1"
-          placeholder="0"
-          value={width}
-          onChange={(e) => onWidthChange(e.target.value)}
-          className="w-full bg-orange-500 px-3 py-2 text-sm text-white placeholder:text-white/70 outline-none font-mono text-center font-bold"
-        />
-      </div>
-    </div>
-
-    {/* Hàng Dài */}
-    <div className="flex items-center justify-between bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
-      <span className="text-sm font-medium text-gray-800 px-3">
-        Kích thước ngoài - Dài
-      </span>
-      <div className="w-1/2 bg-orange-500 flex items-center">
-        <input
-          type="number"
-          inputMode="decimal"
-          min="0"
-          step="0.1"
-          placeholder="0"
-          value={height}
-          onChange={(e) => onHeightChange(e.target.value)}
-          className="w-full bg-orange-500 px-3 py-2 text-sm text-white placeholder:text-white/70 outline-none font-mono text-center font-bold"
-        />
-      </div>
-    </div>
-  </div>
-</div>
-
-      <div className="space-y-4">
-        {/* 1. KHUNG */}
-        <div className="flex items-start gap-3">
-          <div className="w-16 shrink-0" />
-          <div className="flex-1 rounded-lg border border-line overflow-hidden">
-            {renderToggleHeader('khung', 'Khung')}
-            {toggles.khung && (
-              <>
-                
-                <FormRow label="Loại khung">
-                  <div className="w-full py-1">
-                    <select
-                      value={selections.khungType}
-                      onChange={(e) => onSelectionChange('khungType', e.target.value)}
-                      className="w-full bg-transparent px-3 py-1.5 text-sm text-black outline-none font-mono cursor-pointer"
-                    >
-                      {khungTypeOptions.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </FormRow>
-              </>
-            )}
+        <div className="space-y-2">
+          {/* Hàng Rộng */}
+          <div className="flex items-center justify-between bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+            <span className="text-sm font-medium text-gray-800 px-3">
+              Kích thước ngoài - Rộng
+            </span>
+            <div className="w-1/2 bg-orange-500 flex items-center">
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.1"
+                placeholder="0"
+                value={width}
+                onChange={(e) => onWidthChange(e.target.value)}
+                className="w-full bg-orange-500 px-3 py-2 text-sm text-white placeholder:text-white/70 outline-none font-mono text-center font-bold"
+              />
+            </div>
           </div>
+
+          {/* Hàng Dài */}
+          <div className="flex items-center justify-between bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+            <span className="text-sm font-medium text-gray-800 px-3">
+              Kích thước ngoài - Dài
+            </span>
+            <div className="w-1/2 bg-orange-500 flex items-center">
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.1"
+                placeholder="0"
+                value={height}
+                onChange={(e) => onHeightChange(e.target.value)}
+                className="w-full bg-orange-500 px-3 py-2 text-sm text-white placeholder:text-white/70 outline-none font-mono text-center font-bold"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-5">
+        
+        {/* 1. KHUNG — Đã được chia thành 2 ô (Loại khung & Tên khung) */}
+        <div className="rounded-lg border border-line overflow-hidden">
+          {renderToggleHeader('khung', 'Khung')}
+          {toggles.khung && (
+            <div className="flex flex-col bg-white">
+              
+              {/* Ô 1: Chọn Loại Khung (Danh mục) */}
+              <FormRow label="Loại khung">
+                <div className="w-full py-1">
+                  <select
+                    value={khungCategory || ''}
+                    onChange={(e) => onKhungCategoryChange && onKhungCategoryChange(e.target.value)}
+                    className="w-full bg-transparent px-3 py-1.5 text-sm text-black outline-none font-mono cursor-pointer"
+                  >
+                    {categoryOptions.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FormRow>
+
+              {/* Đường kẻ chia cách 2 ô */}
+              <div className="w-full h-px bg-line/50" />
+
+              {/* Ô 2: Chọn Tên Khung chi tiết (Sử dụng typeOptions và formatDisplayName) */}
+              <FormRow label="Tên khung">
+                <div className="w-full py-1">
+                  <select
+                    value={selections.khungType || ''}
+                    onChange={(e) => onSelectionChange('khungType', e.target.value)}
+                    className="w-full bg-transparent px-3 py-1.5 text-sm text-black outline-none font-mono cursor-pointer"
+                  >
+                    {typeOptions.map((type) => (
+                      <option key={type} value={type}>
+                        {formatDisplayName(type)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FormRow>
+              
+            </div>
+          )}
         </div>
 
         {/* 2. IN TRANH */}
-        <div className="flex items-start gap-3">
-          {renderLeftThumbnail(toggles.tranhIn, selections.tranhInType)}
-          <div className="flex-1 rounded-lg border border-line overflow-hidden">
+        <div className="relative">
+          <div className="rounded-lg border border-line overflow-hidden">
             {renderToggleHeader('tranhIn', 'In tranh')}
             {toggles.tranhIn && (
               <div className="flex flex-col">
@@ -176,12 +213,12 @@ export default function CustomQuoteForm({
               </div>
             )}
           </div>
+          {renderCornerThumbnail(toggles.tranhIn, selections.tranhInType)}
         </div>
 
         {/* 3. KÍNH / MICA */}
-        <div className="flex items-start gap-3">
-          {renderLeftThumbnail(toggles.micaKinh, selections.micaKinhType)}
-          <div className="flex-1 rounded-lg border border-line overflow-hidden">
+        <div className="relative">
+          <div className="rounded-lg border border-line overflow-hidden">
             {renderToggleHeader('micaKinh', 'Kính / Mica')}
             {toggles.micaKinh && (
               <div className="flex flex-col">
@@ -195,12 +232,12 @@ export default function CustomQuoteForm({
               </div>
             )}
           </div>
+          {renderCornerThumbnail(toggles.micaKinh, selections.micaKinhType)}
         </div>
 
         {/* 4. VÁN LÓT */}
-        <div className="flex items-start gap-3">
-          {renderLeftThumbnail(toggles.van, selections.vanLy)}
-          <div className="flex-1 rounded-lg border border-line overflow-hidden">
+        <div className="relative">
+          <div className="rounded-lg border border-line overflow-hidden">
             {renderToggleHeader('van', 'Ván lót')}
             {toggles.van && (
               <div className="flex flex-col">
@@ -214,12 +251,12 @@ export default function CustomQuoteForm({
               </div>
             )}
           </div>
+          {renderCornerThumbnail(toggles.van, selections.vanLy)}
         </div>
 
         {/* 5. GIẤY BO */}
-        <div className="flex items-start gap-3">
-          {renderLeftThumbnail(toggles.giayBo, selections.giayBoType)}
-          <div className="flex-1 rounded-lg border border-line overflow-hidden">
+        <div className="relative">
+          <div className="rounded-lg border border-line overflow-hidden">
             {renderToggleHeader('giayBo', 'Giấy bo')}
             {toggles.giayBo && (
               <div className="flex flex-col">
@@ -233,30 +270,34 @@ export default function CustomQuoteForm({
               </div>
             )}
           </div>
+          {renderCornerThumbnail(toggles.giayBo, selections.giayBoType)}
         </div>
 
         {/* 6. SẮT XI */}
-        <div className="flex items-start gap-3">
-          {renderLeftThumbnail(toggles.satXi, 'sat_xi')}
-          <div className="flex-1 rounded-lg border border-line overflow-hidden">
+        <div className="relative">
+          <div className="rounded-lg border border-line overflow-hidden">
             {renderToggleHeader('satXi', 'Sắt xi')}
+            {toggles.satXi && <div className="h-9 sm:h-11 bg-white" />}
           </div>
+          {renderCornerThumbnail(toggles.satXi, 'sat_xi')}
         </div>
 
         {/* 7. SƠN */}
-        <div className="flex items-start gap-3">
-          {renderLeftThumbnail(toggles.son, 'son')}
-          <div className="flex-1 rounded-lg border border-line overflow-hidden">
+        <div className="relative">
+          <div className="rounded-lg border border-line overflow-hidden">
             {renderToggleHeader('son', 'Sơn')}
+            {toggles.son && <div className="h-9 sm:h-11 bg-white" />}
           </div>
+          {renderCornerThumbnail(toggles.son, 'son')}
         </div>
 
         {/* 8. ĐÓNG GÓI */}
-        <div className="flex items-start gap-3">
-          {renderLeftThumbnail(toggles.dongGoi, 'dong_goi')}
-          <div className="flex-1 rounded-lg border border-line overflow-hidden">
+        <div className="relative">
+          <div className="rounded-lg border border-line overflow-hidden">
             {renderToggleHeader('dongGoi', 'Đóng gói')}
+            {toggles.dongGoi && <div className="h-9 sm:h-11 bg-white" />}
           </div>
+          {renderCornerThumbnail(toggles.dongGoi, 'dong_goi')}
         </div>
       </div>
 

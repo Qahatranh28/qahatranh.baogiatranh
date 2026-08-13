@@ -16,6 +16,7 @@ import {
 import { computeFrameCost } from '../utils/frameCosting.js'
 import { useProductCatalog } from '../hooks/useProductCatalog.js'
 import { useStandardPrices } from '../hooks/useStandardPrices.js'
+import { parseDimensionsFromSizeName } from '../utils/sizeParsing.js'
 
 // 🌟 CHỈ GIỮ LAI 9 MỤC VẬT TƯ CÓ TRÊN DATABASE (BẢNG material)
 const SETTING_LABELS = [
@@ -124,9 +125,14 @@ export default function FrameCostCalculator({
 
         for (const [sizeLabel, price] of Object.entries(sizes)) {
           if (price !== null && price !== '' && price !== undefined) {
+            // 🌟 Ghi luôn width/height suy ra từ tên size lên DB để việc so khớp
+            // "size lẻ gần nhất" ở khung tiêu chuẩn hoạt động đúng.
+            const { width, height } = parseDimensionsFromSizeName(sizeLabel)
             upsertRows.push({
               frame_id: frameId,
               size_name: sizeLabel,
+              width,
+              height,
               price: Number(price)
             })
           }

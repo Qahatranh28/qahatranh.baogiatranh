@@ -10,7 +10,6 @@ export const getStaticFrameImage = (frameName, sizeString) => {
 
   // 2. Các khung bình thường khác
   const staticMap = {
-    'Khung Gỗ Tự Nhiên': '/images/khung-go-tu-nhien.png',
     'Khung Moebe Gỗ Sồi': '/images/moebe-go-soi.png',
     // Khai báo thêm tại đây sau này thoải mái mà không sợ rác file App.jsx
   };

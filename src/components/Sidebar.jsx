@@ -78,28 +78,31 @@ export default function Sidebar({
             Báo giá
           </button>
 
-          <button
-            onClick={() => {
-              onViewChange('history')
-              onClose?.()
-            }}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              view === 'history'
-                ? 'bg-orange-500 text-white'
-                : 'text-gray-600 hover:bg-orange-50 hover:text-orange-500'
-            }`}
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <path
-                d="M9 4.5V9l3 2M15 9a6 6 0 1 1-6-6"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Lịch sử báo giá
-          </button>
+          {/* 🌟 Lịch sử báo giá: chỉ hiện cho người đã đăng nhập (ẩn với khách vãng lai) */}
+          {isAdmin && (
+            <button
+              onClick={() => {
+                onViewChange('history')
+                onClose?.()
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                view === 'history'
+                  ? 'bg-orange-500 text-white'
+                  : 'text-gray-600 hover:bg-orange-50 hover:text-orange-500'
+              }`}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                <path
+                  d="M9 4.5V9l3 2M15 9a6 6 0 1 1-6-6"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Lịch sử báo giá
+            </button>
+          )}
 
           {/* 🌟 Dashboard doanh số: hiện cho mọi người đã đăng nhập (sale chỉ xem doanh số của mình) */}
           {isAdmin && (

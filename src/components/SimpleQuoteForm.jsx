@@ -14,6 +14,14 @@ export default function SimpleQuoteForm({
   onQuantityChange,
   onWidthChange,   // 👈 Thêm props cập nhật chiều rộng từ cha (nếu có)
   onHeightChange,  // 👈 Thêm props cập nhật chiều dài từ cha (nếu có)
+  // 🌟 Size lẻ
+  isOddSize,
+  oddWidth,
+  oddHeight,
+  oddSizeMatchLabel,
+  onToggleOddSize,
+  onOddWidthChange,
+  onOddHeightChange,
 }) {
   const selectWrapClass =
     'w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint shadow-sm'
@@ -73,20 +81,74 @@ export default function SimpleQuoteForm({
       </div>
 
       <div>
-        <label
-          htmlFor="khungSize"
-          className="block font-mono text-xs uppercase tracking-widest text-blueprint-light mb-2"
-        >
-          Kích thước
-        </label>
-        <div className={selectWrapClass}>
-          <OptionSelect
-            id="khungSize"
-            value={sizeLabel}
-            onChange={handleSizeSelect} // 👈 Dùng hàm bóc tách thông minh vừa viết
-            options={sizeOptions.map((o) => o.label)}
-          />
+        <div className="flex items-center justify-between mb-2">
+          <label
+            htmlFor="khungSize"
+            className="block font-mono text-xs uppercase tracking-widest text-blueprint-light"
+          >
+            Kích thước
+          </label>
+          <button
+            type="button"
+            onClick={() => onToggleOddSize?.(!isOddSize)}
+            className={`text-xs font-mono px-2.5 py-1 rounded-md border transition-colors ${
+              isOddSize
+                ? 'bg-amber text-blueprint border-amber font-bold'
+                : 'border-line text-blueprint-light hover:border-amber hover:text-blueprint'
+            }`}
+          >
+            {isOddSize ? '✕ Size lẻ' : 'Size lẻ'}
+          </button>
         </div>
+
+        {isOddSize ? (
+          <div>
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                placeholder="Rộng (cm)"
+                value={oddWidth}
+                onChange={(e) => onOddWidthChange?.(e.target.value)}
+                className="w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-mono text-blueprint shadow-sm"
+              />
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                placeholder="Cao (cm)"
+                value={oddHeight}
+                onChange={(e) => onOddHeightChange?.(e.target.value)}
+                className="w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-mono text-blueprint shadow-sm"
+              />
+            </div>
+            {oddWidth > 0 && oddHeight > 0 && (
+              Number(oddWidth) > 100 || Number(oddHeight) > 100 ? (
+                <p className="text-xs text-amber mt-2">
+                  Chiều dài hoặc chiều rộng vượt 100cm — hệ thống sẽ tự chuyển sang tab "Custom".
+                </p>
+              ) : oddSizeMatchLabel ? (
+                <p className="text-xs text-blueprint-light mt-2">
+                  Áp giá theo size chuẩn: <span className="font-medium text-blueprint">{oddSizeMatchLabel}</span>
+                </p>
+              ) : (
+                <p className="text-xs text-blueprint-light mt-2">
+                  Chưa có size chuẩn nào phù hợp — vui lòng kiểm tra lại bảng giá size chuẩn.
+                </p>
+              )
+            )}
+          </div>
+        ) : (
+          <div className={selectWrapClass}>
+            <OptionSelect
+              id="khungSize"
+              value={sizeLabel}
+              onChange={handleSizeSelect} // 👈 Dùng hàm bóc tách thông minh vừa viết
+              options={sizeOptions.map((o) => o.label)}
+            />
+          </div>
+        )}
       </div>
 
       <div>

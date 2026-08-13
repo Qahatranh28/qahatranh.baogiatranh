@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
+import { parseDimensionsFromSizeName } from '../utils/sizeParsing.js'
 
 export function useStandardPrices() {
   const [standardPrices, setStandardPrices] = useState({})
@@ -90,9 +91,15 @@ export function useStandardPrices() {
 
         for (const [sizeLabel, price] of Object.entries(sizes)) {
           if (price !== null && price !== '' && price !== undefined) {
+            // 🌟 Ghi luôn width/height suy ra từ tên size lên DB (bảng frame_size
+            // trước đây chỉ có size_name + price) để việc so khớp "size lẻ gần
+            // nhất" không còn phải phụ thuộc vào việc tự suy luận lúc đọc dữ liệu.
+            const { width, height } = parseDimensionsFromSizeName(sizeLabel)
             upsertRows.push({
               frame_id: frameId,
               size_name: sizeLabel,
+              width,
+              height,
               price: Number(price)
             })
           }

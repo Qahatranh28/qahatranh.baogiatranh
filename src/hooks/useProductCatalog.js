@@ -4,6 +4,7 @@ import {
   khungCategoryOptions as defaultCategories,
   getKhungImage as defaultGetKhungImage,
 } from '../data/khungCatalog.js'
+import { resolveSizeDimensions } from '../utils/sizeParsing.js'
 
 const CATEGORY_LABELS = {
   composite_mong: 'Khung Composite Mỏng',
@@ -85,12 +86,19 @@ export function useProductCatalog() {
       const matchedSizes = rawSizes.filter((s) => s.frame_id === matchedCatalog.frame_id)
 
       if (matchedSizes.length > 0) {
-        return matchedSizes.map((s) => ({
-          label: s.size_name || `${s.width || 0} x ${s.height || 0} cm`,
-          width: Number(s.width || 0),
-          height: Number(s.height || 0),
-          price: s.price != null ? Number(s.price) : null,
-        }))
+        return matchedSizes.map((s) => {
+          // 🌟 DB (bảng frame_size) chỉ lưu size_name + price, KHÔNG có sẵn
+          // width/height cho từng size cố định → tự suy ra chiều dài/chiều
+          // rộng từ size_name khi DB chưa có, để việc so khớp "size lẻ gần
+          // nhất" (findRoundUpStandardSize) hoạt động đúng.
+          const { width, height } = resolveSizeDimensions(s)
+          return {
+            label: s.size_name || `${width || 0} x ${height || 0} cm`,
+            width,
+            height,
+            price: s.price != null ? Number(s.price) : null,
+          }
+        })
       }
 
       return []

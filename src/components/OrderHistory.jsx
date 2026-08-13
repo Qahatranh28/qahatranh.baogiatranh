@@ -120,23 +120,32 @@ function ItemCostBreakdown({ item }) {
   )
 }
 
-export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus }) {
+export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus, currentUser, isSaleRole }) {
   const [expandedId, setExpandedId] = useState(null)
   const [expandedItemId, setExpandedItemId] = useState(null)
   // 🌟 Chỉ cần tải tên sale khi có quyền xem (admin/editor) — dùng để hiện "Người báo giá"
   const { nameById } = useSalesUsers()
 
+  // 🌟 Nếu đang đăng nhập bằng role "sale": chỉ xem được các đơn do CHÍNH mình tạo,
+  // không thấy đơn của sale khác hay khách vãng lai.
+  const scopedOrders = useMemo(() => {
+    if (isSaleRole && currentUser) {
+      return orders.filter((o) => o.idUser === currentUser.id)
+    }
+    return orders
+  }, [orders, isSaleRole, currentUser])
+
   const monthOptions = useMemo(() => {
-    const keys = new Set(orders.map((o) => monthKey(o.createdAt)))
+    const keys = new Set(scopedOrders.map((o) => monthKey(o.createdAt)))
     return Array.from(keys).sort().reverse()
-  }, [orders])
+  }, [scopedOrders])
 
   const [selectedMonth, setSelectedMonth] = useState('all')
 
   const filteredOrders = useMemo(() => {
-    if (selectedMonth === 'all') return orders
-    return orders.filter((o) => monthKey(o.createdAt) === selectedMonth)
-  }, [orders, selectedMonth])
+    if (selectedMonth === 'all') return scopedOrders
+    return scopedOrders.filter((o) => monthKey(o.createdAt) === selectedMonth)
+  }, [scopedOrders, selectedMonth])
 
   const monthProfit = useMemo(
     () => filteredOrders.reduce((sum, o) => sum + o.profit, 0),
@@ -151,7 +160,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
     exportOrdersToExcel(filteredOrders, monthLabel(selectedMonth), isAdmin)
   }
 
-  if (orders.length === 0) {
+  if (scopedOrders.length === 0) {
     return (
       <section className="bg-paper rounded-2xl border border-line p-10 text-center">
         <p className="text-blueprint/60 text-sm">
@@ -234,7 +243,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                     {order.customerName || 'Khách lẻ'}
                   </p>
                   <p className="text-xs text-blueprint/50 font-mono">
-                    {new Date(order.createdAt).toLocaleDateString('vi-VN')} ·{' '}
+                    {new Date(order.createdAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }).replace(',', ' -')} ·{' '}
                     {order.items.length} sản phẩm
                     {isAdmin && order.idUser != null && (
                       <> · Sale: {nameById[order.idUser] || `#${order.idUser}`}</>

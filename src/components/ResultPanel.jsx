@@ -21,6 +21,7 @@ export default function ResultPanel({
   lineTotal,
   onAdd,
   canAdd,
+  canOrder = true, // 🌟 true nếu đã đăng nhập; false = khách vãng lai (chỉ xem giá, không thêm được)
   imageSrc,
   costDisplay,
   costDisplayLabel = 'Giá vốn',
@@ -120,8 +121,13 @@ export default function ResultPanel({
           disabled={!canAdd}
           className="w-full bg-amber hover:bg-amber-light disabled:bg-paper/15 disabled:cursor-not-allowed disabled:text-paper/40 text-blueprint font-medium rounded-md py-3 transition-colors"
         >
-          + Thêm vào danh sách
+          {canOrder ? '+ Thêm vào danh sách' : 'Đăng nhập để tạo báo giá'}
         </button>
+        {!canOrder && (
+          <p className="text-xs text-paper/50 mt-2 text-center">
+            Bạn đang xem giá tham khảo. Vui lòng đăng nhập để thêm sản phẩm và tạo báo giá.
+          </p>
+        )}
       </div>
     </section>
   )
