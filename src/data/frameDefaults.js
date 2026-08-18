@@ -153,3 +153,14 @@ export const giayBoTypeRates = {
   'Giấy bo kem 1.4 ly': 0,
   'Giấy bo 2 ly': 0,
 }
+export const GIO_LAM_KHAN_RATES = {
+  'Khăn Lụa Khung Classic': 2.5,   
+  'Khăn Lụa Khung Moebe': 4.0,   
+  'Khăn Lụa Khung Matboard': 3.0,  
+  'Khăn Lụa Khung Mirror': 2.5,    
+};
+export const MOEBE_SILK_INNER_SIZES = {
+  '60x60': { innerW: 40, innerH: 40 },
+  '85x85': { innerW: 70, innerH: 70 },
+  '100x100': { innerW: 90, innerH: 90 },
+};

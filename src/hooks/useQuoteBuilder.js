@@ -361,7 +361,8 @@ export function useQuoteBuilder() {
         moebeGlassPrice,
         moebeGlassLabel,
         moebeCorePrice,
-        moebeCoreLabel
+        moebeCoreLabel,
+        khungCategory
       ),
     [
       pricingWidth,

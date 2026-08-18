@@ -1,30 +1,36 @@
+// src/utils/frameCosting.js
+
+import { computeSilkScarfCost } from './silkScarfCosting.js'
+
 export function computeFrameCost(
-  widthCm,
-  heightCm,
-  toggles = {},
-  settings = {},
-  isKinh = true,
-  khungPerMOverride = null,
-  khungNameMultiplier = 1,
-  isNhom = false,
-  customTranhInPrice = 0,
-  customTranhInLabel = 'Tranh in',
-  customGlassPrice = 0,
-  customGlassLabel = 'Kính/Mica',
-  customVanPrice = 0,
-  customVanLabel = 'Ván lót',
-  customGiayBoPrice = 0,
-  customGiayBoLabel = 'Giấy bo',
-  customSatXiPrice = 0,
-  customSatXiLabel = 'Sắt xi',
-  mode = 'simple',
-  innerWidthCm = 0,
-  innerHeightCm = 0,
-  moebeGlassPrice = 0,
-  moebeGlassLabel = '',
-  moebeCorePrice = 0,
-  moebeCoreLabel = ''
+  widthCm, heightCm, toggles = {}, settings = {}, isKinh = true,
+  khungPerMOverride = null, khungNameMultiplier = 1, isNhom = false,
+  customTranhInPrice = 0, customTranhInLabel = 'Tranh in',
+  customGlassPrice = 0, customGlassLabel = 'Kính/Mica',
+  customVanPrice = 0, customVanLabel = 'Ván lót',
+  customGiayBoPrice = 0, customGiayBoLabel = 'Giấy bo',
+  customSatXiPrice = 0, customSatXiLabel = 'Sắt xi',
+  mode = 'simple', innerWidthCm = 0, innerHeightCm = 0,
+  moebeGlassPrice = 0, moebeGlassLabel = '',
+  moebeCorePrice = 0, moebeCoreLabel = '',
+  khungCategory = ''
 ) {
+  // 🌟 Đẩy luồng tính Khăn Lụa sang file riêng
+  const isKhanLua = typeof khungCategory === 'string' && khungCategory.includes('Khăn Lụa')
+  
+  if (isKhanLua) {
+    return computeSilkScarfCost(
+      widthCm, heightCm, toggles, settings, isKinh, khungPerMOverride, khungNameMultiplier, isNhom,
+      customTranhInPrice, customTranhInLabel, customGlassPrice, customGlassLabel,
+      customVanPrice, customVanLabel, customGiayBoPrice, customGiayBoLabel,
+      customSatXiPrice, customSatXiLabel, mode, innerWidthCm, innerHeightCm,
+      moebeGlassPrice, moebeGlassLabel, moebeCorePrice, moebeCoreLabel, khungCategory
+    )
+  }
+
+  // ==========================================
+  // LOGIC TÍNH KHUNG TRANH BÌNH THƯỜNG
+  // ==========================================
   const w = Number(widthCm) || 0
   const h = Number(heightCm) || 0
   const areaM2 = (w * h) / 10000
@@ -34,13 +40,11 @@ export function computeFrameCost(
   const inH = Number(innerHeightCm) || 0
   const innerAreaM2 = (inW * inH) / 10000
 
- const isLarge = Math.max(w, h) > 40
+  const isLarge = Math.max(w, h) > 40
   
-  // 🌟 1. TÍNH HAO HỤT KHUNG (Nhôm: +10% | Các loại khung khác: +20%)
   const tyLeHaoHutKhung = isNhom ? 0.1 : 0.2
   const chieuDaiKhungCanM = chuViM * (1 + tyLeHaoHutKhung)
 
-  // 🌟 2. TÍNH HAO HỤT SẮT XI (Mặc định: +10%)
   const tyLeHaoHutSatXi = 0.1
   const tongSatXiM = chuViM * (1 + tyLeHaoHutSatXi)
 
@@ -51,7 +55,6 @@ export function computeFrameCost(
     return total
   }
 
-  // Đơn giá khung
   let khungPerM = Number(khungPerMOverride) > 0 ? Number(khungPerMOverride) : 0
   khungPerM = khungPerM * khungNameMultiplier
 
@@ -65,14 +68,13 @@ export function computeFrameCost(
 
   let nvlTotal = 0
 
-  // 1. 🌟 LUẬT THÉP: CHỈ XÁC NHẬN LÀ "LÀM KHUNG" KHI CÔNG TẮC BẬT VÀ CÓ GIÁ KHUNG > 0
   const isMakingFrame = (toggles?.khung !== false) && (khungPerM > 0)
 
   if (isMakingFrame) {
     nvlTotal += addRow('Khung', 'm', chieuDaiKhungCanM, khungPerM)
   }
 
-  // 2. CÁC VẬT TƯ CHÍNH (CUSTOM / MOEBE)
+  // VẬT TƯ CHÍNH
   if (mode === 'moebe') {
     if (moebeGlassPrice > 0) {
       const glassLabel = (moebeGlassLabel || 'Kính/Mica') + ' (Kẹp 2 mặt)'
@@ -100,7 +102,9 @@ export function computeFrameCost(
     }
   }
 
-  // 3. 🌟 PHỤ KIỆN KHUNG (CHỈ TÍNH KHI THỰC SỰ LÀM KHUNG)
+  // ==========================================
+  // PHỤ KIỆN
+  // ==========================================
   if (isMakingFrame) {
     if (isNhom) {
       if (priceKeGoc > 0) nvlTotal += addRow('Bộ ke góc (khung nhôm)', 'Bộ', 1, priceKeGoc)
@@ -109,30 +113,33 @@ export function computeFrameCost(
       if (priceDinhGhim > 0) nvlTotal += addRow('Đinh/ghim/ốc vít/NVL khác', 'Cái', soDinhGhim, priceDinhGhim)
     }
 
-    const mocTreoQty = isNhom ? 0 : (isLarge ? 2 : 1)
+    // 🌟 Mặc định: Khung lớn có 2 móc và có dây treo. Khung nhỏ có 1 móc và 0 dây treo.
+    let mocTreoQty = isLarge ? 2 : 1
+    let dayTreoQty = isLarge ? ((w + 20) / 100) : 0
+
+    // 🌟 Luật riêng cho Moebe: LUÔN LÀ 2 MÓC, VÀ KHÔNG CÓ DÂY TREO
+    if (mode === 'moebe') {
+      mocTreoQty = 2
+      dayTreoQty = 0
+    }
+
     if (mocTreoQty > 0 && priceMocTreo > 0) nvlTotal += addRow('Móc treo', 'Cái', mocTreoQty, priceMocTreo)
-    
-    const dayTreoQty = isNhom ? 0 : (isLarge ? ((w + 20) / 100) : 0)
     if (dayTreoQty > 0) nvlTotal += addRow('Dây treo', 'm', dayTreoQty, 500)
   }
 
-  // 4. VẬT TƯ ĐÓNG GÓI (CHỈ TÍNH KHI BẬT CÔNG TẮC ĐÓNG GÓI)
+  // ĐÓNG GÓI
   const hasDongGoi = toggles?.dongGoi === true
   if (hasDongGoi) {
-    const peCuonQty = ((areaM2 * 1.5 * 1.2) * 3.5) / 171
-    const xopBongKhiQty = (areaM2 * 2 * 1.2) / 140
-    const cartonQty = areaM2 * 0.96
-    const bangKeoQty = (areaM2 * 1.1) / 9.6
-
-    if (pricePeCuon > 0) nvlTotal += addRow('Pe cuộn', 'kg', peCuonQty, pricePeCuon)
-    if (priceXop > 0) nvlTotal += addRow('Xốp bóng khí', 'Cây', xopBongKhiQty, priceXop)
-    if (priceCarton > 0) nvlTotal += addRow('Carton', 'kg', cartonQty, priceCarton)
-    if (priceBangKeo > 0) nvlTotal += addRow('Băng keo trong', 'Cây', bangKeoQty, priceBangKeo)
+    if (pricePeCuon > 0) nvlTotal += addRow('Pe cuộn', 'kg', ((areaM2 * 1.5 * 1.2) * 3.5) / 171, pricePeCuon)
+    if (priceXop > 0) nvlTotal += addRow('Xốp bóng khí', 'Cây', (areaM2 * 2 * 1.2) / 140, priceXop)
+    if (priceCarton > 0) nvlTotal += addRow('Carton', 'kg', areaM2 * 0.96, priceCarton)
+    if (priceBangKeo > 0) nvlTotal += addRow('Băng keo trong', 'Cây', (areaM2 * 1.1) / 9.6, priceBangKeo)
   }
 
-  // 5. CHI PHÍ NHÂN CÔNG
+  // NHÂN CÔNG
   const laborRows = []
-  const luongNC = Number(settings.luongNhanCongPerGio) || 40000
+  const luongNC = Number(settings.luongNhanCongPerGio) || 40000 
+  
   const addLabor = (label, hours) => {
     const total = hours * luongNC
     laborRows.push({ label, unit: 'giờ', qty: hours, unitPrice: luongNC, total })
@@ -141,7 +148,6 @@ export function computeFrameCost(
 
   let laborTotal = 0
   
-  // 🌟 Giờ công làm khung chỉ tính khi thực sự làm khung
   if (isMakingFrame) {
     laborTotal += addLabor('Chi phí giờ công làm khung', chieuDaiKhungCanM * 0.1)
   }
@@ -169,15 +175,7 @@ export function computeFrameCost(
   const grandTotal = nvlTotal + laborTotal + sxc
 
   return {
-    areaM2,
-    innerAreaM2,
-    chuViM,
-    chieuDaiKhungCanM,
-    materialRows: rows,
-    laborRows,
-    nvlTotal,
-    laborTotal,
-    sxc,
-    grandTotal,
+    areaM2, innerAreaM2, chuViM, chieuDaiKhungCanM,
+    materialRows: rows, laborRows, nvlTotal, laborTotal, sxc, grandTotal,
   }
 }
