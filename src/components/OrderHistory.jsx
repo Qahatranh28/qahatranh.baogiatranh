@@ -27,6 +27,10 @@ const COMPONENT_LABELS = {
 }
 
 function selectedComponentTags(item) {
+  if (item?.mode === 'pallet') {
+    return ['Đóng gói Pallet']
+  }
+
   // Nếu là chế độ Moebe, hiển thị chi tiết Kính và Ruột
   if (item.mode === 'moebe' && item.selections) {
     const labels = []
@@ -311,7 +315,21 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                       </tr>
                     </thead>
                     <tbody>
-                      {order.items.map((item) => {
+                      {[
+                        ...order.items,
+                        ...(order.palletPackagingFee > 0
+                          ? [{
+                              id: `pallet-${order.id}`,
+                              name: 'Đóng gói Pallet',
+                              width: 0,
+                              height: 0,
+                              quantity: 1,
+                              lineTotal: order.palletPackagingFee,
+                              mode: 'pallet',
+                              costBreakdown: null,
+                            }]
+                          : []),
+                      ].map((item) => {
                         const tags = selectedComponentTags(item)
                         const itemKey = `${order.id}:${item.id}`
                         const itemOpen = expandedItemId === itemKey
@@ -327,10 +345,10 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                                 )}
                               </td>
                               <td className="py-2 text-right font-mono text-blueprint/70 align-top">
-                                {item.width}×{item.height} cm
+                                {item.width > 0 && item.height > 0 ? `${item.width}×${item.height} cm` : '—'}
                               </td>
                               <td className="py-2 text-right font-mono text-blueprint/70 align-top">
-                                {item.quantity}
+                                {item.quantity ?? 1}
                               </td>
                               <td className="py-2 text-right font-mono text-blueprint/70 align-top">
                                 {formatVND(item.lineTotal)}
@@ -347,7 +365,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                                 </td>
                               )}
                             </tr>
-                            {isAdmin && itemOpen && (
+                            {isAdmin && itemOpen && item.costBreakdown && (
                               <tr>
                                 <td colSpan={5} className="pb-3">
                                   <ItemCostBreakdown item={item} />

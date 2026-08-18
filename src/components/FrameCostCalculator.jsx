@@ -16,6 +16,9 @@ import {
 import { computeFrameCost } from '../utils/frameCosting.js'
 import { useProductCatalog } from '../hooks/useProductCatalog.js'
 import { useStandardPrices } from '../hooks/useStandardPrices.js'
+import { useMoebePrices } from '../hooks/useMoebePrices.js'
+import { useJerseyPrices } from '../hooks/useJerseyPrices.js'
+import MoebePriceTable, { JerseyPriceTable } from './admin/SpecialPriceTables.jsx'
 import { parseDimensionsFromSizeName } from '../utils/sizeParsing.js'
 
 // 🌟 CHỈ GIỮ LAI 9 MỤC VẬT TƯ CÓ TRÊN DATABASE (BẢNG material)
@@ -162,7 +165,26 @@ export default function FrameCostCalculator({
 
   const [showSettings, setShowSettings] = useState(false)
   const [showStandardPrices, setShowStandardPrices] = useState(false)
+  const [showMoebePrices, setShowMoebePrices] = useState(false)
+  const [showJerseyPrices, setShowJerseyPrices] = useState(false)
   const [syncStatus, setSyncStatus] = useState('')
+
+  const {
+    frameTypes: moebeFrameTypes,
+    sizes: moebeSizes,
+    loading: loadingMoebePrices,
+    saving: savingMoebePrices,
+    updateLocalSize: updateMoebeLocal,
+    saveAllToDB: saveMoebePrices,
+  } = useMoebePrices()
+
+  const {
+    prices: jerseyPrices,
+    loading: loadingJerseyPrices,
+    saving: savingJerseyPrices,
+    updateLocal: updateJerseyLocal,
+    saveAllToDB: saveJerseyPrices,
+  } = useJerseyPrices()
   
   const { categories, typesByCategory, getStandardSizesForType,
     rawCatalog,
@@ -404,9 +426,10 @@ export default function FrameCostCalculator({
                       </td>
                       {tableColumns.map((size) => {
                         const isValidSize = validSizes.includes(size.label);
+                        const cellKey = `${type}-${size.label}`;
 
                         return (
-                          <td key={size.label} className="px-2 py-2 text-right">
+                          <td key={cellKey} className="px-2 py-2 text-right">
                             {isValidSize ? (
                               <input
                                 type="number"
@@ -430,6 +453,57 @@ export default function FrameCostCalculator({
             </table>
           </div>
         </div>
+      )}
+
+      {/* Bảng giá Khung Moebe */}
+      <div className="flex items-center justify-between gap-4 mb-1 mt-8">
+        <h3 className="font-display font-semibold text-base text-blueprint">
+          Giá bán mặc định – Khung Moebe
+        </h3>
+        <button
+          onClick={() => setShowMoebePrices((v) => !v)}
+          className="text-sm text-blueprint/60 hover:text-blueprint underline underline-offset-2"
+        >
+          {showMoebePrices ? 'Ẩn bảng giá' : 'Sửa bảng giá'}
+        </button>
+      </div>
+      <p className="text-sm text-blueprint-light mb-4">
+        Giá bán theo size từ bảng <code>frame_size_moebe</code> — cột price (không in) và price_print (có in tranh).
+      </p>
+      {showMoebePrices && (
+        <MoebePriceTable
+          frameTypes={moebeFrameTypes}
+          sizes={moebeSizes}
+          onUpdate={updateMoebeLocal}
+          onSave={saveMoebePrices}
+          saving={savingMoebePrices}
+          loading={loadingMoebePrices}
+        />
+      )}
+
+      {/* Bảng giá Khung áo đấu */}
+      <div className="flex items-center justify-between gap-4 mb-1 mt-8">
+        <h3 className="font-display font-semibold text-base text-blueprint">
+          Giá bán mặc định – Khung áo đấu
+        </h3>
+        <button
+          onClick={() => setShowJerseyPrices((v) => !v)}
+          className="text-sm text-blueprint/60 hover:text-blueprint underline underline-offset-2"
+        >
+          {showJerseyPrices ? 'Ẩn bảng giá' : 'Sửa bảng giá'}
+        </button>
+      </div>
+      <p className="text-sm text-blueprint-light mb-4">
+        Giá bán theo size áo từ bảng <code>jersey_frame_prices</code> — mặt cơ bản và mặt cao cấp.
+      </p>
+      {showJerseyPrices && (
+        <JerseyPriceTable
+          prices={jerseyPrices}
+          onUpdate={updateJerseyLocal}
+          onSave={saveJerseyPrices}
+          saving={savingJerseyPrices}
+          loading={loadingJerseyPrices}
+        />
       )}
 
       <div className="grid sm:grid-cols-2 gap-6 mb-8 mt-8">

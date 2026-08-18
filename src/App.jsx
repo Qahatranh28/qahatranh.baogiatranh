@@ -5,6 +5,7 @@ import QuoteForm from './components/QuoteForm.jsx'
 import ResultPanel from './components/ResultPanel.jsx'
 import ProductListTable from './components/ProductListTable.jsx'
 import OrderDiscountSummary from './components/OrderDiscountSummary.jsx'
+import PalletPackagingOption from './components/PalletPackagingOption.jsx'
 import CustomerInfo from './components/CustomerInfo.jsx'
 import AdminPanel from './components/AdminPanel.jsx'
 import AdminLogin from './components/AdminLogin.jsx'
@@ -52,6 +53,11 @@ export default function App() {
     itemsTotal,
     discountPercent,
     setDiscountPercent,
+    palletPackagingEnabled,
+    onPalletPackagingToggle,
+    palletPackagingTierId,
+    onPalletPackagingTierChange,
+    palletPackagingFee,
     canExport,
     handleExport,
     settings,
@@ -116,7 +122,12 @@ export default function App() {
             </div>
 
             <main className="max-w-5xl mx-auto px-4 sm:px-6 grid lg:grid-cols-2 gap-6 items-start">
-              <QuoteForm mode={mode} onModeChange={handleModeChange} {...formProps} />
+              <QuoteForm
+                mode={mode}
+                onModeChange={handleModeChange}
+                unitPrice={resultPanelProps.unitPrice}
+                {...formProps}
+              />
 
               <div className="hidden lg:block lg:sticky lg:top-6">
                 <ResultPanel {...resultPanelProps} />
@@ -136,11 +147,21 @@ export default function App() {
                 onRemove={handleRemoveItem}
                 itemsSubtotal={itemsSubtotal}
               />
+              <PalletPackagingOption
+                enabled={palletPackagingEnabled}
+                onToggle={onPalletPackagingToggle}
+                tierId={palletPackagingTierId}
+                onTierChange={onPalletPackagingTierChange}
+                fee={palletPackagingFee}
+                disabled={items.length === 0}
+              />
               <OrderDiscountSummary
                 itemsSubtotal={itemsSubtotal}
                 discountPercent={discountPercent}
                 onDiscountChange={setDiscountPercent}
                 itemsTotal={itemsTotal}
+                palletPackagingFee={palletPackagingFee}
+                palletPackagingEnabled={palletPackagingEnabled}
                 disabled={items.length === 0}
               />
               <ExportQuoteButton

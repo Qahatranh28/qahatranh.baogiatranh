@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <rect width="400" height="400" fill="#FAF8F3"/>
+  <rect x="70" y="50" width="260" height="300" rx="8" fill="#17171B" opacity="0.1"/>
+  <path d="M130 70 L200 115 L270 70 L270 330 L130 330 Z" fill="#B8905A" opacity="0.5" stroke="#B8905A" stroke-width="2"/>
+  <circle cx="200" cy="200" r="30" fill="#B8905A" opacity="0.2"/>
+  <text x="200" y="375" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#9C9488">Áo đấu — Mặt cao cấp</text>
+</svg>

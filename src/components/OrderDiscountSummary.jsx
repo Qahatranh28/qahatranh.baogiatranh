@@ -8,6 +8,8 @@ export default function OrderDiscountSummary({
   discountPercent,
   onDiscountChange,
   itemsTotal,
+  palletPackagingFee = 0,
+  palletPackagingEnabled = false,
   disabled,
   warning,
 }) {
@@ -45,6 +47,14 @@ export default function OrderDiscountSummary({
             <div className="flex items-center justify-end gap-3 text-sm mb-1">
               <dt className="text-paper/60">Chiết khấu</dt>
               <dd className="font-mono text-amber">-{discountPercent}%</dd>
+            </div>
+          )}
+          {palletPackagingEnabled && (
+            <div className="flex items-center justify-end gap-3 text-sm mb-1">
+              <dt className="text-paper/60">Đóng gói pallet</dt>
+              <dd className="font-mono text-amber">
+                {palletPackagingFee > 0 ? `+${formatVND(palletPackagingFee)}` : '—'}
+              </dd>
             </div>
           )}
           <div className="flex items-baseline justify-end gap-3 mt-2">

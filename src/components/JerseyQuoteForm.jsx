@@ -1,26 +1,38 @@
 import React from 'react'
+import { formatVND } from '../utils/format.js'
 
-export default function MoebeQuoteForm({
+const TIER_OPTIONS = [
+  { id: 'basic', label: '1 mặt cơ bản' },
+  { id: 'premium', label: '1 mặt cao cấp' },
+]
+
+export default function JerseyQuoteForm({
   productName,
   onProductNameChange,
+  tier,
+  onTierChange,
   frameTypes = [],
+  filteredFrameTypes = [],
+  selectedCategory,
+  onFrameCategoryChange,
+  categoryOptions = [],
   selectedFrameId,
   onFrameChange,
-  sizeOptions = [],
-  selectedSizeId,
-  onSizeChange,
-  selectedSize,
-  printWidth,
-  printHeight,
-  onPrintWidthChange,
-  onPrintHeightChange,
-  tranhInLabel = 'Tranh in giấy mỹ thuật',
+  selectedFrame,
+  width,
+  height,
+  onWidthChange,
+  onHeightChange,
+  jerseyPrices = [],
+  selectedJerseySizeId,
+  onJerseySizeChange,
+  selectedJerseySize,
   quantity,
   onQuantityChange,
   toggles = {},
   onToggleChange,
+  unitPrice,
 }) {
-  const selectedFrame = frameTypes.find((f) => String(f.frame_id) === String(selectedFrameId)) || frameTypes[0] || null
   const frameImageUrl = selectedFrame?.image_url || '/images/placeholder.svg'
 
   return (
@@ -33,23 +45,45 @@ export default function MoebeQuoteForm({
           type="text"
           value={productName || ''}
           onChange={(e) => onProductNameChange?.(e.target.value)}
-          placeholder="Nhập tên sản phẩm (VD: Khung Moebe nhôm...)"
+          placeholder="Nhập tên sản phẩm (VD: Khung áo đấu Real Madrid...)"
           className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint shadow-sm"
         />
+      </div>
+
+      <div>
+        <label className="block text-xs uppercase tracking-widest text-blueprint/70 font-semibold mb-2">
+          Loại áo đấu
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {TIER_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onTierChange?.(opt.id)}
+              className={`rounded-lg border px-3 py-3 text-sm font-medium transition-colors ${
+                tier === opt.id
+                  ? 'border-amber bg-amber/10 text-blueprint'
+                  : 'border-line bg-white text-blueprint/60 hover:border-amber/50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="relative rounded-xl border border-line bg-white/80 p-3 pr-24 shadow-sm">
         <div className="space-y-3">
           <div>
             <label className="block text-xs uppercase tracking-widest text-blueprint/70 font-semibold mb-1">
-              Tên khung
+              Khung
             </label>
             <select
               value={selectedFrameId || ''}
-              onChange={(e) => onFrameChange?.(e.target.value)}
+              onChange={(e) => onFrameChange?.(Number(e.target.value) || e.target.value)}
               className="w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint"
             >
-              {frameTypes.map((f) => (
+              {filteredFrameTypes.map((f) => (
                 <option key={f.frame_id} value={f.frame_id}>
                   {f.name}
                 </option>
@@ -73,70 +107,45 @@ export default function MoebeQuoteForm({
         )}
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs text-blueprint/60 mb-1">Chiều rộng khung (cm)</label>
+          <input
+            type="number"
+            value={width ?? ''}
+            onChange={(e) => onWidthChange?.(e.target.value)}
+            placeholder="Rộng"
+            className="w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber font-mono bg-white"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-blueprint/60 mb-1">Chiều dài khung (cm)</label>
+          <input
+            type="number"
+            value={height ?? ''}
+            onChange={(e) => onHeightChange?.(e.target.value)}
+            placeholder="Dài"
+            className="w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber font-mono bg-white"
+          />
+        </div>
+      </div>
+
       <div>
         <label className="block text-xs uppercase tracking-widest text-blueprint/70 font-semibold mb-1">
-          Kích thước
+          Size áo đấu
         </label>
         <select
-          value={selectedSizeId || ''}
-          onChange={(e) => onSizeChange?.(e.target.value)}
+          value={selectedJerseySizeId || ''}
+          onChange={(e) => onJerseySizeChange?.(Number(e.target.value) || e.target.value)}
           className="w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint"
         >
-          {sizeOptions.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
+          {jerseyPrices.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.sizeLabel}
             </option>
           ))}
         </select>
-      </div>
-
-      {selectedSize && (
-        <div className="p-3 bg-paper/60 rounded-lg border border-line text-xs font-mono text-blueprint/70">
-          Phủ bì: {selectedSize.width} × {selectedSize.height} cm · Ruột: {selectedSize.innerWidth} ×{' '}
-          {selectedSize.innerHeight} cm
-        </div>
-      )}
-
-      <div className="p-4 bg-white rounded-xl border border-line shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="font-bold text-xs uppercase text-blueprint">Tranh in</span>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={Boolean(toggles.tranhIn)}
-              onChange={(e) => onToggleChange?.('tranhIn', e.target.checked)}
-              className="w-4 h-4 accent-amber"
-            />
-            <span className="text-xs font-mono text-blueprint/70">In tranh</span>
-          </label>
-        </div>
         
-        {toggles.tranhIn && (
-          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-line/50">
-            <div>
-              <label className="block text-xs text-blueprint/60 mb-1">
-                Rộng tranh in (cm)
-              </label>
-              <input
-                type="number"
-                value={printWidth ?? ''}
-                onChange={(e) => onPrintWidthChange?.(e.target.value)}
-                className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-amber font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-blueprint/60 mb-1">
-                Dài tranh in (cm) 
-              </label>
-              <input
-                type="number"
-                value={printHeight ?? ''}
-                onChange={(e) => onPrintHeightChange?.(e.target.value)}
-                className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-amber font-mono"
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       <div>
@@ -156,13 +165,13 @@ export default function MoebeQuoteForm({
         <div className="flex items-center gap-3 bg-blueprint/5 border border-line rounded-lg p-3">
           <input
             type="checkbox"
-            id="moebeDongGoiToggle"
+            id="jerseyDongGoiToggle"
             checked={Boolean(toggles.dongGoi)}
             onChange={(e) => onToggleChange?.('dongGoi', e.target.checked)}
             className="w-4 h-4 cursor-pointer accent-amber"
           />
           <label
-            htmlFor="moebeDongGoiToggle"
+            htmlFor="jerseyDongGoiToggle"
             className="font-mono text-xs uppercase tracking-widest text-blueprint cursor-pointer select-none"
           >
             Bao gồm Đóng gói sản phẩm

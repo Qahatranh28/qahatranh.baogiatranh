@@ -27,6 +27,8 @@ export default function ResultPanel({
   costDisplayLabel = 'Giá vốn',
   isAdmin,
   matchedStandardSizeLabel,
+  hideArea = false,
+  mode = 'simple',
 }) {
   const hasDimensions = width > 0 && height > 0
   const selectedComponents = Object.entries(toggles)
@@ -44,7 +46,7 @@ export default function ResultPanel({
           <img
             src={imageSrc}
             alt="Hình minh hoạ khung" 
-            className="w-full aspect-[6/6] object-cover"
+            className={mode === 'jersey' ? 'w-full aspect-auto object-contain' : 'w-full aspect-[6/6] object-cover'}
             onError={(e) => {
               if (e.currentTarget.src.indexOf(DEFAULT_KHUNG_IMAGE) === -1) {
                 e.currentTarget.src = DEFAULT_KHUNG_IMAGE
@@ -66,9 +68,11 @@ export default function ResultPanel({
           <span className="flex-1 border-t border-dashed border-paper/30" />
           <span>{hasDimensions ? height.toFixed(1) : '0'} cm</span>
         </div>
-        <p className="mt-3 font-mono text-3xl font-medium text-orange-500">
-          {area.toFixed(2)} <span className="text-lg text-white/50">m²</span>
-        </p>
+        {!hideArea && (
+          <p className="mt-3 font-mono text-3xl font-medium text-orange-500">
+            {area.toFixed(2)} <span className="text-lg text-white/50">m²</span>
+          </p>
+        )}
         {matchedStandardSizeLabel && (
           <p className="mt-2 text-xs font-mono text-amber">
             Size lẻ ≤ 1m — tự động tính theo giá khung tiêu chuẩn {matchedStandardSizeLabel}
