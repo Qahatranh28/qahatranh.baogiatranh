@@ -20,9 +20,6 @@ export default function MoebeQuoteForm({
   toggles = {},
   onToggleChange,
 }) {
-  const selectedFrame = frameTypes.find((f) => String(f.frame_id) === String(selectedFrameId)) || frameTypes[0] || null
-  const frameImageUrl = selectedFrame?.image_url || '/images/placeholder.svg'
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -38,39 +35,23 @@ export default function MoebeQuoteForm({
         />
       </div>
 
-      <div className="relative rounded-xl border border-line bg-white/80 p-3 pr-24 shadow-sm">
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs uppercase tracking-widest text-blueprint/70 font-semibold mb-1">
-              Tên khung
-            </label>
-            <select
-              value={selectedFrameId || ''}
-              onChange={(e) => onFrameChange?.(e.target.value)}
-              className="w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint"
-            >
-              {frameTypes.map((f) => (
-                <option key={f.frame_id} value={f.frame_id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="rounded-xl border border-line bg-white/80 p-3 shadow-sm">
+        <div>
+          <label className="block text-xs uppercase tracking-widest text-blueprint/70 font-semibold mb-1">
+            Tên khung
+          </label>
+          <select
+            value={selectedFrameId || ''}
+            onChange={(e) => onFrameChange?.(e.target.value)}
+            className="w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint"
+          >
+            {frameTypes.map((f) => (
+              <option key={f.frame_id} value={f.frame_id}>
+                {f.name}
+              </option>
+            ))}
+          </select>
         </div>
-
-        {selectedFrame && (
-          <div className="absolute right-3 top-3 flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl border border-line bg-paper shadow-sm">
-            <img
-              src={frameImageUrl}
-              alt={selectedFrame.name}
-              className="h-full w-full object-cover"
-              onError={(e) => {
-                e.target.onerror = null
-                e.target.src = '/images/placeholder.svg'
-              }}
-            />
-          </div>
-        )}
       </div>
 
       <div>
