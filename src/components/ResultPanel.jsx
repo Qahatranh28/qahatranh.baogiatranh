@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { formatVND } from '../utils/format.js'
 import { DEFAULT_KHUNG_IMAGE } from '../data/khungCatalog.js'
+import MaterialBreakdownTable from './MaterialBreakdownTable.jsx'
 
 const COMPONENT_LABELS = {
   khung: 'Khung',
@@ -29,6 +31,9 @@ export default function ResultPanel({
   matchedStandardSizeLabel,
   hideArea = false,
   mode = 'simple',
+  costResult,
+  khungType,
+  isAdminRole = false,
 }) {
   const hasDimensions = width > 0 && height > 0
   const selectedComponents = Object.entries(toggles)
@@ -36,17 +41,26 @@ export default function ResultPanel({
     .map(([k]) => COMPONENT_LABELS[k])
     .filter(Boolean)
 
+  // 🌟 Trạng thái mở/đóng ô "Chi tiết vật tư cấu thành" được giữ ở đây (thay
+  // vì trong MaterialBreakdownTable) để khi ô này mở, ảnh minh hoạ phía trên
+  // tự ẩn đi — tiết kiệm diện tích hiển thị.
+  const [materialsOpen, setMaterialsOpen] = useState(false)
+  const showImage = Boolean(imageSrc) && !(isAdminRole && materialsOpen)
+
   return (
     <section
       aria-labelledby="result-heading"
       className="bg-blueprint text-paper rounded-2xl shadow-lg p-6 sm:p-8 flex flex-col h-full"
     >
-      {imageSrc && (
-        <div className="mb-6 rounded-x1 overflow-hidden bg-paper/5 border border-paper/10">
+      {showImage && (
+        // 🌟 Kích thước chuẩn cho mọi form (simple/custom/moebe/jersey): 1 khung
+        // ảnh cao cố định, dùng object-contain để ảnh LUÔN hiện đầy đủ (không bị
+        // cắt) dù ảnh vuông, ngang hay dọc — thay vì mỗi form 1 kiểu như trước.
+        <div className="mb-6 rounded-x1 overflow-hidden bg-paper/5 border border-paper/10 h-56 sm:h-64 flex items-center justify-center">
           <img
             src={imageSrc}
-            alt="Hình minh hoạ khung" 
-            className={mode === 'jersey' ? 'w-full aspect-auto object-contain' : 'w-full aspect-[6/6] object-cover'}
+            alt="Hình minh hoạ khung"
+            className="w-full h-full object-contain"
             onError={(e) => {
               if (e.currentTarget.src.indexOf(DEFAULT_KHUNG_IMAGE) === -1) {
                 e.currentTarget.src = DEFAULT_KHUNG_IMAGE
@@ -112,6 +126,16 @@ export default function ResultPanel({
           </div>
         )}
       </dl>
+
+      {isAdminRole && (
+        <MaterialBreakdownTable
+          costResult={costResult}
+          mode={mode}
+          khungType={khungType}
+          open={materialsOpen}
+          onToggle={setMaterialsOpen}
+        />
+      )}
 
       <div className="mt-auto pt-6 border-t border-paper/15">
         <p className="font-mono text-xs uppercase tracking-widest text-paper/50 mb-1">

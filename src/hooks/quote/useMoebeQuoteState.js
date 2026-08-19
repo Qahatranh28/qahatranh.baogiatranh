@@ -78,6 +78,42 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
   const activeInnerWidth = selectedSize?.innerWidth || 0
   const activeInnerHeight = selectedSize?.innerHeight || 0
 
+  // 🌟 Kích tranh in không được vượt quá kích thước khung đã chọn (phủ bì).
+  // Ghim (clamp) ngay khi người dùng nhập vượt mức, thay vì chỉ báo lỗi.
+  const handlePrintWidthChange = useCallback(
+    (value) => {
+      if (value === '') {
+        setPrintWidth('')
+        return
+      }
+      const num = parseFloat(value)
+      if (Number.isNaN(num)) {
+        setPrintWidth(value)
+        return
+      }
+      const max = activeWidth > 0 ? activeWidth : Infinity
+      setPrintWidth(String(Math.min(num, max)))
+    },
+    [activeWidth]
+  )
+
+  const handlePrintHeightChange = useCallback(
+    (value) => {
+      if (value === '') {
+        setPrintHeight('')
+        return
+      }
+      const num = parseFloat(value)
+      if (Number.isNaN(num)) {
+        setPrintHeight(value)
+        return
+      }
+      const max = activeHeight > 0 ? activeHeight : Infinity
+      setPrintHeight(String(Math.min(num, max)))
+    },
+    [activeHeight]
+  )
+
   const khungRate = Number(selectedFrame?.price_cost) || 0
   const glassMat = getGlassMicaDetail(DEFAULT_GLASS_ID, dbMaterialsList)
   const tranhInMat = getTranhInDetail(DEFAULT_TRANH_IN_ID, dbMaterialsList)
@@ -243,9 +279,9 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
     setSelectedSizeId,
     selectedSize,
     printWidth,
-    setPrintWidth,
+    setPrintWidth: handlePrintWidthChange,
     printHeight,
-    setPrintHeight,
+    setPrintHeight: handlePrintHeightChange,
     activeWidth,
     activeHeight,
     unitPrice,

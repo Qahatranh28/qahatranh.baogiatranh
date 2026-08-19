@@ -262,6 +262,8 @@ export function useProductCatalog() {
     getFrameImage,
     getMaterialImage,
     updateMaterialCost, // 👈 Thêm vào đây
+    updateFrameCostRate, // 🌟 Fix: hàm này đã được định nghĩa ở trên nhưng thiếu
+    // trong return khiến nút "Lưu" giá gốc khung ở Công cụ tính giá thành bị lỗi.
     addFrameType,
     deleteFrameType,
     refreshCatalog: fetchCatalogData,

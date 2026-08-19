@@ -76,19 +76,47 @@ export default function JerseyQuoteForm({
         <div className="space-y-3">
           <div>
             <label className="block text-xs uppercase tracking-widest text-blueprint/70 font-semibold mb-1">
-              Khung
+              Loại khung
             </label>
             <select
-              value={selectedFrameId || ''}
-              onChange={(e) => onFrameChange?.(Number(e.target.value) || e.target.value)}
+              value={selectedCategory || ''}
+              onChange={(e) => onFrameCategoryChange?.(e.target.value)}
               className="w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint"
             >
-              {filteredFrameTypes.map((f) => (
-                <option key={f.frame_id} value={f.frame_id}>
-                  {f.name}
+              {categoryOptions.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
+                  {cat.hasFrames === false ? ' (chưa có khung trong DB)' : ''}
                 </option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-xs uppercase tracking-widest text-blueprint/70 font-semibold mb-1">
+              Tên khung
+            </label>
+            {filteredFrameTypes.length > 0 ? (
+              <select
+                value={selectedFrameId || ''}
+                onChange={(e) => onFrameChange?.(Number(e.target.value) || e.target.value)}
+                className="w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint"
+              >
+                {filteredFrameTypes.map((f) => (
+                  <option key={f.frame_id} value={f.frame_id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-xs text-amber bg-amber/10 border border-amber/30 rounded-lg px-3 py-2.5">
+                Chưa có khung nào thuộc danh mục này trong DB. Vào "Quản lý sản phẩm" để gán danh mục{' '}
+                <span className="font-mono">
+                  {selectedCategory === 'nhom' ? 'nhom' : 'composite_2x3'}
+                </span>{' '}
+                cho khung tương ứng.
+              </p>
+            )}
           </div>
         </div>
 

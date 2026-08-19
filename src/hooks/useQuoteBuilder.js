@@ -224,6 +224,11 @@ export function useQuoteBuilder() {
         : null,
     hideArea: mode === 'jersey',
     mode,
+    costResult: activeState.costResult,
+    khungType: activeState.selections?.khungType || activeState.selectedFrame?.name || '',
+    // 🌟 Ô "Chi tiết vật tư cấu thành" chỉ hiển thị khi role thực sự là admin
+    // (không hiện với editor/sale), khác với `canSeeCost` vốn cho cả editor.
+    isAdminRole: user?.role === 'admin',
   }
 
   return {

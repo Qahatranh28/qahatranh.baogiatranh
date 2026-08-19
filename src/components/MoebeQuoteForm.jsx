@@ -20,6 +20,9 @@ export default function MoebeQuoteForm({
   toggles = {},
   onToggleChange,
 }) {
+  const selectedFrame = frameTypes.find((f) => String(f.frame_id) === String(selectedFrameId)) || frameTypes[0] || null
+  const frameImageUrl = selectedFrame?.image_url || '/images/placeholder.svg'
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -35,24 +38,25 @@ export default function MoebeQuoteForm({
         />
       </div>
 
-      <div className="rounded-xl border border-line bg-white/80 p-3 shadow-sm">
-        <div>
-          <label className="block text-xs uppercase tracking-widest text-blueprint/70 font-semibold mb-1">
-            Tên khung
-          </label>
-          <select
-            value={selectedFrameId || ''}
-            onChange={(e) => onFrameChange?.(e.target.value)}
-            className="w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint"
-          >
-            {frameTypes.map((f) => (
-              <option key={f.frame_id} value={f.frame_id}>
-                {f.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <div className="mb-4">
+  {/* LABEL ĐƯỢC ĐƯA RA NGOÀI */}
+  <label className="block text-xs uppercase tracking-widest text-blueprint/70 font-semibold mb-2">
+    Tên khung
+  </label>
+  
+  {/* THẺ SELECT TRỰC TIẾP */}
+  <select
+    value={selectedFrameId || ''}
+    onChange={(e) => onFrameChange?.(e.target.value)}
+    className="w-full max-w-full truncate border border-line rounded-lg py-2.5 pl-3 pr-8 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint shadow-sm"
+  >
+    {frameTypes.map((f) => (
+      <option key={f.frame_id} value={f.frame_id}>
+        {f.name}
+      </option>
+    ))}
+  </select>
+</div>
 
       <div>
         <label className="block text-xs uppercase tracking-widest text-blueprint/70 font-semibold mb-1">
@@ -88,33 +92,42 @@ export default function MoebeQuoteForm({
               onChange={(e) => onToggleChange?.('tranhIn', e.target.checked)}
               className="w-4 h-4 accent-amber"
             />
-            <span className="text-xs font-mono text-blueprint/70">In tranh</span>
+            <span className="text-xs font-mono text-blueprint/70">Bật in tranh</span>
           </label>
         </div>
         
         {toggles.tranhIn && (
-          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-line/50">
-            <div>
-              <label className="block text-xs text-blueprint/60 mb-1">
-                Rộng tranh in (cm)
-              </label>
-              <input
-                type="number"
-                value={printWidth ?? ''}
-                onChange={(e) => onPrintWidthChange?.(e.target.value)}
-                className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-amber font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-blueprint/60 mb-1">
-                Dài tranh in (cm) 
-              </label>
-              <input
-                type="number"
-                value={printHeight ?? ''}
-                onChange={(e) => onPrintHeightChange?.(e.target.value)}
-                className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-amber font-mono"
-              />
+          <div className="pt-2 border-t border-line/50">
+            {selectedSize && (
+              <p className="text-[11px] text-blueprint/50 mb-2">
+                Tối đa theo khung đã chọn: {selectedSize.width} × {selectedSize.height} cm
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-blueprint/60 mb-1">
+                  Rộng tranh in (cm) — chỉ tính giá vốn
+                </label>
+                <input
+                  type="number"
+                  value={printWidth ?? ''}
+                  max={selectedSize?.width || undefined}
+                  onChange={(e) => onPrintWidthChange?.(e.target.value)}
+                  className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-amber font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-blueprint/60 mb-1">
+                  Dài tranh in (cm) — chỉ tính giá vốn
+                </label>
+                <input
+                  type="number"
+                  value={printHeight ?? ''}
+                  max={selectedSize?.height || undefined}
+                  onChange={(e) => onPrintHeightChange?.(e.target.value)}
+                  className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-amber font-mono"
+                />
+              </div>
             </div>
           </div>
         )}

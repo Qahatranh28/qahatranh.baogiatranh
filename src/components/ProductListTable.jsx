@@ -1,7 +1,21 @@
 import { formatVND } from '../utils/format.js'
+import { getPalletTierById } from '../services/palletPackagingService.js'
 
-export default function ProductListTable({ items, onRemove, itemsSubtotal }) {
-  if (items.length === 0) {
+export default function ProductListTable({
+  items,
+  onRemove,
+  itemsSubtotal,
+  palletPackagingEnabled = false,
+  palletPackagingTierId = null,
+  palletPackagingFee = 0,
+}) {
+  // 🌟 Khi sale/admin bật "Đóng gói Pallet cho đơn hàng", hiển thị thêm 1
+  // dòng trong danh sách sản phẩm báo giá của khách để khách thấy rõ khoản
+  // phí này — giống cách nó vẫn hiện trong Lịch sử báo giá (OrderHistory).
+  const palletTier = palletPackagingEnabled ? getPalletTierById(palletPackagingTierId) : null
+  const showPalletRow = palletPackagingEnabled && palletPackagingFee > 0
+
+  if (items.length === 0 && !showPalletRow) {
     return (
       <section className="bg-paper rounded-2xl border border-line p-10 text-center">
         <p className="text-blueprint-light text-sm">
@@ -66,6 +80,20 @@ export default function ProductListTable({ items, onRemove, itemsSubtotal }) {
                 </td>
               </tr>
             ))}
+            {showPalletRow && (
+              <tr className="border-t border-line bg-amber/5">
+                <td className="px-4 py-3 text-blueprint-light">{items.length + 1}</td>
+                <td className="px-4 py-3 text-blueprint font-medium">
+                  Đóng gói Pallet{palletTier ? ` (${palletTier.label})` : ''}
+                </td>
+                <td className="px-4 py-3 text-right font-mono text-blueprint-light">—</td>
+                <td className="px-4 py-3 text-right font-mono text-blueprint-light">—</td>
+                <td className="px-4 py-3 text-right font-mono font-medium text-blueprint">
+                  {formatVND(palletPackagingFee)}
+                </td>
+                <td className="px-2 py-3 text-center" />
+              </tr>
+            )}
           </tbody>
           <tfoot>
             <tr className="bg-amber/10 border-t-2 border-amber/40">

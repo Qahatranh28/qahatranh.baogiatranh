@@ -11,6 +11,7 @@ export default function Sidebar({
   onAddProductClick,
   onCreateAdminClick,
   onManageProductsClick,
+  onCostCalculatorClick,
 }) {
   return (
     <>
@@ -185,6 +186,28 @@ export default function Sidebar({
                   <span>Tạo tài khoản hệ thống</span>
                 </button>
               )}
+
+              {/* 🌟 Công cụ tính giá thành khung tranh: đã chuyển khỏi giao diện
+                  báo giá chính, giờ mở qua nút này — nằm ngay dưới nút
+                  "Tạo tài khoản hệ thống". Giữ 1 nội dung tương tự: chỉ dành
+                  cho admin/editor (canSeeCost), không hiện với sale. */}
+              <button
+                onClick={() => {
+                  onCostCalculatorClick?.()
+                  onClose?.()
+                }}
+                className={`w-full flex items-center gap-2 py-2 px-3 text-sm font-medium rounded-md transition-colors text-left ${
+                  view === 'costTool'
+                    ? 'bg-amber/10 text-amber'
+                    : 'text-blueprint hover:bg-paper'
+                }`}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 2.5v3M9 12.5v3M2.5 9h3M12.5 9h3" />
+                  <circle cx="9" cy="9" r="3.5" />
+                </svg>
+                <span>Công cụ tính giá thành</span>
+              </button>
             </div>
           )}
         </nav>

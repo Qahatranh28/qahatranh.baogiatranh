@@ -14,6 +14,7 @@ import OrderHistory from './components/OrderHistory.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import QuoteHeader from './components/QuoteHeader.jsx'
 import FrameCostCalculator from './components/FrameCostCalculator.jsx'
+import DefaultPricesPanel from './components/DefaultPricesPanel.jsx'
 import SalesDashboard from './components/SalesDashboard.jsx'
 import { formatVND } from './utils/format.js'
 import { useQuoteBuilder } from './hooks/useQuoteBuilder.js'
@@ -63,9 +64,6 @@ export default function App() {
     settings,
     updateSetting,
     resetSettings,
-    standardPrices,
-    updateStandardPrice,
-    resetStandardPrices,
     typeRates,
     updateTypeRate,
     resetTypeRates,
@@ -88,6 +86,7 @@ export default function App() {
         onAddProductClick={() => setIsAddProductModalOpen(true)}
         onCreateAdminClick={() => setIsCreateAdminModalOpen(true)}
         onManageProductsClick={() => setIsManageProductsModalOpen(true)}
+        onCostCalculatorClick={() => setView('costTool')}
       />
 
       <div className="flex-1 min-w-0 pb-28 lg:pb-10">
@@ -113,6 +112,17 @@ export default function App() {
               canSeeCost={canSeeCost}
               currentUser={user}
               isSaleRole={isSaleRole}
+            />
+          </div>
+        ) : view === 'costTool' && canSeeCost ? (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <FrameCostCalculator
+              settings={settings}
+              updateSetting={updateSetting}
+              resetSettings={resetSettings}
+              typeRates={typeRates}
+              updateTypeRate={updateTypeRate}
+              resetTypeRates={resetTypeRates}
             />
           </div>
         ) : (
@@ -146,6 +156,9 @@ export default function App() {
                 items={items}
                 onRemove={handleRemoveItem}
                 itemsSubtotal={itemsSubtotal}
+                palletPackagingEnabled={palletPackagingEnabled}
+                palletPackagingTierId={palletPackagingTierId}
+                palletPackagingFee={palletPackagingFee}
               />
               <PalletPackagingOption
                 enabled={palletPackagingEnabled}
@@ -174,17 +187,7 @@ export default function App() {
             {canSeeCost && (
               <div className="max-w-5xl mx-auto px-4 sm:px-6">
                 <AdminPanel itemsCost={itemsCost} itemsTotal={itemsTotal} />
-                <FrameCostCalculator
-                  settings={settings}
-                  updateSetting={updateSetting}
-                  resetSettings={resetSettings}
-                  standardPrices={standardPrices}
-                  updateStandardPrice={updateStandardPrice}
-                  resetStandardPrices={resetStandardPrices}
-                  typeRates={typeRates}
-                  updateTypeRate={updateTypeRate}
-                  resetTypeRates={resetTypeRates}
-                />
+                <DefaultPricesPanel />
               </div>
             )}
           </>

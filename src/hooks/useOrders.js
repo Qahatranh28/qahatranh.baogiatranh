@@ -76,7 +76,10 @@ export function useOrders() {
             createdAt: orderDate,
             date: orderDate, // Đảm bảo hỗ trợ cả biến date nếu component cũ cần
             status: order.status || 'chua_chot',
-            idUser: order.id_user ?? null // 🌟 định danh sale đã tạo báo giá này
+            idUser: order.id_user ?? null, // 🌟 định danh sale đã tạo báo giá này
+            // 🌟 Đọc lại phí đóng gói Pallet đã lưu — để OrderHistory hiện đúng dòng này.
+            palletPackagingFee: Number(order.pallet_packaging_fee) || 0,
+            palletPackagingTierId: order.pallet_packaging_tier_id ?? null,
           }
         })
         
@@ -107,7 +110,12 @@ export function useOrders() {
           total_profit: orderData.profit || 0,
           profit_margin: orderData.margin || 0,
           status: 'chua_chot',
-          id_user: orderData.idUser ?? null // 🌟 gắn báo giá này với user (sale) đang đăng nhập
+          id_user: orderData.idUser ?? null, // 🌟 gắn báo giá này với user (sale) đang đăng nhập
+          // 🌟 Lưu phí đóng gói Pallet để Lịch sử báo giá hiện lại được đúng dòng này.
+          // ⚠️ Cần đảm bảo bảng 'oders' đã có 2 cột: pallet_packaging_fee (numeric),
+          // pallet_packaging_tier_id (text) — nếu chưa có, hãy thêm trên Supabase.
+          pallet_packaging_fee: orderData.palletPackagingFee || 0,
+          pallet_packaging_tier_id: orderData.palletPackagingTierId ?? null,
         }])
         .select()
         .single() 

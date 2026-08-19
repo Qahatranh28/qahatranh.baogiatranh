@@ -3,6 +3,7 @@ import { formatVND, formatPercent } from '../utils/format.js'
 import { exportOrdersToExcel } from '../utils/exportOrdersToExcel.js'
 import { isNhomType } from '../data/frameDefaults.js'
 import { useSalesUsers } from '../hooks/useSalesUsers.js'
+import { getPalletTierById } from '../services/palletPackagingService.js'
 
 function monthKey(isoDate) {
   const d = new Date(isoDate)
@@ -320,7 +321,11 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                         ...(order.palletPackagingFee > 0
                           ? [{
                               id: `pallet-${order.id}`,
-                              name: 'Đóng gói Pallet',
+                              name: `Đóng gói Pallet${
+                                getPalletTierById(order.palletPackagingTierId)
+                                  ? ` (${getPalletTierById(order.palletPackagingTierId).label})`
+                                  : ''
+                              }`,
                               width: 0,
                               height: 0,
                               quantity: 1,
