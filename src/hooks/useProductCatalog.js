@@ -97,6 +97,10 @@ export function useProductCatalog() {
             width,
             height,
             price: s.price != null ? Number(s.price) : null,
+            // 🌟 Giá bán khi khách bật "In tranh" — lấy từ cột price_print
+            // của bảng frame_size (nếu size_name đó chưa có price_print thì
+            // để null, phía tính giá sẽ tự dùng công thức dự phòng).
+            pricePrint: s.price_print != null ? Number(s.price_print) : null,
           }
         })
       }

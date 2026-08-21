@@ -1,15 +1,15 @@
 import { getTranhInDetail } from '../services/tranhInService.js'
-import { getGlassMicaDetail } from '../services/glassMicaService.js'
+import { getMica2LiDetail } from '../services/glassMicaService.js'
 
 const DEFAULT_FORMEX_ID = 'tranh_in_formex_10ly_mo'
-const DEFAULT_GLASS_ID = 'kinh'
+// 🌟 Khung áo đấu: mặc định vật tư mặt kính/mica là Mica 2 ly lấy giá từ DB (thay "Kính" trước đây).
 const JERSEY_LABOR_HOURS = 3
 
 /**
  * Tính giá vốn khung áo đấu:
  * - Khung: chu vi × đơn giá khung/m (hao hụt 10% cho nhôm)
  * - In tranh: mặc định Formex 10ly mờ
- * - Kính: theo diện tích khung
+ * - Kính (Mica 2 ly): theo diện tích khung
  * - Nhân công: cố định 3 giờ làm áo
  * - Đóng gói + SXC: theo công thức chung
  */
@@ -48,9 +48,9 @@ export function computeJerseyCost(
     nvlTotal += addRow(formexMat.label || 'In Formex 10ly mờ', 'm²', areaM2, formexMat.price)
   }
 
-  const glassMat = getGlassMicaDetail(DEFAULT_GLASS_ID, dbMaterialsList)
+  const glassMat = getMica2LiDetail(dbMaterialsList)
   if (glassMat.price > 0) {
-    nvlTotal += addRow(glassMat.label || 'Kính', 'm²', areaM2, glassMat.price)
+    nvlTotal += addRow(glassMat.label || 'Mica 2 ly', 'm²', areaM2, glassMat.price)
   }
 
   const priceDinhGhim = Number(settings.dinhGhimPerCai) || 0
@@ -95,7 +95,7 @@ export function computeJerseyCost(
 
   let laborTotal = addLabor('Tiền công nhân làm áo đấu', JERSEY_LABOR_HOURS)
   laborTotal += addLabor('Chi phí giờ công làm khung', chieuDaiKhungM * 0.1)
-  laborTotal += addLabor('Chi phí giờ công làm kính', areaM2 * 0.2)
+  laborTotal += addLabor('Chi phí giờ công làm mica', areaM2 * 0.2)
 
   if (toggles.dongGoi) {
     laborTotal += addLabor('Chi phí giờ công đóng gói', areaM2 * 0.5)

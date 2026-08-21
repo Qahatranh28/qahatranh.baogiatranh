@@ -83,7 +83,7 @@ export default function ResultPanel({
           <span>{hasDimensions ? height.toFixed(1) : '0'} cm</span>
         </div>
         {!hideArea && (
-          <p className="mt-3 font-mono text-3xl font-medium text-orange-500">
+          <p className="mt-3 font-mono text-3xl font-medium text-[#ff4f25]">
             {area.toFixed(2)} <span className="text-lg text-white/50">m²</span>
           </p>
         )}
@@ -141,13 +141,13 @@ export default function ResultPanel({
         <p className="font-mono text-xs uppercase tracking-widest text-paper/50 mb-1">
           Thành tiền
         </p>
-        <p className="font-mono text-4xl sm:text-5xl font-bold text-orange-500 break-all mb-5">
+        <p className="font-mono text-4xl sm:text-5xl font-bold text-[#ff4f25] break-all mb-5">
           {formatVND(lineTotal)}
         </p>
         <button
           onClick={onAdd}
           disabled={!canAdd}
-          className="w-full bg-amber hover:bg-amber-light disabled:bg-paper/15 disabled:cursor-not-allowed disabled:text-paper/40 text-blueprint font-medium rounded-md py-3 transition-colors"
+          className="w-full bg-[#ff4f25] hover:bg-[#e0441e] disabled:bg-paper/15 disabled:cursor-not-allowed disabled:text-paper/40 text-white font-medium rounded-md py-3 transition-colors"
         >
           {canOrder ? '+ Thêm vào danh sách' : 'Đăng nhập để tạo báo giá'}
         </button>

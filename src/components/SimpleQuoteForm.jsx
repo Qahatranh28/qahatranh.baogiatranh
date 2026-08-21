@@ -1,8 +1,10 @@
 import OptionSelect from './OptionSelect.jsx'
+import LuxurySelect from './LuxurySelect.jsx';
 
 export default function SimpleQuoteForm({
+  selections, // 🌟 1. THÊM selections VÀO ĐÂY
   khungCategory,
-  khungType,
+  khungType, // Vẫn giữ nguyên phòng trường hợp các form khác truyền trực tiếp
   sizeLabel,
   categoryOptions,
   typeOptions,
@@ -12,9 +14,8 @@ export default function SimpleQuoteForm({
   onKhungTypeChange,
   onSizeChange,
   onQuantityChange,
-  onWidthChange,   // 👈 Thêm props cập nhật chiều rộng từ cha (nếu có)
-  onHeightChange,  // 👈 Thêm props cập nhật chiều dài từ cha (nếu có)
-  // 🌟 Size lẻ
+  onWidthChange,
+  onHeightChange,
   isOddSize,
   oddWidth,
   oddHeight,
@@ -22,27 +23,29 @@ export default function SimpleQuoteForm({
   onToggleOddSize,
   onOddWidthChange,
   onOddHeightChange,
+  tranhInOn = true,
+  onToggleTranhIn,
 }) {
   const selectWrapClass =
     'w-full border border-line rounded-lg px-3 py-2.5 text-sm outline-none focus:border-amber bg-white font-medium text-blueprint shadow-sm'
 
-  // 🌟 Hàm xử lý khi chọn kích thước tiêu chuẩn: Vừa cập nhật size, vừa tự bóc tách số điền vào width và height
   const handleSizeSelect = (selectedSize) => {
     onSizeChange(selectedSize);
 
     if (selectedSize) {
-      // Chỉ lấy các con số đứng trước chữ "cm" hoặc 2 số đầu tiên để tránh bị dính chữ A5
       const nums = selectedSize.match(/\d+/g);
       if (nums && nums.length >= 2) {
-        // Lấy đúng số thứ 1 làm rộng, số thứ 2 làm dài
-        if (onWidthChange) onWidthChange(Number(nums[0]));   // -> 15
-        if (onHeightChange) onHeightChange(Number(nums[1]));  // -> 21
+        if (onWidthChange) onWidthChange(Number(nums[0]));
+        if (onHeightChange) onHeightChange(Number(nums[1]));
       }
     } else {
       if (onWidthChange) onWidthChange(0);
       if (onHeightChange) onHeightChange(0);
     }
   };
+
+  // 🌟 2. LẤY GIÁ TRỊ TỪ SELECTIONS NẾU CÓ, NẾU KHÔNG THÌ LẤY KHUNGTYPE
+  const activeKhungType = selections?.khungType || khungType;
 
   return (
     <div className="space-y-4">
@@ -54,7 +57,7 @@ export default function SimpleQuoteForm({
           Loại khung
         </label>
         <div className={selectWrapClass}>
-          <OptionSelect
+          <LuxurySelect
             id="khungCategory"
             value={khungCategory}
             onChange={onKhungCategoryChange}
@@ -71,9 +74,9 @@ export default function SimpleQuoteForm({
           Tên khung
         </label>
         <div className={selectWrapClass}>
-          <OptionSelect
+          <LuxurySelect
             id="khungType"
-            value={khungType}
+            value={activeKhungType} // 🌟 3. SỬ DỤNG BIẾN MỚI TẠO Ở TRÊN ĐỂ KHÔNG BỊ TRỐNG
             onChange={onKhungTypeChange}
             options={typeOptions}
           />
@@ -93,7 +96,7 @@ export default function SimpleQuoteForm({
             onClick={() => onToggleOddSize?.(!isOddSize)}
             className={`text-xs font-mono px-2.5 py-1 rounded-md border transition-colors ${
               isOddSize
-                ? 'bg-amber text-blueprint border-amber font-bold'
+                ? 'bg-[#ff4f25] text-white shadow-sm font-bold'
                 : 'border-line text-blueprint-light hover:border-amber hover:text-blueprint'
             }`}
           >
@@ -141,14 +144,43 @@ export default function SimpleQuoteForm({
           </div>
         ) : (
           <div className={selectWrapClass}>
-            <OptionSelect
+            <LuxurySelect
               id="khungSize"
               value={sizeLabel}
-              onChange={handleSizeSelect} // 👈 Dùng hàm bóc tách thông minh vừa viết
+              onChange={handleSizeSelect}
               options={sizeOptions.map((o) => o.label)}
             />
           </div>
         )}
+      </div>
+
+      {/* IN TRANH */}
+      <div
+        className="flex items-center justify-between p-3 rounded-lg border border-line bg-white shadow-sm cursor-pointer group transition-colors hover:bg-paper"
+        onClick={() => onToggleTranhIn?.(!tranhInOn)}
+      >
+        <div>
+          <span className="font-bold text-xs uppercase tracking-widest text-blueprint group-hover:text-[#ff4f25]/80 transition-colors select-none">
+            In tranh
+          </span>
+          <p className="text-[11px] text-blueprint-light mt-0.5">
+            {tranhInOn ? 'Vật tư: tranh in 5 ly mờ' : 'Vật tư: ván lót 4 ly'}
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={Boolean(tranhInOn)}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+            tranhInOn ? 'bg-[#ff4f25]' : 'bg-gray-300'
+          }`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+              tranhInOn ? 'translate-x-5' : 'translate-x-0'
+            }`}
+          />
+        </button>
       </div>
 
       <div>

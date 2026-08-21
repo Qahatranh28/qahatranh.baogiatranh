@@ -50,8 +50,8 @@ export default function QuoteForm({ mode, onModeChange, onToggleChange, toggles,
               onClick={() => onModeChange(tab.id)}
               className={`px-3 py-2 rounded-lg text-xs font-mono uppercase tracking-wider text-center transition-all ${
                 mode === tab.id
-                  ? 'bg-amber text-blueprint shadow-sm font-bold'
-                  : 'text-blueprint/60 hover:bg-amber/10 hover:text-blueprint'
+                  ? 'bg-[#ff4f25] text-white shadow-sm font-bold'
+                  : 'text-black hover:bg-[#FF8F00]/20 hover:text-[#ff4f25]'
               }`}
             >
               {tab.label}

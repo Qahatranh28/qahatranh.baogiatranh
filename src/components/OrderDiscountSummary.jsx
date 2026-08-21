@@ -46,20 +46,13 @@ export default function OrderDiscountSummary({
           {Number(discountPercent) > 0 && (
             <div className="flex items-center justify-end gap-3 text-sm mb-1">
               <dt className="text-paper/60">Chiết khấu</dt>
-              <dd className="font-mono text-amber">-{discountPercent}%</dd>
+              <dd className="font-mono text-[#ff4f25]">-{discountPercent}%</dd>
             </div>
           )}
-          {palletPackagingEnabled && (
-            <div className="flex items-center justify-end gap-3 text-sm mb-1">
-              <dt className="text-paper/60">Đóng gói pallet</dt>
-              <dd className="font-mono text-amber">
-                {palletPackagingFee > 0 ? `+${formatVND(palletPackagingFee)}` : '—'}
-              </dd>
-            </div>
-          )}
+          
           <div className="flex items-baseline justify-end gap-3 mt-2">
             <dt className="text-xs uppercase tracking-widest text-paper/50">Tổng tiền</dt>
-            <dd className="font-mono text-3xl font-bold text-amber">{formatVND(itemsTotal)}</dd>
+            <dd className="font-mono text-3xl font-bold text-[#ff4f25]">{formatVND(itemsTotal)}</dd>
           </div>
         </dl>
       </div>

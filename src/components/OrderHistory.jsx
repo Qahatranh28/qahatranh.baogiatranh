@@ -125,7 +125,7 @@ function ItemCostBreakdown({ item }) {
   )
 }
 
-export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus, currentUser, isSaleRole }) {
+export default function OrderHistory({ orders, onDelete, isAdmin, canSeeMargin = isAdmin, onUpdateStatus, currentUser, isSaleRole }) {
   const [expandedId, setExpandedId] = useState(null)
   const [expandedItemId, setExpandedItemId] = useState(null)
   // 🌟 Chỉ cần tải tên sale khi có quyền xem (admin/editor) — dùng để hiện "Người báo giá"
@@ -162,7 +162,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
   )
 
   const handleExport = () => {
-    exportOrdersToExcel(filteredOrders, monthLabel(selectedMonth), isAdmin)
+    exportOrdersToExcel(filteredOrders, monthLabel(selectedMonth), canSeeMargin)
   }
 
   if (scopedOrders.length === 0) {
@@ -219,12 +219,12 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
       </div>
 
       {/* Tổng kết theo bộ lọc hiện tại */}
-      <div className={`grid ${isAdmin ? 'grid-cols-2' : 'grid-cols-1'} gap-4 mb-6`}>
+      <div className={`grid ${canSeeMargin ? 'grid-cols-2' : 'grid-cols-1'} gap-4 mb-6`}>
         <div className="bg-paper rounded-lg p-4">
           <p className="text-xs text-blueprint/60 mb-1">Doanh thu</p>
           <p className="font-mono text-lg text-blueprint">{formatVND(monthRevenue)}</p>
         </div>
-        {isAdmin && (
+        {canSeeMargin && (
           <div className="bg-blueprint rounded-lg p-4">
             <p className="text-xs text-paper/60 mb-1">Tổng lợi nhuận</p>
             <p className="font-mono text-lg font-bold text-amber">{formatVND(monthProfit)}</p>
@@ -284,7 +284,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                     <p className="font-mono text-sm text-blueprint">
                       {formatVND(order.itemsTotal)}
                     </p>
-                    {isAdmin && (
+                    {canSeeMargin && (
                       <p
                         className={`font-mono text-xs ${
                           isLowMargin ? 'text-red-600' : 'text-amber'
@@ -312,7 +312,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                         <th className="text-right font-normal pb-2">Kích thước</th>
                         <th className="text-right font-normal pb-2">SL</th>
                         <th className="text-right font-normal pb-2">Thành tiền</th>
-                        {isAdmin && <th className="w-8" />}
+                        {canSeeMargin && <th className="w-8" />}
                       </tr>
                     </thead>
                     <tbody>
@@ -358,7 +358,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                               <td className="py-2 text-right font-mono text-blueprint/70 align-top">
                                 {formatVND(item.lineTotal)}
                               </td>
-                              {isAdmin && (
+                              {canSeeMargin && (
                                 <td className="py-2 text-center align-top">
                                   <button
                                     onClick={() => setExpandedItemId(itemOpen ? null : itemKey)}
@@ -370,7 +370,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                                 </td>
                               )}
                             </tr>
-                            {isAdmin && itemOpen && item.costBreakdown && (
+                            {canSeeMargin && itemOpen && item.costBreakdown && (
                               <tr>
                                 <td colSpan={5} className="pb-3">
                                   <ItemCostBreakdown item={item} />
@@ -402,7 +402,7 @@ export default function OrderHistory({ orders, onDelete, isAdmin, onUpdateStatus
                       <dt className="text-xs text-blueprint/50">Tổng tiền</dt>
                       <dd className="font-mono text-blueprint">{formatVND(order.itemsTotal)}</dd>
                     </div>
-                    {isAdmin && (
+                    {canSeeMargin && (
                       <>
                         <div>
                           <dt className="text-xs text-blueprint/50">Giá vốn</dt>

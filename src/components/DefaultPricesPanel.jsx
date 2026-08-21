@@ -143,7 +143,7 @@ export default function DefaultPricesPanel() {
     <section className="bg-white rounded-2xl border border-amber/30 shadow-sm p-6 sm:p-8 mt-6">
       <div className="flex items-center justify-between gap-4 mb-1">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-widest bg-amber text-white px-2 py-0.5 rounded">
+          <span className="font-mono text-[10px] uppercase tracking-widest bg-[#ff4f25] text-white px-2 py-0.5 rounded">
             Admin
           </span>
           <h2 className="font-display font-semibold text-lg text-blueprint">

@@ -25,6 +25,9 @@ export function useQuoteBuilder() {
   const { user, isAdmin, login, logout } = useAdminAuth()
   const isSaleRole = isAdmin && user?.role === 'sale'
   const canSeeCost = isAdmin && user?.role !== 'sale'
+  // 🌟 canSeeMargin: CHỈ role admin — editor "làm mọi thứ" như admin (canSeeCost
+  // vẫn đúng cho editor) nhưng KHÔNG được xem giá vốn/biên lợi nhuận/chi tiết vật tư.
+  const canSeeMargin = isAdmin && user?.role === 'admin'
   const { orders, saveOrder, deleteOrder, updateOrderStatus } = useOrders()
   const { settings, updateSetting, resetSettings } = useFrameSettings()
   const { standardPrices, updateStandardPrice, resetStandardPrices } = useStandardPrices()
@@ -62,11 +65,14 @@ export function useQuoteBuilder() {
     activeGetSizes,
     activeGetImage,
     rawCatalog,
-    canSeeCost,
+    // 🌟 canSeeCost ở đây quyết định có tính/hiện costDisplay (Giá vốn) hay
+    // không — cố tình truyền canSeeMargin (chỉ admin) thay vì canSeeCost
+    // (admin+editor) để editor không thấy giá vốn trong ResultPanel.
+    canSeeCost: canSeeMargin,
   })
 
-  const moebe = useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost })
-  const jersey = useJerseyQuoteState({ settings, dbMaterialsList, canSeeCost })
+  const moebe = useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost: canSeeMargin })
+  const jersey = useJerseyQuoteState({ settings, dbMaterialsList, canSeeCost: canSeeMargin })
 
   const cart = useQuoteCart({ isAdmin, user, saveOrder })
 
@@ -159,6 +165,9 @@ export function useQuoteBuilder() {
           },
           onOddWidthChange: simpleCustom.setOddWidth,
           onOddHeightChange: simpleCustom.setOddHeight,
+          // 🌟 Bật/tắt In tranh riêng cho Khung tiêu chuẩn (giống Moebe)
+          tranhInOn: simpleCustom.simpleTranhInOn,
+          onToggleTranhIn: simpleCustom.onToggleSimpleTranhIn,
         }
       : {}),
 
@@ -177,6 +186,14 @@ export function useQuoteBuilder() {
           onPrintWidthChange: moebe.setPrintWidth,
           onPrintHeightChange: moebe.setPrintHeight,
           tranhInLabel: moebe.tranhInLabel,
+          // 🌟 Size lẻ (giống Khung tiêu chuẩn)
+          isOddSize: moebe.isOddSize,
+          oddWidth: moebe.oddWidth,
+          oddHeight: moebe.oddHeight,
+          oddSizeMatch: moebe.oddSizeMatch,
+          onToggleOddSize: moebe.onToggleOddSize,
+          onOddWidthChange: moebe.onOddWidthChange,
+          onOddHeightChange: moebe.onOddHeightChange,
         }
       : {}),
 
@@ -216,11 +233,13 @@ export function useQuoteBuilder() {
     canOrder: isAdmin,
     imageSrc: mode === 'jersey' ? jersey.previewImage : activeState.previewImage,
     costDisplay: activeState.costDisplay,
-    costDisplayLabel: canSeeCost ? 'Giá vốn' : 'Giá bán',
-    isAdmin: canSeeCost,
+    costDisplayLabel: canSeeMargin ? 'Giá vốn' : 'Giá bán',
+    isAdmin: canSeeMargin,
     matchedStandardSizeLabel:
       mode === 'simple' && simpleCustom.isOddSize && simpleCustom.oddSizeMatch
         ? simpleCustom.oddSizeMatch.label
+        : mode === 'moebe' && moebe.isOddSize && moebe.oddSizeMatch
+        ? moebe.oddSizeMatch.label
         : null,
     hideArea: mode === 'jersey',
     mode,
@@ -228,7 +247,7 @@ export function useQuoteBuilder() {
     khungType: activeState.selections?.khungType || activeState.selectedFrame?.name || '',
     // 🌟 Ô "Chi tiết vật tư cấu thành" chỉ hiển thị khi role thực sự là admin
     // (không hiện với editor/sale), khác với `canSeeCost` vốn cho cả editor.
-    isAdminRole: user?.role === 'admin',
+    isAdminRole: canSeeMargin,
   }
 
   return {
@@ -252,6 +271,7 @@ export function useQuoteBuilder() {
     user,
     isAdmin,
     canSeeCost,
+    canSeeMargin,
     isSaleRole,
     handleLogin: login,
     handleLogout: logout,

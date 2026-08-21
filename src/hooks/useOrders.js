@@ -68,7 +68,12 @@ export function useOrders() {
             id: order.id_oder,
             customerName: order.customer_name || 'Khách lẻ',
             items: items,
-            itemsSubtotal: order.total_revenue || 0,
+            // 🌟 items_subtotal = tổng tiền TRƯỚC chiết khấu/pallet (nếu bản ghi cũ
+            // chưa có cột này thì tạm lấy lại total_revenue như trước để không vỡ layout).
+            itemsSubtotal:
+              order.items_subtotal !== null && order.items_subtotal !== undefined
+                ? Number(order.items_subtotal) || 0
+                : order.total_revenue || 0,
             itemsTotal: order.total_revenue || 0,
             itemsCost: totalCost,
             profit: order.total_profit || 0,
@@ -80,6 +85,8 @@ export function useOrders() {
             // 🌟 Đọc lại phí đóng gói Pallet đã lưu — để OrderHistory hiện đúng dòng này.
             palletPackagingFee: Number(order.pallet_packaging_fee) || 0,
             palletPackagingTierId: order.pallet_packaging_tier_id ?? null,
+            // 🌟 Đọc lại % chiết khấu đã lưu — để OrderHistory hiện đúng dòng "Chiết khấu".
+            discountPercent: Number(order.discount_percent) || 0,
           }
         })
         
@@ -112,10 +119,14 @@ export function useOrders() {
           status: 'chua_chot',
           id_user: orderData.idUser ?? null, // 🌟 gắn báo giá này với user (sale) đang đăng nhập
           // 🌟 Lưu phí đóng gói Pallet để Lịch sử báo giá hiện lại được đúng dòng này.
-          // ⚠️ Cần đảm bảo bảng 'oders' đã có 2 cột: pallet_packaging_fee (numeric),
-          // pallet_packaging_tier_id (text) — nếu chưa có, hãy thêm trên Supabase.
+          // ⚠️ Cần đảm bảo bảng 'oders' đã có các cột sau (nếu chưa có, hãy thêm trên Supabase):
+          //   - pallet_packaging_fee (numeric), pallet_packaging_tier_id (text)
+          //   - discount_percent (numeric) — % chiết khấu đã áp dụng
+          //   - items_subtotal (numeric) — tổng tiền TRƯỚC chiết khấu/pallet
           pallet_packaging_fee: orderData.palletPackagingFee || 0,
           pallet_packaging_tier_id: orderData.palletPackagingTierId ?? null,
+          discount_percent: orderData.discountPercent || 0,
+          items_subtotal: orderData.itemsSubtotal || 0,
         }])
         .select()
         .single() 

@@ -41,6 +41,7 @@ export default function App() {
     user,
     isAdmin,
     canSeeCost,
+    canSeeMargin,
     isSaleRole,
     handleLogin,
     handleLogout,
@@ -78,6 +79,7 @@ export default function App() {
         onViewChange={setView}
         isAdmin={isAdmin}
         canSeeCost={canSeeCost}
+        canSeeMargin={canSeeMargin}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onLoginClick={() => setShowLogin(true)}
@@ -100,6 +102,7 @@ export default function App() {
               orders={orders}
               onDelete={deleteOrder}
               isAdmin={canSeeCost}
+              canSeeMargin={canSeeMargin}
               onUpdateStatus={updateOrderStatus}
               currentUser={user}
               isSaleRole={isSaleRole}
@@ -110,11 +113,12 @@ export default function App() {
             <SalesDashboard
               orders={orders}
               canSeeCost={canSeeCost}
+              canSeeMargin={canSeeMargin}
               currentUser={user}
               isSaleRole={isSaleRole}
             />
           </div>
-        ) : view === 'costTool' && canSeeCost ? (
+        ) : view === 'costTool' && canSeeMargin ? (
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <FrameCostCalculator
               settings={settings}
@@ -186,7 +190,7 @@ export default function App() {
 
             {canSeeCost && (
               <div className="max-w-5xl mx-auto px-4 sm:px-6">
-                <AdminPanel itemsCost={itemsCost} itemsTotal={itemsTotal} />
+                {canSeeMargin && <AdminPanel itemsCost={itemsCost} itemsTotal={itemsTotal} />}
                 <DefaultPricesPanel />
               </div>
             )}

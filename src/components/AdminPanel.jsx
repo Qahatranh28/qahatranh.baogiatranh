@@ -11,7 +11,7 @@ export default function AdminPanel({ itemsCost, itemsTotal }) {
       className="bg-white rounded-2xl border border-amber/30 shadow-sm p-6 sm:p-8 mt-6"
     >
       <div className="flex items-center gap-2 mb-1">
-        <span className="font-mono text-[10px] uppercase tracking-widest bg-amber text-white px-2 py-0.5 rounded">
+        <span className="font-mono text-[10px] uppercase tracking-widest bg-[#ff4f25] text-white px-2 py-0.5 rounded">
           Admin
         </span>
         <h2 id="admin-heading" className="font-display font-semibold text-lg text-blueprint">

@@ -1,6 +1,6 @@
 export default function QuoteHeader({ onMenuClick }) {
   return (
-    <div className="bg-orange-500 rounded-2xl shadow-lg p-6 sm:p-8 flex items-center gap-4">
+    <div className="bg-[#ff4f25] rounded-2xl shadow-lg p-6 sm:p-8 flex items-center gap-4">
       <button
         onClick={onMenuClick}
         aria-label="Mở menu"
@@ -14,7 +14,7 @@ export default function QuoteHeader({ onMenuClick }) {
         <h1 className="font-display font-bold text-2xl sm:text-3xl text-white">
           BẢNG BÁO GIÁ
         </h1>
-        <p className="text-white/60 mt-1">
+        <p className="text-white/80 mt-1">
           Hệ thống tính toán tự động theo yêu cầu
         </p>
       </div>

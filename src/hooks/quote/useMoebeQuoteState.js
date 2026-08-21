@@ -6,12 +6,12 @@ import {
   formatMoebeSizeOption,
 } from '../../services/moebeSizeService.js'
 import { getTranhInDetail } from '../../services/tranhInService.js'
-import { getGlassMicaDetail } from '../../services/glassMicaService.js'
+import { getMica2LiDetail } from '../../services/glassMicaService.js'
 import { computeFrameCost } from '../../utils/frameCosting.js'
 import { getStaticFrameImage } from '../../utils/imageMapper.js'
+import { findRoundUpStandardSize } from '../../config/quoteDefaults.js'
 
 const DEFAULT_TRANH_IN_ID = 'tranh_in_giay_my_thuat'
-const DEFAULT_GLASS_ID = 'kinh'
 
 export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
   const [frameTypes, setFrameTypes] = useState([])
@@ -23,6 +23,11 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
   const [toggles, setToggles] = useState({ tranhIn: true, dongGoi: false })
   const [printWidth, setPrintWidth] = useState('')
   const [printHeight, setPrintHeight] = useState('')
+
+  // 🌟 State mới hỗ trợ Size lẻ
+  const [isOddSize, setIsOddSize] = useState(false)
+  const [oddWidth, setOddWidth] = useState('')
+  const [oddHeight, setOddHeight] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -67,19 +72,39 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
   )
 
   useEffect(() => {
-    if (selectedSize) {
+    if (selectedSize && !isOddSize) {
       setPrintWidth(String(selectedSize.innerWidth || selectedSize.width))
       setPrintHeight(String(selectedSize.innerHeight || selectedSize.height))
     }
-  }, [selectedSize?.id])
+  }, [selectedSize?.id, isOddSize])
 
-  const activeWidth = selectedSize?.width || 0
-  const activeHeight = selectedSize?.height || 0
-  const activeInnerWidth = selectedSize?.innerWidth || 0
-  const activeInnerHeight = selectedSize?.innerHeight || 0
+  // 🌟 Xác định kích thước hoạt động dựa trên việc chọn Size chuẩn hay Size lẻ
+  const activeWidth = isOddSize ? parseFloat(oddWidth) || 0 : (selectedSize?.width || 0)
+  const activeHeight = isOddSize ? parseFloat(oddHeight) || 0 : (selectedSize?.height || 0)
+  const activeInnerWidth = isOddSize ? activeWidth : (selectedSize?.innerWidth || 0)
+  const activeInnerHeight = isOddSize ? activeHeight : (selectedSize?.innerHeight || 0)
+
+  // 🌟 Size lẻ (giống Khung tiêu chuẩn): khi bật, vẫn ÁP GIÁ theo size khung
+  // chuẩn lớn hơn gần nhất (không lấy đúng size chuẩn nào chứa vừa size lẻ,
+  // cho phép xoay ngang/dọc) trong danh sách size của khung Moebe đang chọn.
+  const oddSizeMatch = useMemo(() => {
+    if (!isOddSize) return null
+    return findRoundUpStandardSize(sizeOptions, activeWidth, activeHeight)
+  }, [isOddSize, sizeOptions, activeWidth, activeHeight])
+
+  // 🌟 Xử lý chuyển đổi bật/tắt size lẻ
+  const handleToggleOddSize = useCallback((value) => {
+    setIsOddSize(value)
+    if (value) {
+      // Khi bật size lẻ, mặc định lấy width/height của size chuẩn hiện tại làm mốc
+      if (selectedSize) {
+        setOddWidth(String(selectedSize.width || ''))
+        setOddHeight(String(selectedSize.height || ''))
+      }
+    }
+  }, [selectedSize])
 
   // 🌟 Kích tranh in không được vượt quá kích thước khung đã chọn (phủ bì).
-  // Ghim (clamp) ngay khi người dùng nhập vượt mức, thay vì chỉ báo lỗi.
   const handlePrintWidthChange = useCallback(
     (value) => {
       if (value === '') {
@@ -115,7 +140,8 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
   )
 
   const khungRate = Number(selectedFrame?.price_cost) || 0
-  const glassMat = getGlassMicaDetail(DEFAULT_GLASS_ID, dbMaterialsList)
+  // 🌟 Mặc định vật tư mặt kính/mica của Moebe: Mica 2 ly lấy giá từ DB (thay "Kính").
+  const glassMat = getMica2LiDetail(dbMaterialsList)
   const tranhInMat = getTranhInDetail(DEFAULT_TRANH_IN_ID, dbMaterialsList)
 
   const costResult = useMemo(() => {
@@ -189,11 +215,36 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
     printHeight,
   ])
 
+  // 🌟 Tính đơn giá thông minh:
+  // - Size chuẩn: ưu tiên giá DB (price/pricePrint), fallback công thức x1.2.
+  // - Size lẻ: LẤY GIÁ theo size khung chuẩn LỚN HƠN gần nhất (oddSizeMatch) —
+  //   giống hệt cách "Khung tiêu chuẩn" xử lý Size lẻ. Nếu không có size chuẩn
+  //   nào đủ lớn (khách đặt vượt size lớn nhất), tạm tính theo giá vốn + markup
+  //   (như Custom), thay vì công thức tỉ lệ diện tích cũ.
   const unitPrice = useMemo(() => {
+    if (isOddSize) {
+      if (oddSizeMatch) {
+        if (toggles.tranhIn && oddSizeMatch.pricePrint > 0) return oddSizeMatch.pricePrint
+        if (oddSizeMatch.price > 0) return oddSizeMatch.price
+      }
+      // Chưa có size chuẩn nào đủ lớn phù hợp — tạm tính theo giá vốn + markup.
+      return Math.round(costResult.grandTotal / 0.35)
+    }
+
     if (!selectedSize) return 0
-    if (toggles.tranhIn && selectedSize.pricePrint > 0) return selectedSize.pricePrint
-    return selectedSize.price
-  }, [selectedSize, toggles.tranhIn])
+
+    // KHI KHÁCH CÓ CHỌN IN TRANH (Áp dụng Fallback Pricing)
+    if (toggles.tranhIn) {
+      if (selectedSize.pricePrint && selectedSize.pricePrint > 0) {
+        return selectedSize.pricePrint
+      }
+      if (selectedSize.price && selectedSize.price > 0) {
+        return Math.ceil((selectedSize.price * 1.2) / 10000) * 10000 - 1000
+      }
+    }
+
+    return selectedSize.price || 0
+  }, [selectedSize, toggles.tranhIn, isOddSize, oddSizeMatch, costResult])
 
   const lineTotal = (parseInt(quantity, 10) || 0) * unitPrice
 
@@ -210,11 +261,15 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
     setProductName('')
     setQuantity('1')
     setToggles({ tranhIn: true, dongGoi: false })
+    setIsOddSize(false)
+    setOddWidth('')
+    setOddHeight('')
   }, [])
 
   const buildCartItem = useCallback(() => {
     const qty = parseInt(quantity, 10) || 1
-    const name = productName.trim() || `Khung Moebe ${selectedFrame?.name || ''} ${selectedSize?.label || ''}`.trim()
+    const sizeDescription = isOddSize ? `${activeWidth}x${activeHeight}cm (Size lẻ)` : (selectedSize?.label || '')
+    const name = productName.trim() || `Khung Moebe ${selectedFrame?.name || ''} ${sizeDescription}`.trim()
 
     return {
       id: crypto.randomUUID(),
@@ -231,8 +286,8 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
       selections: {
         khungType: selectedFrame?.name,
         frameId: selectedFrameId,
-        sizeId: selectedSizeId,
-        sizeLabel: selectedSize?.label,
+        sizeId: isOddSize ? 'odd' : selectedSizeId,
+        sizeLabel: sizeDescription,
       },
       unitPrice,
       lineTotal: unitPrice * qty,
@@ -244,6 +299,7 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
     productName,
     selectedFrame,
     selectedSize,
+    isOddSize,
     activeWidth,
     activeHeight,
     activeInnerWidth,
@@ -294,5 +350,13 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
     reset,
     buildCartItem,
     tranhInLabel: tranhInMat.label,
+    // 🌟 Trả thêm các biến size lẻ ra ngoài để form nhận diện
+    isOddSize,
+    onToggleOddSize: handleToggleOddSize,
+    oddWidth,
+    onOddWidthChange: setOddWidth,
+    oddHeight,
+    onOddHeightChange: setOddHeight,
+    oddSizeMatch,
   }
 }

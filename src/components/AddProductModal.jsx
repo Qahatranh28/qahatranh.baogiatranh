@@ -59,54 +59,66 @@ export default function AddProductModal({ isOpen, onClose, onAdded }) {
       if (isAddingNewCat) {
         if (!newCatName.trim()) return alert('Vui lòng nhập tên danh mục mới!')
         
-        // Tự động tạo slug không dấu từ tên danh mục mới (vd: "Khung Nhôm Cao Cấp" -> "khung_nhom_cao_cap")
         finalCategorySlug = newCatName
           .toLowerCase()
           .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[đĐ]/g, 'd')
           .replace(/[^a-z0-9]/g, '_')
           .replace(/_+/g, '_')
           .replace(/^_|_$/g, '')
 
-        // Lưu danh mục mới vào bảng `categories` trên DB
         const { error: catError } = await supabase.from('categories').insert([
           { slug: finalCategorySlug, name: newCatName.trim() }
         ])
         
-        // Bỏ qua lỗi nếu slug đã tồn tại sẵn
         if (catError && !catError.message.includes('duplicate')) {
           throw catError
         }
       }
 
-      // Tự động sinh frame_id độc nhất
-      const normalizedId = name
+      // Tự động sinh frame_id sạch (không kèm timestamp)
+      const frameId = name
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
         .replace(/[^a-z0-9]/g, '_')
         .replace(/_+/g, '_')
         .replace(/^_|_$/g, '')
-      const frameId = `${normalizedId}_${Date.now()}`
+
+      if (!frameId) {
+        return alert('Tên sản phẩm không hợp lệ để tạo mã frame_id!')
+      }
+
+      // Kiểm tra trùng frame_id trong database
+      const { data: existingFrame, error: checkError } = await supabase
+        .from('frame_catalog')
+        .select('frame_id')
+        .eq('frame_id', frameId)
+        .maybeSingle()
+
+      if (checkError) throw checkError
+
+      if (existingFrame) {
+        return alert(`Mã khung "${frameId}" đã tồn tại! Vui lòng chọn tên sản phẩm khác hoặc chỉnh sửa khung hiện có.`)
+      }
 
       let imageUrl = '/images/default.png'
-// Upload ảnh lên Supabase Storage bucket 'qaha tranh', thư mục 'khung tranh'
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop()
         const fileName = `${frameId}.${fileExt}`
-        
-        // 🌟 Thêm đường dẫn thư mục vào trước tên file
         const filePath = `khung tranh/${fileName}`
         
         const { error: uploadError } = await supabase.storage
-          .from('qaha tranh') // 👈 Đổi thành bucket 'qaha tranh'
-          .upload(filePath, imageFile, { upsert: true }) // 👈 Upload vào filePath (đã bao gồm thư mục)
+          .from('qaha tranh')
+          .upload(filePath, imageFile, { upsert: true })
 
         if (uploadError) throw new Error('Lỗi upload ảnh: ' + uploadError.message)
 
         const { data: publicURLData } = supabase.storage
-          .from('qaha tranh') // 👈 Đổi thành bucket 'qaha tranh'
-          .getPublicUrl(filePath) // 👈 Lấy link từ filePath (đã bao gồm thư mục)
+          .from('qaha tranh')
+          .getPublicUrl(filePath)
 
         if (publicURLData?.publicUrl) {
           imageUrl = publicURLData.publicUrl
@@ -118,7 +130,7 @@ export default function AddProductModal({ isOpen, onClose, onAdded }) {
         {
           frame_id: frameId,
           name: name.trim(),
-          category: finalCategorySlug, // Lưu chuẩn dạng slug không dấu
+          category: finalCategorySlug,
           price_cost: Number(priceCost) || 0,
           image_url: imageUrl,
         },

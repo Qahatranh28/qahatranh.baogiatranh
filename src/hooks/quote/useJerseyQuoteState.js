@@ -54,7 +54,13 @@ export function useJerseyQuoteState({ settings, dbMaterialsList, canSeeCost }) {
   // 🌟 Logic lọc: Lấy danh sách khung tương ứng với loại khung đang chọn
   const filteredFrameTypes = useMemo(() => {
     if (!selectedCategory) return []
-    return frameTypes.filter((f) => getCat(f) === selectedCategory)
+    return frameTypes.filter((f) => {
+      const matchCat = getCat(f) === selectedCategory;
+      // Nhận diện khung mỏng (dựa vào tên chứa chữ "mỏng" hoặc "mong")
+      const isThinFrame = f.name?.toLowerCase().includes('mỏng') || f.slug?.toLowerCase().includes('mong');
+      
+      return matchCat && !isThinFrame; // Bắt buộc đúng category VÀ không phải khung mỏng
+    })
   }, [frameTypes, selectedCategory])
 
   useEffect(() => {

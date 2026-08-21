@@ -19,19 +19,28 @@ export function useQuoteCart({ isAdmin, user, saveOrder }) {
     setItems((prev) => [...prev, item])
   }, [])
 
-  const itemsSubtotal = useMemo(() => items.reduce((sum, item) => sum + item.lineTotal, 0), [items])
-  const itemsCost = useMemo(() => items.reduce((sum, item) => sum + item.cost, 0), [items])
-  const discount = Math.min(100, Math.max(0, parseFloat(discountPercent) || 0))
-
+  // 🌟 1. Đưa hàm tính phí pallet lên TRƯỚC để tránh lỗi khởi tạo
   const { fee: palletPackagingFee } = useMemo(
     () => computePalletPackagingFee({ enabled: palletPackagingEnabled, tierId: palletPackagingTierId }),
     [palletPackagingEnabled, palletPackagingTierId]
   )
 
-  const itemsTotal = itemsSubtotal * (1 - discount / 100) + palletPackagingFee
+  // 🌟 2. Sau đó mới tính itemsSubtotal (có cộng dồn luôn tiền Pallet vào Tạm tính)
+  const itemsSubtotal = useMemo(() => {
+    const base = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+    const palletFee = Number(palletPackagingFee) || 0;
+    return base + palletFee;
+  }, [items, palletPackagingFee]);
+
+  const itemsCost = useMemo(() => items.reduce((sum, item) => sum + item.cost, 0), [items])
+  const discount = Math.min(100, Math.max(0, parseFloat(discountPercent) || 0))
+
+  // Lưu ý: Vì itemsSubtotal ở trên đã bao gồm tiền pallet, nên itemsTotal nhân chiết khấu xong ta không cộng thêm palletFee nữa để tránh bị cộng đúp
+  const itemsTotal = itemsSubtotal * (1 - discount / 100)
   const profit = itemsTotal - itemsCost
   const margin = itemsTotal > 0 ? (profit / itemsTotal) * 100 : 0
-  const canExport = isAdmin && items.length > 0
+  const isLowMargin = margin < 55 && itemsTotal > 0;
+  const canExport = isAdmin && items.length > 0 && !isLowMargin;
 
   const handlePalletPackagingToggle = useCallback((checked) => {
     setPalletPackagingEnabled(checked)

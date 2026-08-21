@@ -37,7 +37,7 @@ export default function MaterialBreakdownTable({
         className="w-full flex items-center justify-between gap-2 bg-blueprint text-paper px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-widest"
       >
         <span className="flex items-center gap-1.5">
-          <span className="bg-amber text-blueprint px-1 py-0.5 rounded text-[9px] font-bold">
+          <span className="bg-[#ff4f25] text-white px-1 py-0.5 rounded text-[9px] font-bold">
             Admin
           </span>
           Chi tiết vật tư cấu thành

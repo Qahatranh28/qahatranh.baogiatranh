@@ -45,7 +45,7 @@ function ChartTooltip({ active, payload, label, moneyKeys = [] }) {
   )
 }
 
-export default function SalesDashboard({ orders, canSeeCost, currentUser, isSaleRole }) {
+export default function SalesDashboard({ orders, canSeeCost, canSeeMargin = canSeeCost, currentUser, isSaleRole }) {
   // 🌟 TẤT CẢ hook được gọi vô điều kiện ở đầu component (tuân thủ Rules of Hooks) —
   // việc hiển thị chế độ admin hay sale chỉ quyết định ở phần JSX return bên dưới.
   const { nameById, loading: loadingUsers } = useSalesUsers()
@@ -185,7 +185,9 @@ export default function SalesDashboard({ orders, canSeeCost, currentUser, isSale
   }
 
   // ===================== CHẾ ĐỘ ADMIN/EDITOR =====================
-  // Xem doanh số + biên lợi nhuận trung bình của TẤT CẢ sale.
+  // Xem doanh số của TẤT CẢ sale. Riêng giá vốn/lợi nhuận/biên lợi nhuận CHỈ
+  // hiện với role admin (canSeeMargin) — editor vẫn xem được doanh số theo
+  // Sale nhưng không thấy giá vốn/lợi nhuận.
   return (
     <div className="pb-10">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
@@ -195,22 +197,26 @@ export default function SalesDashboard({ orders, canSeeCost, currentUser, isSale
         {monthSelector}
       </div>
 
-      <div className="grid sm:grid-cols-4 gap-4 mb-6">
+      <div className={`grid sm:grid-cols-2 ${canSeeMargin ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-4 mb-6`}>
         <div className="bg-white rounded-2xl border border-amber/30 shadow-sm p-5">
           <p className="text-xs text-blueprint-light mb-1">Tổng doanh thu (đã chốt)</p>
           <p className="font-mono text-lg font-bold text-blueprint">{formatVND(totals.revenue)}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-amber/30 shadow-sm p-5">
-          <p className="text-xs text-blueprint-light mb-1">Tổng giá vốn</p>
-          <p className="font-mono text-lg font-bold text-blueprint">{formatVND(totals.cost)}</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-amber/30 shadow-sm p-5">
-          <p className="text-xs text-blueprint-light mb-1">Lợi nhuận / Biên TB</p>
-          <p className="font-mono text-lg font-bold text-blueprint">
-            {formatVND(totals.revenue - totals.cost)}{' '}
-            <span className="text-amber text-sm">({formatPercent(totalMargin)})</span>
-          </p>
-        </div>
+        {canSeeMargin && (
+          <>
+            <div className="bg-white rounded-2xl border border-amber/30 shadow-sm p-5">
+              <p className="text-xs text-blueprint-light mb-1">Tổng giá vốn</p>
+              <p className="font-mono text-lg font-bold text-blueprint">{formatVND(totals.cost)}</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-amber/30 shadow-sm p-5">
+              <p className="text-xs text-blueprint-light mb-1">Lợi nhuận / Biên TB</p>
+              <p className="font-mono text-lg font-bold text-blueprint">
+                {formatVND(totals.revenue - totals.cost)}{' '}
+                <span className="text-amber text-sm">({formatPercent(totalMargin)})</span>
+              </p>
+            </div>
+          </>
+        )}
         <div className="bg-white rounded-2xl border border-amber/30 shadow-sm p-5">
           <p className="text-xs text-blueprint-light mb-1">Số đơn đã chốt</p>
           <p className="font-mono text-lg font-bold text-blueprint">{totals.count}</p>
@@ -219,7 +225,7 @@ export default function SalesDashboard({ orders, canSeeCost, currentUser, isSale
 
       {bySale.length > 0 ? (
         <>
-          <div className="grid lg:grid-cols-2 gap-4 mb-6">
+          <div className={`grid ${canSeeMargin ? 'lg:grid-cols-2' : ''} gap-4 mb-6`}>
             <div className="bg-white rounded-2xl border border-line shadow-sm p-6">
               <p className="text-sm font-medium text-blueprint mb-4">Doanh thu theo Sale</p>
               <ResponsiveContainer width="100%" height={280}>
@@ -237,22 +243,24 @@ export default function SalesDashboard({ orders, canSeeCost, currentUser, isSale
               </ResponsiveContainer>
             </div>
 
-            <div className="bg-white rounded-2xl border border-line shadow-sm p-6">
-              <p className="text-sm font-medium text-blueprint mb-4">Biên lợi nhuận trung bình theo Sale</p>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={bySale}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={60} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${v}%`} />
-                  <Tooltip content={<ChartTooltip moneyKeys={[]} />} />
-                  <Bar dataKey="margin" name="Biên LN" radius={[4, 4, 0, 0]}>
-                    {bySale.map((_, i) => (
-                      <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {canSeeMargin && (
+              <div className="bg-white rounded-2xl border border-line shadow-sm p-6">
+                <p className="text-sm font-medium text-blueprint mb-4">Biên lợi nhuận trung bình theo Sale</p>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={bySale}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={60} />
+                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${v}%`} />
+                    <Tooltip content={<ChartTooltip moneyKeys={[]} />} />
+                    <Bar dataKey="margin" name="Biên LN" radius={[4, 4, 0, 0]}>
+                      {bySale.map((_, i) => (
+                        <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl border border-line shadow-sm overflow-hidden overflow-x-auto">
@@ -262,9 +270,13 @@ export default function SalesDashboard({ orders, canSeeCost, currentUser, isSale
                   <th className="px-4 py-3">Sale</th>
                   <th className="px-4 py-3 text-right">Số đơn</th>
                   <th className="px-4 py-3 text-right">Doanh thu</th>
-                  <th className="px-4 py-3 text-right">Giá vốn</th>
-                  <th className="px-4 py-3 text-right">Lợi nhuận</th>
-                  <th className="px-4 py-3 text-right">Biên LN</th>
+                  {canSeeMargin && (
+                    <>
+                      <th className="px-4 py-3 text-right">Giá vốn</th>
+                      <th className="px-4 py-3 text-right">Lợi nhuận</th>
+                      <th className="px-4 py-3 text-right">Biên LN</th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -273,9 +285,13 @@ export default function SalesDashboard({ orders, canSeeCost, currentUser, isSale
                     <td className="px-4 py-3 font-medium text-blueprint">{s.name}</td>
                     <td className="px-4 py-3 text-right font-mono">{s.count}</td>
                     <td className="px-4 py-3 text-right font-mono">{formatVND(s.revenue)}</td>
-                    <td className="px-4 py-3 text-right font-mono">{formatVND(s.cost)}</td>
-                    <td className="px-4 py-3 text-right font-mono">{formatVND(s.profit)}</td>
-                    <td className="px-4 py-3 text-right font-mono text-amber font-medium">{formatPercent(s.margin)}</td>
+                    {canSeeMargin && (
+                      <>
+                        <td className="px-4 py-3 text-right font-mono">{formatVND(s.cost)}</td>
+                        <td className="px-4 py-3 text-right font-mono">{formatVND(s.profit)}</td>
+                        <td className="px-4 py-3 text-right font-mono text-amber font-medium">{formatPercent(s.margin)}</td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>

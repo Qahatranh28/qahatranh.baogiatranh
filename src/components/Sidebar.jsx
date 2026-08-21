@@ -2,7 +2,8 @@ export default function Sidebar({
   view,
   onViewChange,
   isAdmin,
-  canSeeCost,            // 👈 true nếu là admin/editor (không phải sale) - được xem giá vốn/lợi nhuận
+  canSeeCost,            // 👈 true nếu là admin/editor (không phải sale) - được thao tác quản trị sản phẩm
+  canSeeMargin,          // 👈 CHỈ true nếu role admin - được xem giá vốn/lợi nhuận/công cụ tính giá thành
   user,                  // 👈 Thêm prop user để nhận dữ liệu từ App.jsx
   isOpen,
   onClose,
@@ -49,7 +50,7 @@ export default function Sidebar({
               </p>
               <span className={`inline-block mt-2 text-[10px] px-2 py-0.5 rounded font-medium ${
                 user?.role === 'admin' 
-                  ? 'bg-amber text-white' 
+                  ? 'bg-[#ff4f25] text-white' 
                   : user?.role === 'sale'
                   ? 'bg-emerald-100 text-emerald-700'
                   : 'bg-blueprint/10 text-blueprint'
@@ -68,7 +69,7 @@ export default function Sidebar({
             }}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               view === 'create'
-                ? 'bg-orange-500 text-white'
+                ? 'bg-[#ff4f25] text-white'
                 : 'text-gray-600 hover:bg-orange-50 hover:text-orange-500'
             }`}
           >
@@ -88,7 +89,7 @@ export default function Sidebar({
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 view === 'history'
-                  ? 'bg-orange-500 text-white'
+                  ? 'bg-[#ff4f25] text-white'
                   : 'text-gray-600 hover:bg-orange-50 hover:text-orange-500'
               }`}
             >
@@ -114,7 +115,7 @@ export default function Sidebar({
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 view === 'dashboard'
-                  ? 'bg-orange-500 text-white'
+                  ? 'bg-[#ff4f25] text-white'
                   : 'text-gray-600 hover:bg-orange-50 hover:text-orange-500'
               }`}
             >
@@ -187,27 +188,28 @@ export default function Sidebar({
                 </button>
               )}
 
-              {/* 🌟 Công cụ tính giá thành khung tranh: đã chuyển khỏi giao diện
-                  báo giá chính, giờ mở qua nút này — nằm ngay dưới nút
-                  "Tạo tài khoản hệ thống". Giữ 1 nội dung tương tự: chỉ dành
-                  cho admin/editor (canSeeCost), không hiện với sale. */}
-              <button
-                onClick={() => {
-                  onCostCalculatorClick?.()
-                  onClose?.()
-                }}
-                className={`w-full flex items-center gap-2 py-2 px-3 text-sm font-medium rounded-md transition-colors text-left ${
-                  view === 'costTool'
-                    ? 'bg-amber/10 text-amber'
-                    : 'text-blueprint hover:bg-paper'
-                }`}
-              >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 2.5v3M9 12.5v3M2.5 9h3M12.5 9h3" />
-                  <circle cx="9" cy="9" r="3.5" />
-                </svg>
-                <span>Công cụ tính giá thành</span>
-              </button>
+              {/* 🌟 Công cụ tính giá thành khung tranh: chứa "Chi tiết vật tư &
+                  Giá gốc" — CHỈ dành cho role admin, editor không được xem
+                  giá vốn/vật tư nên không thấy nút này. */}
+              {canSeeMargin && (
+                <button
+                  onClick={() => {
+                    onCostCalculatorClick?.()
+                    onClose?.()
+                  }}
+                  className={`w-full flex items-center gap-2 py-2 px-3 text-sm font-medium rounded-md transition-colors text-left ${
+                    view === 'costTool'
+                      ? 'bg-amber/10 text-amber'
+                      : 'text-blueprint hover:bg-paper'
+                  }`}
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 2.5v3M9 12.5v3M2.5 9h3M12.5 9h3" />
+                    <circle cx="9" cy="9" r="3.5" />
+                  </svg>
+                  <span>Công cụ tính giá thành</span>
+                </button>
+              )}
             </div>
           )}
         </nav>

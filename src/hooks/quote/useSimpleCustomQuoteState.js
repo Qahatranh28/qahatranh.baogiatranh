@@ -16,9 +16,9 @@ import {
   OVERSIZE_THRESHOLD_CM,
 } from '../../config/quoteDefaults.js'
 import { parseDimensionsFromSizeName } from '../../utils/sizeParsing.js'
-import { getGlassMicaDetail } from '../../services/glassMicaService.js'
+import { getGlassMicaDetail, getMica2LiDetail, getMica4LiDetail } from '../../services/glassMicaService.js'
 import { getTranhInDetail } from '../../services/tranhInService.js'
-import { getVanDetail } from '../../services/vanService.js'
+import { getVanDetail, getVan4LyDetail } from '../../services/vanService.js'
 import { getGiayBoDetail } from '../../services/giayBoService.js'
 import { getSatXiDetail } from '../../services/satXiService.js'
 
@@ -49,6 +49,8 @@ export function useSimpleCustomQuoteState({
   const [oddHeight, setOddHeight] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [toggles, setToggles] = useState(defaultToggles)
+  
+  const [simpleTranhInOn, setSimpleTranhInOn] = useState(true)
   const [selections, setSelections] = useState(() => ({
     ...defaultSelections,
     khungType: 'Khung Composite Mỏng Đen',
@@ -78,12 +80,22 @@ export function useSimpleCustomQuoteState({
     })
   }, [dynamicTranhInOptions, dynamicVanOptions, dynamicGiayBoOptions, dynamicGlassMicaOptions])
 
+  // 🌟 TRẢ VỀ ĐÚNG MẢNG STRING ĐỂ KHÔNG BỊ KẸT UI
   const currentTypeOptions = useMemo(() => {
+    const rawInCat = rawCatalog?.filter(
+      (c) => c.category === khungCategory || c.category_name === khungCategory
+    ) || []
+    
+    if (rawInCat.length > 0) {
+      return rawInCat.map(c => c.name) // Chỉ trả về tên (chuỗi)
+    }
+
     const fromDb = activeTypesByCategory[khungCategory]
     if (fromDb && fromDb.length > 0) return fromDb
     return getKhungTypesByCategory(khungCategory) || khungTypeOptions
-  }, [activeTypesByCategory, khungCategory])
+  }, [rawCatalog, khungCategory, activeTypesByCategory])
 
+  // 🌟 HÀM KIỂM TRA LỖI NAY ĐÃ NHẬN DIỆN ĐÚNG CHUỖI
   useEffect(() => {
     if (currentTypeOptions.length > 0 && !currentTypeOptions.includes(selections.khungType)) {
       setSelections((prev) => ({ ...prev, khungType: currentTypeOptions[0] }))
@@ -91,8 +103,17 @@ export function useSimpleCustomQuoteState({
   }, [currentTypeOptions])
 
   const activeKhungType = selections.khungType
-  const activeToggles = mode === 'simple' ? simpleToggles : toggles
-  const isKinh = isKinhType(selections.micaKinhType)
+  
+  const simpleToggleState = useMemo(
+    () => ({
+      ...simpleToggles,
+      tranhIn: simpleTranhInOn,
+      van: !simpleTranhInOn,
+    }),
+    [simpleTranhInOn]
+  )
+  const activeToggles = mode === 'simple' ? simpleToggleState : toggles
+  const isKinh = mode === 'simple' ? false : isKinhType(selections.micaKinhType)
   const isNhom = isNhomType(activeKhungType)
 
   const currentSizes = useMemo(() => {
@@ -167,15 +188,25 @@ export function useSimpleCustomQuoteState({
     }
   }, [mode, sizeLabel, activeKhungType, presetDims])
 
+  // Lấy đơn giá khung chính xác
   const catalogItem = rawCatalog?.find(
-    (c) => c.name?.trim().toLowerCase() === activeKhungType?.trim().toLowerCase()
+    (c) => 
+      c.frame_id === activeKhungType || 
+      c.name === activeKhungType ||
+      c.name?.trim().toLowerCase() === activeKhungType?.trim().toLowerCase()
   )
   const khungRate = catalogItem && Number(catalogItem.price_cost) > 0 ? Number(catalogItem.price_cost) : 0
 
-  const glassMat = getGlassMicaDetail(selections.micaKinhType, dbMaterialsList)
+  const isSilkScarf = typeof khungCategory === 'string' && khungCategory.includes('Khăn Lụa')
+  const glassMat =
+    mode === 'simple'
+      ? isSilkScarf && activeWidth > 85 && activeHeight > 85
+        ? getMica4LiDetail(dbMaterialsList)
+        : getMica2LiDetail(dbMaterialsList)
+      : getGlassMicaDetail(selections.micaKinhType, dbMaterialsList)
   const activeTranhInType = mode === 'simple' ? 'tranh_in_5ly_mo' : selections.tranhInType
   const tranhInMat = getTranhInDetail(activeTranhInType, dbMaterialsList)
-  const vanMat = getVanDetail(selections.vanLy, dbMaterialsList)
+  const vanMat = mode === 'simple' ? getVan4LyDetail(dbMaterialsList) : getVanDetail(selections.vanLy, dbMaterialsList)
   const giayBoMat = getGiayBoDetail(selections.giayBoType, dbMaterialsList)
   const satXiMat = getSatXiDetail(dbMaterialsList, settings)
 
@@ -212,31 +243,74 @@ export function useSimpleCustomQuoteState({
     [activeWidth, activeHeight, activeToggles, settings, isKinh, khungRate, isNhom, tranhInMat, glassMat, vanMat, giayBoMat, satXiMat, mode, khungCategory]
   )
 
+  const pickStandardPrice = useCallback(
+    (basePrice, pricePrint) => {
+      const base = Number(basePrice) || 0
+      if (!simpleTranhInOn) return base > 0 ? base : null
+      if (pricePrint != null && Number(pricePrint) > 0) return Number(pricePrint)
+      if (base > 0) return Math.ceil((base * 1.2) / 10000) * 10000 - 1000
+      return null
+    },
+    [simpleTranhInOn]
+  )
+
   const standardPrice = useMemo(() => {
     if (mode !== 'simple') return null
     if (isOddSize) {
-      return oddSizeMatch?.price != null && Number(oddSizeMatch.price) > 0 ? Number(oddSizeMatch.price) : null
+      if (!oddSizeMatch) return null
+      return pickStandardPrice(oddSizeMatch.price, oddSizeMatch.pricePrint)
     }
     if (selectedPreset && typeof selectedPreset === 'object') {
-      const p = Number(selectedPreset.price ?? selectedPreset.price_sell ?? selectedPreset.standard_price)
-      if (!isNaN(p) && p > 0) return p
+      const p = pickStandardPrice(
+        selectedPreset.price ?? selectedPreset.price_sell ?? selectedPreset.standard_price,
+        selectedPreset.pricePrint
+      )
+      if (p != null) return p
     }
     if (standardPrices && typeof standardPrices === 'object') {
       const keyType = `${activeKhungType}_${sizeLabel}`
       const keyCat = `${khungCategory}_${sizeLabel}`
-      if (Number(standardPrices[keyType]) > 0) return Number(standardPrices[keyType])
-      if (Number(standardPrices[keyCat]) > 0) return Number(standardPrices[keyCat])
-      if (Number(standardPrices[sizeLabel]) > 0) return Number(standardPrices[sizeLabel])
+      const base =
+        Number(standardPrices[keyType]) > 0
+          ? Number(standardPrices[keyType])
+          : Number(standardPrices[keyCat]) > 0
+          ? Number(standardPrices[keyCat])
+          : Number(standardPrices[sizeLabel]) > 0
+          ? Number(standardPrices[sizeLabel])
+          : 0
+      if (base > 0) return pickStandardPrice(base, null)
     }
     return null
-  }, [mode, isOddSize, oddSizeMatch, selectedPreset, standardPrices, activeKhungType, khungCategory, sizeLabel])
+  }, [
+    mode,
+    isOddSize,
+    oddSizeMatch,
+    selectedPreset,
+    standardPrices,
+    activeKhungType,
+    khungCategory,
+    sizeLabel,
+    pickStandardPrice,
+  ])
 
   const unitPrice = useMemo(() => {
-    const customCalculatedSell = Math.round(costResult.grandTotal / 0.35)
-    return mode === 'simple' && standardPrice && standardPrice > 0 ? standardPrice : customCalculatedSell
-  }, [costResult, standardPrice, mode])
+    const S = (activeWidth * activeHeight) / 10000;
+    const BaseAdjust = 9874 - 107286 * S;
+    const totalCost = costResult.grandTotal || 0;
+    let price = (totalCost / 0.30) + BaseAdjust;
+    const hasPrint = mode === 'simple' ? simpleTranhInOn : Boolean(activeToggles?.tranhIn);
 
-  const lineTotal = (parseInt(quantity, 10) || 0) * unitPrice
+    if (hasPrint) {
+      const PrintAdjust = 56250 - 318016 * S;
+      price = price + PrintAdjust;
+    }
+    const beautifulPrice = Math.ceil(price / 10000) * 10000 - 1000;
+    const customCalculatedSell = Math.max(0, beautifulPrice);
+    return mode === 'simple' && standardPrice && standardPrice > 0 ? standardPrice : customCalculatedSell;
+  }, [costResult, standardPrice, mode, activeWidth, activeHeight, simpleTranhInOn, activeToggles]);
+
+  const lineTotal = (parseInt(quantity, 10) || 0) * unitPrice;
+
   const previewImage =
     getStaticFrameImage(activeKhungType, sizeLabel) ||
     activeGetImage(mode === 'simple' ? khungCategory : null, activeKhungType, sizeLabel)
@@ -263,15 +337,22 @@ export function useSimpleCustomQuoteState({
     [activeGetSizes, sizeLabel]
   )
 
+  // 🌟 CHUẨN HÓA MẢNG STRING KHI ĐỔI DANH MỤC
   const handleKhungCategoryChange = useCallback(
     (category) => {
       setKhungCategory(category)
-      const typesInCategory = activeTypesByCategory[category] || getKhungTypesByCategory(category) || []
+      
+      const rawInCat = rawCatalog?.filter(c => c.category === category || c.category_name === category) || []
+      const typesInCategory = rawInCat.length > 0 
+        ? rawInCat.map(c => c.name) 
+        : (activeTypesByCategory[category] || getKhungTypesByCategory(category) || [])
+        
       let newKhungType = selections.khungType
       if (typesInCategory.length && !typesInCategory.includes(selections.khungType)) {
         newKhungType = typesInCategory[0]
         setSelections((prev) => ({ ...prev, khungType: newKhungType }))
       }
+      
       const newSizeOptions = (typeof activeGetSizes === 'function' ? activeGetSizes(newKhungType) : []) || []
       if (Array.isArray(newSizeOptions) && newSizeOptions.length > 0) {
         const firstLabel = typeof newSizeOptions[0] === 'object' ? newSizeOptions[0].label : newSizeOptions[0]
@@ -279,7 +360,7 @@ export function useSimpleCustomQuoteState({
         if (!hasCurrentLabel) setSizeLabel(firstLabel)
       }
     },
-    [activeTypesByCategory, selections.khungType, activeGetSizes, sizeLabel]
+    [rawCatalog, activeTypesByCategory, selections.khungType, activeGetSizes, sizeLabel]
   )
 
   const handleModeChangeSideEffects = useCallback(
@@ -302,6 +383,7 @@ export function useSimpleCustomQuoteState({
       setKhungCategory(nextCategory)
       setQuantity('1')
       setToggles(defaultToggles)
+      setSimpleTranhInOn(true)
       setIsOddSize(false)
       setOddWidth('')
       setOddHeight('')
@@ -348,6 +430,8 @@ export function useSimpleCustomQuoteState({
     quantity,
     setQuantity,
     toggles: activeToggles,
+    simpleTranhInOn,
+    onToggleSimpleTranhIn: setSimpleTranhInOn,
     selections,
     khungCategory,
     sizeLabel,
