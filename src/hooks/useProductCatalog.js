@@ -17,7 +17,22 @@ const CATEGORY_LABELS = {
   moebe_silk: 'Khăn Lụa Khung Moebe',
   mirror_silk: 'Khăn Lụa Khung Mirror',
   nhom_day: 'Khung Nhôm Dày 3,5',
+}
+
+// 🌟 Hàm tự động biến đổi mã category không dấu thành tên có dấu, viết hoa gọn gàng
+const getCategoryLabel = (catKey) => {
+  if (!catKey) return ''
   
+  // 1. Nếu đã có sẵn trong từ điển CATEGORY_LABELS thì ưu tiên lấy luôn
+  if (CATEGORY_LABELS[catKey]) {
+    return CATEGORY_LABELS[catKey]
+  }
+  
+  // 2. Nếu là mã mới phát sinh (ví dụ: "khung_tao_lao_ne"), tự động thay dấu gạch dưới thành khoảng trắng và viết hoa chữ cái đầu
+  return catKey
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
 }
 
 export function useProductCatalog() {
@@ -25,7 +40,7 @@ export function useProductCatalog() {
   const [typesByCategory, setTypesByCategory] = useState({})
   const [rawCatalog, setRawCatalog] = useState([])
   const [rawSizes, setRawSizes] = useState([])
-  const [rawMaterials, setRawMaterials] = useState([]) // 👈 Đã khai báo đầy đủ state này
+  const [rawMaterials, setRawMaterials] = useState([]) 
   const [loading, setLoading] = useState(true)
 
   const fetchCatalogData = useCallback(async () => {
@@ -47,14 +62,15 @@ export function useProductCatalog() {
 
       setRawCatalog(catalogData)
       setRawSizes(sizeData)
-      setRawMaterials(materialData) // 👈 Lưu dữ liệu vào state
+      setRawMaterials(materialData)
 
       if (catalogData.length > 0) {
         const catMap = {}
 
         catalogData.forEach((item) => {
           const rawCat = item.category || 'khac'
-          const categoryLabel = CATEGORY_LABELS[rawCat] || rawCat
+          // 🌟 Gọi hàm getCategoryLabel để tự động xử lý nhãn có dấu cho mã mới
+          const categoryLabel = getCategoryLabel(rawCat)
           const typeName = item.name
 
           if (!catMap[categoryLabel]) {
@@ -88,19 +104,12 @@ export function useProductCatalog() {
 
       if (matchedSizes.length > 0) {
         return matchedSizes.map((s) => {
-          // 🌟 DB (bảng frame_size) chỉ lưu size_name + price, KHÔNG có sẵn
-          // width/height cho từng size cố định → tự suy ra chiều dài/chiều
-          // rộng từ size_name khi DB chưa có, để việc so khớp "size lẻ gần
-          // nhất" (findRoundUpStandardSize) hoạt động đúng.
           const { width, height } = resolveSizeDimensions(s)
           return {
             label: s.size_name || `${width || 0} x ${height || 0} cm`,
             width,
             height,
             price: s.price != null ? Number(s.price) : null,
-            // 🌟 Giá bán khi khách bật "In tranh" — lấy từ cột price_print
-            // của bảng frame_size (nếu size_name đó chưa có price_print thì
-            // để null, phía tính giá sẽ tự dùng công thức dự phòng).
             pricePrint: s.price_print != null ? Number(s.price_print) : null,
           }
         })
@@ -130,7 +139,6 @@ export function useProductCatalog() {
     [rawCatalog]
   )
 
-  // 🌟 Hàm lấy ảnh vật liệu từ bảng material an toàn tuyệt đối
   const getMaterialImage = useCallback(
     (materialKey) => {
       const matched = rawMaterials.find(
@@ -169,7 +177,6 @@ export function useProductCatalog() {
 
       const frameId = newFrame.frame_id || `frame_${Date.now()}`
 
-      // 1. Thêm vào bảng frame_catalog (với price_cost)
       const { error: catalogError } = await supabase.from('frame_catalog').insert([
         {
           frame_id: frameId,
@@ -182,7 +189,6 @@ export function useProductCatalog() {
 
       if (catalogError) throw catalogError
 
-      // 2. Nếu có nhập các size cố định thì đẩy tiếp vào bảng frame_size
       if (sizesList && sizesList.length > 0) {
         const sizePayloads = sizesList.map((s) => ({
           frame_id: frameId,
@@ -216,7 +222,6 @@ export function useProductCatalog() {
     }
   }
 
-// Hàm cập nhật giá vốn (price_cost) của vật liệu lên bảng material trên Supabase
   const updateMaterialCost = async (idMaterial, newPrice) => {
     try {
       const { error } = await supabase
@@ -226,7 +231,6 @@ export function useProductCatalog() {
 
       if (error) throw error
 
-      // Cập nhật lại state local ngay lập tức để giao diện phản hồi mượt mà
       setRawMaterials((prev) =>
         prev.map((m) =>
           m.id_material === idMaterial ? { ...m, price_cost: Number(newPrice) } : m
@@ -238,6 +242,7 @@ export function useProductCatalog() {
       return false
     }
   }
+
   const updateFrameCostRate = async (frameName, newRate) => {
     try {
       const { error } = await supabase
@@ -246,16 +251,14 @@ export function useProductCatalog() {
         .eq('name', frameName)
 
       if (error) throw error
-      await refreshCatalog() // Tải lại dữ liệu mới nhất
+      await fetchCatalogData() 
       return true
     } catch (err) {
       console.error('Lỗi khi cập nhật cost_rate:', err.message)
       return false
     }
   }
-  
 
-  // Đảm bảo trả về hàm này trong return của hook:
   return {
     categories,
     typesByCategory,
@@ -266,9 +269,8 @@ export function useProductCatalog() {
     getStandardSizesForType,
     getFrameImage,
     getMaterialImage,
-    updateMaterialCost, // 👈 Thêm vào đây
-    updateFrameCostRate, // 🌟 Fix: hàm này đã được định nghĩa ở trên nhưng thiếu
-    // trong return khiến nút "Lưu" giá gốc khung ở Công cụ tính giá thành bị lỗi.
+    updateMaterialCost,
+    updateFrameCostRate,
     addFrameType,
     deleteFrameType,
     refreshCatalog: fetchCatalogData,
