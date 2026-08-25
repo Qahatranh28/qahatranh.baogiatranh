@@ -2,15 +2,15 @@ import { getTranhInDetail } from '../services/tranhInService.js'
 import { getMica2LiDetail } from '../services/glassMicaService.js'
 
 const DEFAULT_FORMEX_ID = 'tranh_in_formex_10ly_mo'
-// 🌟 Khung áo đấu: mặc định vật tư mặt kính/mica là Mica 2 ly lấy giá từ DB (thay "Kính" trước đây).
+// 🌟 Khung áo đấu: mặc định vật tư mặt kính/mica là Mica 2 ly lấy giá từ DB.
 const JERSEY_LABOR_HOURS = 3
 
 /**
  * Tính giá vốn khung áo đấu:
  * - Khung: chu vi × đơn giá khung/m (hao hụt 10% cho nhôm)
- * - In tranh: mặc định Formex 10ly mờ
- * - Kính (Mica 2 ly): theo diện tích khung
- * - Nhân công: cố định 3 giờ làm áo
+ * - In tranh: mặc định Formex 10ly mờ (x2 nếu là 2 mặt cao cấp)
+ * - Kính (Mica 2 ly): theo diện tích khung (x2 nếu là 2 mặt cao cấp)
+ * - Nhân công: cố định 3 giờ làm áo (x2 nếu là 2 mặt cao cấp)
  * - Đóng gói + SXC: theo công thức chung
  */
 export function computeJerseyCost(
@@ -20,7 +20,8 @@ export function computeJerseyCost(
   isNhom,
   settings = {},
   dbMaterialsList = [],
-  toggles = {}
+  toggles = {},
+  tier = 'basic' // 🌟 Nhận thêm tham số tier để phân biệt gói áo đấu
 ) {
   const w = Number(widthCm) || 0
   const h = Number(heightCm) || 0
@@ -28,6 +29,10 @@ export function computeJerseyCost(
   const chuViM = (2 * (w + h)) / 100
   const tyLeHaoHut = isNhom ? 0.1 : 0.2
   const chieuDaiKhungM = chuViM * (1 + tyLeHaoHut)
+
+  // 🌟 Nếu là 2 mặt cao cấp (2_faces_premium), hệ số nhân vật tư/công nhân liên quan là 2
+  const is2Faces = tier === '2_faces_premium'
+  const multiplier = is2Faces ? 2 : 1
 
   const rows = []
   const addRow = (label, unit, qty, unitPrice) => {
@@ -45,12 +50,17 @@ export function computeJerseyCost(
 
   const formexMat = getTranhInDetail(DEFAULT_FORMEX_ID, dbMaterialsList)
   if (formexMat.price > 0) {
-    nvlTotal += addRow(formexMat.label || 'In Formex 10ly mờ', 'm²', areaM2, formexMat.price)
+    // 🌟 In tranh x2 nếu là 2 mặt cao cấp
+    const qtyInTranh = areaM2 * multiplier
+    const labelSuffix = is2Faces ? ' (2 mặt)' : ''
+    nvlTotal += addRow((formexMat.label || 'In Formex 10ly mờ') + labelSuffix, 'm²', qtyInTranh, formexMat.price)
   }
 
   const glassMat = getMica2LiDetail(dbMaterialsList)
   if (glassMat.price > 0) {
-    nvlTotal += addRow(glassMat.label || 'Mica 2 ly', 'm²', areaM2, glassMat.price)
+    const qtyMica = areaM2 * multiplier
+    const labelSuffix = is2Faces ? ' x2' : '' // 🌟 Sửa x2 thành chuỗi ' x2'
+    nvlTotal += addRow((glassMat.label || 'Mica 2 ly') + labelSuffix, 'm²', qtyMica, glassMat.price)
   }
 
   const priceDinhGhim = Number(settings.dinhGhimPerCai) || 0
@@ -93,9 +103,13 @@ export function computeJerseyCost(
     return total
   }
 
-  let laborTotal = addLabor('Tiền công nhân làm áo đấu', JERSEY_LABOR_HOURS)
+  // 🌟 Tiền công nhân làm áo đấu x2 nếu là 2 mặt cao cấp
+  let laborTotal = addLabor('Tiền công nhân làm áo đấu' + (is2Faces ? ' x2' : ''), JERSEY_LABOR_HOURS * multiplier)
+  
   laborTotal += addLabor('Chi phí giờ công làm khung', chieuDaiKhungM * 0.1)
-  laborTotal += addLabor('Chi phí giờ công làm mica', areaM2 * 0.2)
+  
+  // 🌟 Chi phí giờ công làm mica x2 nếu là 2 mặt cao cấp
+  laborTotal += addLabor('Chi phí giờ công làm mica' + (is2Faces ? ' x2' : ''), (areaM2 * 0.2) * multiplier)
 
   if (toggles.dongGoi) {
     laborTotal += addLabor('Chi phí giờ công đóng gói', areaM2 * 0.5)

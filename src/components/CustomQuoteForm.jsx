@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import ProductNameCombobox from './ProductNameCombobox.jsx'
 import LuxurySelect from './LuxurySelect.jsx'
 
@@ -17,24 +17,31 @@ export default function CustomQuoteForm({
   onQuantityChange,
   onToggleChange,
   onSelectionChange,
-  khungTypeOptions = [], 
-  
+  khungTypeOptions = [],
+
   // Các biến phân nhóm khung
   khungCategory,
   onKhungCategoryChange,
   categoryOptions = [],
   typeOptions = [],
-  
+
   tranhInTypeOptions = [],
-  vanTypeOptions = [],        
-  giayBoTypeOptions = [],      
-  glassMicaOptions = [],
+  giayBoTypeOptions = [],
   tranhInYoutubeUrl,
-  glassMicaYoutubeUrl,
-  vanYoutubeUrl,
   giayBoYoutubeUrl,
   getMaterialImage,
+
+  // 🌟 Giấy bo: Nhận đầy đủ Label và Price
+  giayBoQuantity = '1',
+  onGiayBoQuantityChange,
+  giayBoSizeMatchLabel,
+  giayBoSizeMatchPrice,
 }) {
+
+  // Lọc bỏ các danh mục có chứa chữ "Khăn Lụa"
+  const filteredCategoryOptions = categoryOptions.filter(
+    (cat) => !String(cat).toLowerCase().includes('khăn lụa')
+  )
 
   // Rút gọn tên hiển thị (cắt bỏ các chữ tiếng Anh dài)
   const formatDisplayName = (fullName) => {
@@ -50,7 +57,7 @@ export default function CustomQuoteForm({
     if (!show) return null
 
     const localImages = {
-      'sat_xi': '/images/sat-xi.png', 
+      'sat_xi': '/images/sat-xi.png',
       'son': '/images/son.jpg',
       'dong_goi': '/images/dong-goi.jpg'
     };
@@ -66,53 +73,26 @@ export default function CustomQuoteForm({
       <img
         src={imgUrl}
         alt={materialKey}
-        className="pointer-events-none absolute -top-3 -right-3 z-10 w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-[3px] border-white object-cover shadow-lg bg-gray-50"
+        className="pointer-events-none absolute -top-2.5 -right-2.5 z-10 w-12 h-12 sm:w-14 sm:h-14 rounded-lg border-2 border-white object-cover shadow-md bg-gray-50"
         onError={(e) => {
-          e.target.onerror = null; 
+          e.target.onerror = null;
           e.target.src = '/images/default.png';
         }}
       />
     )
   }
 
-  // Header kèm Nút Công Tắc (Toggle) Luxury
-  const renderToggleHeader = (key, label) => (
-    <div 
-      className="bg-white border-b border-gray-100 px-4 py-3.5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
-      onClick={() => onToggleChange(key, !toggles[key])}
-    >
-      <span className="font-bold text-xs uppercase text-gray-800 tracking-widest select-none">
-        {label}
-      </span>
-      
-      <button
-        type="button"
-        role="switch"
-        aria-checked={Boolean(toggles[key])}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-          toggles[key] ? 'bg-[#ff4f25]' : 'bg-gray-300'
-        }`}
-      >
-        <span
-          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-            toggles[key] ? 'translate-x-5' : 'translate-x-0'
-          }`}
-        />
-      </button>
-    </div>
-  )
-
   // Hàm render link YouTube
   const renderYouTubeLink = (url) => {
     if (!url) return null;
     return (
-      <a 
-        href={url} 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        className="mt-3 text-[11px] font-mono font-bold text-red-500 hover:text-red-600 flex items-center gap-1.5 transition-colors inline-flex"
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 text-[10px] font-mono font-bold text-red-500 hover:text-red-600 flex items-center gap-1 transition-colors inline-flex"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
           <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
         </svg>
         Xem video thực tế
@@ -120,13 +100,53 @@ export default function CustomQuoteForm({
     )
   }
 
+  const ToggleCard = ({ toggleKey, label, thumbnailKey, children, caption }) => (
+    <div className="relative">
+      <div className="rounded-lg border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div
+          className="bg-white px-3.5 py-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+          onClick={() => onToggleChange(toggleKey, !toggles[toggleKey])}
+        >
+          <div className="min-w-0">
+            <span className="font-bold text-xs uppercase text-gray-800 tracking-widest select-none">
+              {label}
+            </span>
+            {caption && (
+              <p className="text-[10px] text-gray-400 mt-0.5 truncate">{caption}</p>
+            )}
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={Boolean(toggles[toggleKey])}
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ml-3 ${
+              toggles[toggleKey] ? 'bg-[#ff4f25]' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                toggles[toggleKey] ? 'translate-x-4' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+        {toggles[toggleKey] && children && (
+          <div className="p-3 bg-gray-50/60 border-t border-gray-100">{children}</div>
+        )}
+      </div>
+      {thumbnailKey && renderCornerThumbnail(toggles[toggleKey], thumbnailKey)}
+    </div>
+  )
+
+  const currentTier = String(selections.customTierOption || '1');
+
   return (
     <div>
       {/* TÊN SẢN PHẨM */}
-      <div className="mb-6">
+      <div className="mb-4">
         <label
           htmlFor="productName"
-          className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2 pl-1 transition-colors"
+          className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 pl-1 transition-colors"
         >
           Tên sản phẩm
         </label>
@@ -137,149 +157,191 @@ export default function CustomQuoteForm({
           options={productNameOptions}
         />
       </div>
-      
+
       {/* KÍCH THƯỚC */}
-      <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-3 shadow-sm my-3">
+      <div className="bg-white border border-gray-200 rounded-lg p-3 space-y-2 shadow-sm mb-4">
         <div className="text-[11px] font-bold text-gray-500 uppercase tracking-widest px-1">
           Kích thước ngoài (cm)
         </div>
 
-        <div className="space-y-2">
-          {/* Hàng Rộng */}
+        <div className="grid grid-cols-2 gap-2">
           <div className="flex items-center justify-between bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
-            <span className="text-sm font-bold text-gray-700 px-3">
-              Chiều Rộng
-            </span>
-            <div className="w-1/2 bg-[#ff4f25] flex items-center">
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="0.1"
-                placeholder="0"
-                value={width}
-                onChange={(e) => onWidthChange(e.target.value)}
-                className="w-full bg-[#ff4f25] px-3 py-2 text-sm text-white placeholder:text-white/70 outline-none font-mono text-center font-bold"
-              />
-            </div>
+            <span className="text-xs font-bold text-gray-700 px-2">Rộng</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.1"
+              placeholder="0"
+              value={width}
+              onChange={(e) => onWidthChange(e.target.value)}
+              className="w-1/2 bg-[#ff4f25] px-2 py-2 text-sm text-white placeholder:text-white/70 outline-none font-mono text-center font-bold"
+            />
           </div>
 
-          {/* Hàng Dài */}
           <div className="flex items-center justify-between bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
-            <span className="text-sm font-bold text-gray-700 px-3">
-              Chiều Dài
-            </span>
-            <div className="w-1/2 bg-[#ff4f25] flex items-center">
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="0.1"
-                placeholder="0"
-                value={height}
-                onChange={(e) => onHeightChange(e.target.value)}
-                className="w-full bg-[#ff4f25] px-3 py-2 text-sm text-white placeholder:text-white/70 outline-none font-mono text-center font-bold"
-              />
-            </div>
+            <span className="text-xs font-bold text-gray-700 px-2">Dài</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.1"
+              placeholder="0"
+              value={height}
+              onChange={(e) => onHeightChange(e.target.value)}
+              className="w-1/2 bg-[#ff4f25] px-2 py-2 text-sm text-white placeholder:text-white/70 outline-none font-mono text-center font-bold"
+            />
           </div>
         </div>
       </div>
 
-      <div className="space-y-5 mt-6">
-        
+      <div className="space-y-2.5">
+
         {/* 1. KHUNG */}
-        <div className="relative">
-          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            {renderToggleHeader('khung', 'Khung')}
-            {toggles.khung && (
-              <div className="flex flex-col gap-4 p-4 bg-gray-50/50">
-                <LuxurySelect
-                  id="khungCategory"
-                  label="Loại khung"
-                  value={khungCategory}
-                  onChange={onKhungCategoryChange}
-                  options={categoryOptions}
-                />
+        <ToggleCard toggleKey="khung" label="Khung">
+          <div className="flex flex-col gap-2.5">
+            <LuxurySelect
+              id="khungCategory"
+              label="Loại khung"
+              value={khungCategory}
+              onChange={onKhungCategoryChange}
+              options={filteredCategoryOptions}
+            />
+            <LuxurySelect
+              id="khungType"
+              label="Tên khung chi tiết"
+              value={selections.khungType}
+              onChange={(val) => onSelectionChange('khungType', val)}
+              options={typeOptions.map(t => ({ value: t, label: formatDisplayName(t) }))}
+            />
+
+            {/* 🌟 TÙY CHỌN RIÊNG CHO GỖ TỰ NHIÊN / COMPOSITE 2X3 */}
+            {(khungCategory === 'Khung Gỗ Tự Nhiên' || khungCategory === 'Khung Composite 2x3') && (
+              <div className="bg-white border border-gray-200 rounded-lg p-3 space-y-3 mt-1 shadow-sm">
                 
-                <LuxurySelect
-                  id="khungType"
-                  label="Tên khung chi tiết"
-                  value={selections.khungType}
-                  onChange={(val) => onSelectionChange('khungType', val)}
-                  // Map lại mảng chuỗi thành mảng object có label đã rút gọn
-                  options={typeOptions.map(t => ({ value: t, label: formatDisplayName(t) }))}
-                />
+                {/* Kiểu & Công tắc Viền Fomex nằm chung 1 hàng */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
+                      Kiểu tùy chọn
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {['1', '2'].map((tier) => (
+                        <button
+                          key={tier}
+                          type="button"
+                          onClick={() => onSelectionChange('customTierOption', tier)}
+                          className={`py-1.5 rounded-md text-xs font-bold border transition-colors ${
+                            currentTier === tier
+                              ? 'bg-[#ff4f25] text-white border-transparent'
+                              : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-[#ff4f25]'
+                          }`}
+                        >
+                          Kiểu {tier}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* CHỈ HIỆN CÔNG TẮC VIỀN FOMEX KHI CHỌN KIỂU 1 */}
+                  {currentTier === '1' && (
+                    <div className="shrink-0 pt-3">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
+                        Viền Fomex
+                      </label>
+                      <div className="flex items-center h-[30px]">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={Boolean(toggles.vienFomex)}
+                          onClick={() => onToggleChange('vienFomex', !toggles.vienFomex)}
+                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                            toggles.vienFomex ? 'bg-[#ff4f25]' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              toggles.vienFomex ? 'translate-x-4' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 🌟 NỘI DUNG LƯU Ý CHO TỪNG KIỂU */}
+                <div className="bg-amber-50 border border-amber-200/60 rounded-md p-2">
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    <span className="font-bold">Lưu ý ({currentTier === '1' ? 'Kiểu 1' : 'Kiểu 2'}):</span>{' '}
+                    {currentTier === '1' 
+                      ? 'Áp dụng thiết kế chuẩn form đơn, hỗ trợ tùy chọn chèn viền fomex bên trong.'
+                      : 'Áp dụng thiết kế cấu trúc kép đặc biệt, không hỗ trợ chèn viền fomex.'}
+                  </p>
+                </div>
+
               </div>
             )}
+
           </div>
-        </div>
+        </ToggleCard>
 
         {/* 2. IN TRANH */}
-        <div className="relative">
-          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            {renderToggleHeader('tranhIn', 'In tranh')}
-            {toggles.tranhIn && (
-              <div className="p-4 bg-gray-50/50">
-                <LuxurySelect
-                  id="tranhInType"
-                  label="Loại tranh in"
-                  value={selections.tranhInType}
-                  onChange={(val) => onSelectionChange('tranhInType', val)}
-                  options={tranhInTypeOptions}
-                />
-                {renderYouTubeLink(tranhInYoutubeUrl)}
-              </div>
-            )}
-          </div>
-          {renderCornerThumbnail(toggles.tranhIn, selections.tranhInType)}
-        </div>
+        <ToggleCard toggleKey="tranhIn" label="In tranh" thumbnailKey={selections.tranhInType}>
+          <LuxurySelect
+            id="tranhInType"
+            label="Loại tranh in"
+            value={selections.tranhInType}
+            onChange={(val) => onSelectionChange('tranhInType', val)}
+            options={tranhInTypeOptions}
+          />
+          {renderYouTubeLink(tranhInYoutubeUrl)}
+        </ToggleCard>
 
-        {/* 3. KÍNH / MICA */}
-        <div className="relative">
-          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            {renderToggleHeader('micaKinh', 'Kính / Mica')}
-            {toggles.micaKinh && (
-              <div className="p-4 bg-gray-50/50">
-                <LuxurySelect
-                  id="micaKinhType"
-                  label="Loại Kính / Mica"
-                  value={selections.micaKinhType}
-                  onChange={(val) => onSelectionChange('micaKinhType', val)}
-                  options={glassMicaOptions}
-                />
-                {renderYouTubeLink(glassMicaYoutubeUrl)}
-              </div>
-            )}
+        {/* 3. MICA */}
+        <ToggleCard
+          toggleKey="micaKinh"
+          label="Mica"
+          thumbnailKey="kinh"
+          caption={!toggles.micaKinh ? 'Mặc định Mica 2 ly' : null}
+        >
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">
+              Số tấm
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {[1, 2].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => onSelectionChange('micaSheets', n)}
+                  className={`py-2 rounded-lg text-sm font-bold border transition-colors ${
+                    Number(selections.micaSheets || 1) === n
+                      ? 'bg-[#ff4f25] text-white border-transparent'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-[#ff4f25]'
+                  }`}
+                >
+                  {n} tấm
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1.5">Mặc định lấy giá Mica 2 ly từ DB.</p>
           </div>
-          {renderCornerThumbnail(toggles.micaKinh, selections.micaKinhType)}
-        </div>
+        </ToggleCard>
 
         {/* 4. VÁN LÓT */}
-        <div className="relative">
-          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            {renderToggleHeader('van', 'Ván lót')}
-            {toggles.van && (
-              <div className="p-4 bg-gray-50/50">
-                <LuxurySelect
-                  id="vanLy"
-                  label="Loại ván lót"
-                  value={selections.vanLy}
-                  onChange={(val) => onSelectionChange('vanLy', val)}
-                  options={vanTypeOptions}
-                />
-                {renderYouTubeLink(vanYoutubeUrl)}
-              </div>
-            )}
-          </div>
-          {renderCornerThumbnail(toggles.van, selections.vanLy)}
-        </div>
+        <ToggleCard
+          toggleKey="van"
+          label="Ván lót"
+          thumbnailKey="van_4ly"
+          caption="Mặc định Ván 4 ly"
+        />
 
         {/* 5. GIẤY BO */}
-        <div className="relative">
-          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            {renderToggleHeader('giayBo', 'Giấy bo')}
-            {toggles.giayBo && (
-              <div className="p-4 bg-gray-50/50">
+        <ToggleCard toggleKey="giayBo" label="Giấy bo" thumbnailKey={selections.giayBoType}>
+          <div className="space-y-2.5">
+            <div className="flex items-end gap-2">
+              <div className="flex-1 min-w-0">
                 <LuxurySelect
                   id="giayBoType"
                   label="Loại giấy bo"
@@ -287,102 +349,72 @@ export default function CustomQuoteForm({
                   onChange={(val) => onSelectionChange('giayBoType', val)}
                   options={giayBoTypeOptions}
                 />
-                {renderYouTubeLink(giayBoYoutubeUrl)}
-              </div>
-            )}
-          </div>
-          {renderCornerThumbnail(toggles.giayBo, selections.giayBoType)}
-        </div>
-
-        {/* 6. SẮT XI */}
-        <div className="relative">
-          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            {renderToggleHeader('satXi', 'Sắt xi')}
-          </div>
-          {renderCornerThumbnail(toggles.satXi, 'sat_xi')}
-        </div>
-
-        {/* 7. SƠN */}
-        <div className="relative">
-          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            {renderToggleHeader('son', 'Sơn')}
-          </div>
-          {renderCornerThumbnail(toggles.son, 'son')}
-        </div>
-
-        {/* 8. ĐÓNG GÓI - GIAO DIỆN LUXURY MỚI */}
-        <div className="relative">
-          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div
-              onClick={() => onToggleChange?.('dongGoi', !toggles.dongGoi)}
-              className={`relative flex items-center gap-3 p-4 cursor-pointer transition-all duration-300 group ${
-                toggles.dongGoi
-                  ? 'bg-white'
-                  : 'bg-[#ff4f25]/5 hover:bg-[#ff4f25]/10'
-              }`}
-            >
-              {/* CỘT 1: Icon */}
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 transition-colors ${
-                toggles.dongGoi ? 'bg-gray-100 text-gray-400' : 'bg-[#ff4f25]/10 text-[#ff4f25]'
-              }`}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-                </svg>
               </div>
               
-              {/* CỘT 2: Nội dung chữ & Nhãn cảnh báo (Đã đưa xuống dưới) */}
-              <div className="flex-1 min-w-0 flex flex-col items-start justify-center">
-                <span className={`font-bold text-sm uppercase tracking-widest truncate w-full transition-colors ${
-                  toggles.dongGoi ? 'text-gray-800' : 'text-[#ff4f25]'
-                }`}>
-                  Đóng gói
-                </span>
-                <span className="text-[11px] text-gray-500 mt-0.5 whitespace-normal break-words leading-tight">
-                  {toggles.dongGoi 
-                    ? 'Đã bọc chống sốc an toàn.' 
-                    : 'Khách mua lẻ ưu tiên chọn đóng gói.'}
-                </span>
-                
-                {/* 🌟 Nhãn cảnh báo đẩy xuống dưới */}
-                {!toggles.dongGoi && (
-                  <div className="mt-1.5 px-2 py-0.5 bg-[#ff4f25] text-white text-[9px] font-bold uppercase tracking-wider rounded-full shadow-sm flex items-center gap-1 animate-pulse">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-2.5 h-2.5">
-                      <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
-                    </svg>
-                    Khuyên dùng
-                  </div>
-                )}
+              <div className="w-20 sm:w-24 shrink-0">
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 truncate">
+                  Số lượng
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  step="1"
+                  value={giayBoQuantity}
+                  onChange={(e) => onGiayBoQuantityChange?.(e.target.value)}
+                  className="w-full h-[42px] bg-white border border-gray-200 rounded-lg px-2 text-sm outline-none focus:border-[#ff4f25] font-mono font-bold text-center transition-colors"
+                />
               </div>
-
-              {/* CỘT 3: Nút Toggle Switch */}
-              <div className="shrink-0 flex items-center justify-center pl-1">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={Boolean(toggles.dongGoi)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    toggles.dongGoi ? 'bg-[#ff4f25]' : 'bg-gray-300 group-hover:bg-gray-400'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      toggles.dongGoi ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-
             </div>
+            
+            {giayBoSizeMatchLabel ? (
+              <div className="bg-white rounded border border-gray-200 p-2.5 shadow-sm">
+                <p className="text-[11px] text-gray-500">
+                  Size áp dụng: <span className="font-bold text-gray-700">{giayBoSizeMatchLabel}</span>
+                  {giayBoSizeMatchPrice > 0 ? (
+                    <> - Giá: <span className="font-bold text-[#ff4f25]">{giayBoSizeMatchPrice.toLocaleString('vi-VN')} đ/tấm</span></>
+                  ) : (
+                    <> - Giá: <span className="font-bold text-red-500">0 đ (Kiểm tra lại DB hoặc useQuoteBuilder)</span></>
+                  )}
+                </p>
+              </div>
+            ) : (
+              <p className="text-[10px] text-amber-600">
+                Chưa tìm được size giấy bo phù hợp trong DB cho kích thước này.
+              </p>
+            )}
+            
+            {renderYouTubeLink(giayBoYoutubeUrl)}
           </div>
-          {renderCornerThumbnail(toggles.dongGoi, 'dong_goi')}
-        </div>
+        </ToggleCard>
+
+        {/* 6. SẮT XI */}
+        <ToggleCard toggleKey="satXi" label="Sắt xi" thumbnailKey="sat_xi" />
+
+        {/* 7. SƠN */}
+        <ToggleCard toggleKey="son" label="Sơn" thumbnailKey="son" />
+
+        {/* 8. ĐÓNG GÓI */}
+        <ToggleCard
+          toggleKey="dongGoi"
+          label="Đóng gói sản phẩm"
+          thumbnailKey="dong_goi"
+          caption={!toggles.dongGoi ? 'Khách mua lẻ ưu tiên chọn đóng gói' : 'Đã bọc chống sốc an toàn'}
+        />
+
+        {/* 9. HOÀN THIỆN SẢN PHẨM CỦA KHÁCH */}
+        <ToggleCard
+          toggleKey="hoanThien"
+          label="Hoàn thiện sản phẩm của khách"
+          caption={toggles.hoanThien ? 'Đã cộng thêm 30% vào tổng giá bán' : 'Bật để cộng thêm 30% giá bán'}
+        />
       </div>
 
       {/* SỐ LƯỢNG */}
-      <div className="mt-8 pb-4">
+      <div className="mt-5 pb-2">
         <label
           htmlFor="quantity"
-          className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2 pl-1"
+          className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 pl-1"
         >
           Số lượng
         </label>
@@ -394,7 +426,7 @@ export default function CustomQuoteForm({
           step="1"
           value={quantity}
           onChange={(e) => onQuantityChange(e.target.value)}
-          className="w-32 bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-base outline-none focus:border-[#ff4f25] focus:ring-4 focus:ring-[#ff4f25]/15 font-mono font-bold text-gray-800 shadow-sm transition-all text-center"
+          className="w-28 bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-base outline-none focus:border-[#ff4f25] focus:ring-4 focus:ring-[#ff4f25]/15 font-mono font-bold text-gray-800 shadow-sm transition-all text-center"
         />
       </div>
     </div>

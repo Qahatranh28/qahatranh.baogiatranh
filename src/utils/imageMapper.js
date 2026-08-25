@@ -17,5 +17,6 @@ export const getStaticFrameImage = (frameName, sizeString) => {
 /** Ảnh minh hoạ khung áo đấu — thay bằng ảnh thật trong public/images sau. */
 export function getJerseyImage(tier = 'basic') {
   if (tier === 'premium') return '/images/ao-dau-cao-cap.png'
+  if (tier === '2_faces_premium') return '/images/ao_2_mat.png'
   return '/images/ao-dau-co-ban.png'
 }

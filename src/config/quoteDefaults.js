@@ -49,6 +49,8 @@ export const defaultSelections = {
   tranhInType: 'tranh_in_5ly_mo',
   micaKinhType: micaKinhTypeOptions[0],
   micaKinhLy: micaKinhLyOptions[0],
+  // 🌟 Số tấm mica (form Custom): 1 hoặc 2 tấm — mặc định 1 tấm.
+  micaSheets: 1,
   vanLy: vanLyOptions[0],
   giayBoType: giayBoTypeOptions[0],
 }

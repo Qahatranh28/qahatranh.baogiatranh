@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import LuxurySelect from './LuxurySelect.jsx';
 
 export default function MoebeQuoteForm({
@@ -32,6 +32,18 @@ export default function MoebeQuoteForm({
   const selectedFrame = frameTypes.find((f) => String(f.frame_id) === String(selectedFrameId)) || frameTypes[0] || null
   const frameImageUrl = selectedFrame?.image_url || '/images/placeholder.svg'
 
+  // Trạng thái mở/tảng bảng lưới chọn size dạng Popover cho Moebe
+  const [isSizeOpen, setIsSizeOpen] = useState(false);
+
+  const handleSizeSelect = (sizeId) => {
+    onSizeChange?.(sizeId);
+    setIsSizeOpen(false); // Chọn xong tự động đóng danh sách lại
+  };
+
+  // Tìm label của size đang chọn để hiển thị lên nút bấm
+  const currentSizeObj = sizeOptions.find((o) => String(o.id ?? o.value ?? o) === String(selectedSizeId));
+  const currentSizeLabel = currentSizeObj ? (currentSizeObj.label || currentSizeObj.name || currentSizeObj) : 'Chọn kích thước';
+
   return (
     <div className="space-y-6 animate-fade-in">
       
@@ -58,7 +70,7 @@ export default function MoebeQuoteForm({
         options={frameTypes} 
       />
 
-      {/* KÍCH THƯỚC (Sử dụng LuxurySelect, hoặc nhập Size lẻ) */}
+      {/* KÍCH THƯỚC (Dạng Grid Popover 3 cột, sắp xếp tăng dần, hoặc nhập Size lẻ) */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 pl-1">
@@ -69,8 +81,8 @@ export default function MoebeQuoteForm({
             onClick={() => onToggleOddSize?.(!isOddSize)}
             className={`text-xs font-mono px-2.5 py-1 rounded-md border transition-colors ${
               isOddSize
-                ? 'bg-[#ff4f25] text-white shadow-sm font-bold border-transparent'
-                : 'border-gray-200 text-gray-500 hover:border-[#ff4f25] hover:text-gray-800'
+                ? 'border-line text-blueprint-light hover:border-amber hover:text-blueprint bg-white text-blueprint'
+                : 'bg-[#ff4f25] text-white shadow-sm font-bold border-transparent'
             }`}
           >
             {isOddSize ? '✕ Size lẻ' : 'Size lẻ'}
@@ -112,15 +124,62 @@ export default function MoebeQuoteForm({
             )}
           </div>
         ) : (
-          <>
-            <LuxurySelect
-              id="kichThuoc"
-              value={selectedSizeId}
-              onChange={(val) => onSizeChange?.(val)}
-              options={sizeOptions}
-            />
+          <div className="relative">
+            {/* Nút bấm hiển thị size đang chọn để bật/đóng danh sách */}
+            <button
+              type="button"
+              onClick={() => setIsSizeOpen(!isSizeOpen)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm bg-white font-medium text-gray-800 shadow-sm flex items-center justify-between text-left cursor-pointer hover:border-[#ff4f25] transition-all"
+            >
+              <span className="font-bold text-gray-800">{currentSizeLabel}</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isSizeOpen ? 'rotate-180' : ''}`}
+              >
+                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+              </svg>
+            </button>
 
-            {/* Khối hiển thị thông số Phủ bì / Ruột được thiết kế lại đẹp hơn */}
+            {/* Bảng danh sách kích thước dạng lưới 3 cột, sắp xếp tăng dần */}
+            {isSizeOpen && (
+              <div className="absolute z-30 mt-1.5 w-full min-w-[320px] bg-white border border-gray-200 rounded-xl shadow-2xl p-3 max-h-72 overflow-y-auto">
+                <div className="grid grid-cols-3 gap-2">
+                  {[...sizeOptions]
+                    .sort((a, b) => {
+                      const strA = typeof a === 'object' ? (a.label || a.name || '') : String(a);
+                      const strB = typeof b === 'object' ? (b.label || b.name || '') : String(b);
+                      const numsA = strA.match(/\d+/g)?.map(Number) || [0, 0];
+                      const numsB = strB.match(/\d+/g)?.map(Number) || [0, 0];
+                      const areaA = (numsA[0] || 0) * (numsA[1] || numsA[0] || 0);
+                      const areaB = (numsB[0] || 0) * (numsB[1] || numsB[0] || 0);
+                      return areaA - areaB;
+                    })
+                    .map((o) => {
+                      const id = o.id ?? o.value ?? o;
+                      const lbl = typeof o === 'object' ? (o.label || o.name || o) : o;
+                      const isSelected = String(id) === String(selectedSizeId);
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => handleSizeSelect(id)}
+                          className={`px-3 py-2 text-xs font-mono font-bold rounded-lg border text-center transition-all ${
+                            isSelected
+                              ? 'bg-[#ff4f25] text-white border-transparent shadow-sm'
+                              : 'bg-gray-50/80 text-gray-700 border-gray-200 hover:border-[#ff4f25] hover:bg-orange-50/30'
+                          }`}
+                        >
+                          {lbl}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* Khối hiển thị thông số Phủ bì / Ruột */}
             {selectedSize && (
               <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs font-mono text-gray-600 shadow-inner">
                 Phủ bì: <span className="font-bold text-gray-800">{selectedSize.width} × {selectedSize.height} cm</span>
@@ -129,7 +188,7 @@ export default function MoebeQuoteForm({
                 Ruột: <span className="font-bold text-gray-800">{selectedSize.innerWidth} × {selectedSize.innerHeight} cm</span>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
 
@@ -143,7 +202,6 @@ export default function MoebeQuoteForm({
             Khách thêm in tranh
           </span>
           
-          {/* Nút Toggle chuẩn iOS */}
           <button
             type="button"
             role="switch"
@@ -211,65 +269,6 @@ export default function MoebeQuoteForm({
           onChange={(e) => onQuantityChange?.(e.target.value)}
           className="w-32 border border-gray-200 rounded-xl px-4 py-3.5 text-base outline-none focus:border-[#ff4f25] focus:ring-4 focus:ring-[#ff4f25]/15 bg-white font-mono font-bold text-gray-800 shadow-sm transition-all text-center"
         />
-      </div>
-
-      {/* ĐÓNG GÓI CAO CẤP */}
-      <div className="pt-6 border-t border-gray-200">
-        <div
-          onClick={() => onToggleChange?.('dongGoi', !toggles.dongGoi)}
-          className={`relative flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all duration-300 group ${
-            toggles.dongGoi
-              ? 'bg-white border border-gray-200 shadow-sm'
-              : 'bg-[#ff4f25]/5 border border-[#ff4f25]/30 shadow-md hover:border-[#ff4f25]/50'
-          }`}
-        >
-          {!toggles.dongGoi && (
-            <div className="absolute -top-3 left-4 px-2.5 py-0.5 bg-[#ff4f25] text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm flex items-center gap-1 animate-pulse">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
-                <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
-              </svg>
-              Khuyên dùng
-            </div>
-          )}
-
-          <div className="flex items-center gap-3.5">
-            <div className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 transition-colors ${
-              toggles.dongGoi ? 'bg-gray-100 text-gray-400' : 'bg-[#ff4f25]/10 text-[#ff4f25]'
-            }`}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-              </svg>
-            </div>
-            
-            <div className="flex flex-col">
-              <span className={`font-bold text-sm uppercase tracking-widest transition-colors ${
-                toggles.dongGoi ? 'text-gray-800' : 'text-[#ff4f25]'
-              }`}>
-                Bao gồm đóng gói
-              </span>
-              <span className="text-xs text-gray-500 mt-0.5">
-                {toggles.dongGoi 
-                  ? 'Sản phẩm sẽ được bọc chống sốc an toàn tuyệt đối.' 
-                  : 'Khách hàng mua lẻ sản phẩm ưu tiên chọn đóng gói.'}
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            role="switch"
-            aria-checked={Boolean(toggles.dongGoi)}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-              toggles.dongGoi ? 'bg-[#ff4f25]' : 'bg-gray-300 group-hover:bg-gray-400'
-            }`}
-          >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                toggles.dongGoi ? 'translate-x-5' : 'translate-x-0'
-              }`}
-            />
-          </button>
-        </div>
       </div>
     </div>
   )

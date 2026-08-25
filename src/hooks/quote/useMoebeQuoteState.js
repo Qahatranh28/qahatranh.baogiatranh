@@ -20,7 +20,7 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
   const [selectedSizeId, setSelectedSizeId] = useState(null)
   const [productName, setProductName] = useState('')
   const [quantity, setQuantity] = useState('1')
-  const [toggles, setToggles] = useState({ tranhIn: true, dongGoi: false })
+  const [toggles, setToggles] = useState({ tranhIn: true, dongGoi: true })
   const [printWidth, setPrintWidth] = useState('')
   const [printHeight, setPrintHeight] = useState('')
 
@@ -260,7 +260,7 @@ export function useMoebeQuoteState({ settings, dbMaterialsList, canSeeCost }) {
   const reset = useCallback(() => {
     setProductName('')
     setQuantity('1')
-    setToggles({ tranhIn: true, dongGoi: false })
+    setToggles({ tranhIn: true, dongGoi: true })
     setIsOddSize(false)
     setOddWidth('')
     setOddHeight('')

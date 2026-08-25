@@ -16,6 +16,7 @@ const CATEGORY_LABELS = {
   matboard_silk: 'Khăn Lụa Khung Matboard',
   moebe_silk: 'Khăn Lụa Khung Moebe',
   mirror_silk: 'Khăn Lụa Khung Mirror',
+  nhom_day: 'Khung Nhôm Dày 3,5',
   
 }
 

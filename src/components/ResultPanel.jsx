@@ -11,6 +11,7 @@ const COMPONENT_LABELS = {
   giayBo: 'Giấy bo',
   satXi: 'Sắt xi',
   son: 'Sơn',
+  hoanThien: 'Hoàn thiện',
 }
 
 export default function ResultPanel({
@@ -23,7 +24,7 @@ export default function ResultPanel({
   lineTotal,
   onAdd,
   canAdd,
-  canOrder = true, // 🌟 true nếu đã đăng nhập; false = khách vãng lai (chỉ xem giá, không thêm được)
+  canOrder = true,
   imageSrc,
   costDisplay,
   costDisplayLabel = 'Giá vốn',
@@ -36,16 +37,26 @@ export default function ResultPanel({
   isAdminRole = false,
 }) {
   const hasDimensions = width > 0 && height > 0
-  const selectedComponents = Object.entries(toggles)
-    .filter(([, v]) => v)
-    .map(([k]) => COMPONENT_LABELS[k])
-    .filter(Boolean)
 
-  // 🌟 Trạng thái mở/đóng ô "Chi tiết vật tư cấu thành" được giữ ở đây (thay
-  // vì trong MaterialBreakdownTable) để khi ô này mở, ảnh minh hoạ phía trên
-  // tự ẩn đi — tiết kiệm diện tích hiển thị.
+  // 🌟 Định nghĩa các cấu phần hiển thị riêng theo từng loại form/mode
+  let selectedComponents = []
+
+  if (mode === 'moebe') {
+    selectedComponents = ['Khung', 'Mica/Kính x2', toggles?.tranhIn ? 'In tranh' : null].filter(Boolean)
+  } else if (mode === 'jersey') {
+    // 🌟 Cấu tạo cho form Áo đấu theo đúng yêu cầu
+    selectedComponents = ['Khung', 'Kính/Mica', 'In tranh', 'Ván lót', 'Áo đấu']
+  } else {
+    selectedComponents = Object.entries(toggles || {})
+      .filter(([, v]) => v)
+      .map(([k]) => COMPONENT_LABELS[k])
+      .filter(Boolean)
+  }
+
   const [materialsOpen, setMaterialsOpen] = useState(false)
   const showImage = Boolean(imageSrc) && !(isAdminRole && materialsOpen)
+
+  const phuThuHoanThien = toggles?.hoanThien ? unitPrice - Math.round(unitPrice / 1.3) : 0
 
   return (
     <section
@@ -53,10 +64,7 @@ export default function ResultPanel({
       className="bg-blueprint text-paper rounded-2xl shadow-lg p-6 sm:p-8 flex flex-col h-full"
     >
       {showImage && (
-        // 🌟 Kích thước chuẩn cho mọi form (simple/custom/moebe/jersey): 1 khung
-        // ảnh cao cố định, dùng object-contain để ảnh LUÔN hiện đầy đủ (không bị
-        // cắt) dù ảnh vuông, ngang hay dọc — thay vì mỗi form 1 kiểu như trước.
-        <div className="mb-6 rounded-x1 overflow-hidden bg-paper/5 border border-paper/10 h-56 sm:h-64 flex items-center justify-center">
+        <div className="mb-6 rounded-xl overflow-hidden bg-paper/5 border border-paper/10 h-56 sm:h-64 flex items-center justify-center">
           <img
             src={imageSrc}
             alt="Hình minh hoạ khung"
@@ -94,16 +102,22 @@ export default function ResultPanel({
         )}
       </div>
 
+      {/* 🌟 Khối hiển thị tiêu đề chung "Cấu tạo sản phẩm" và các thẻ */}
       {selectedComponents.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-6">
-          {selectedComponents.map((label) => (
-            <span
-              key={label}
-              className="text-xs font-mono px-2 py-1 rounded-full bg-paper/10 text-paper/70"
-            >
-              {label}
-            </span>
-          ))}
+        <div className="mb-6 border-t border-paper/15 pt-4">
+          <p className="font-mono text-xs uppercase tracking-widest text-white mb-2">
+            Cấu tạo sản phẩm
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {selectedComponents.map((label) => (
+              <span
+                key={label}
+                className="text-xs font-mono px-2.5 py-1 rounded-full bg-paper/10 text-paper/80 font-medium"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -112,6 +126,14 @@ export default function ResultPanel({
           <dt className="text-paper/60">Đơn giá (1 sản phẩm)</dt>
           <dd className="font-mono">{formatVND(unitPrice)}</dd>
         </div>
+        
+        {toggles?.hoanThien && (
+          <div className="flex justify-between text-sm text-[#ff4f25]">
+            <dt className="text-paper/80 font-medium">↳ Phụ thu hoàn thiện (30%)</dt>
+            <dd className="font-mono">+{formatVND(phuThuHoanThien)}</dd>
+          </div>
+        )}
+
         <div className="flex justify-between text-sm">
           <dt className="text-paper/60">Số lượng</dt>
           <dd className="font-mono">{quantity}</dd>
@@ -128,13 +150,21 @@ export default function ResultPanel({
       </dl>
 
       {isAdminRole && (
-        <MaterialBreakdownTable
-          costResult={costResult}
-          mode={mode}
-          khungType={khungType}
-          open={materialsOpen}
-          onToggle={setMaterialsOpen}
-        />
+        <div className="mb-6 space-y-2">
+          <MaterialBreakdownTable
+            costResult={costResult}
+            mode={mode}
+            khungType={khungType}
+            open={materialsOpen}
+            onToggle={setMaterialsOpen}
+          />
+          {materialsOpen && toggles?.hoanThien && (
+            <div className="bg-[#ff4f25]/10 border border-[#ff4f25]/20 rounded-md p-3 flex justify-between items-center text-[#ff4f25]">
+              <span className="text-[11px] font-bold uppercase tracking-widest">Phụ thu hoàn thiện (Tính trên giá bán)</span>
+              <span className="font-mono font-bold text-sm">+{formatVND(phuThuHoanThien)} / sp</span>
+            </div>
+          )}
+        </div>
       )}
 
       <div className="mt-auto pt-6 border-t border-paper/15">

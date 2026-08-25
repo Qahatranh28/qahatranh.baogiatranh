@@ -168,6 +168,11 @@ export function useQuoteBuilder() {
           // 🌟 Bật/tắt In tranh riêng cho Khung tiêu chuẩn (giống Moebe)
           tranhInOn: simpleCustom.simpleTranhInOn,
           onToggleTranhIn: simpleCustom.onToggleSimpleTranhIn,
+          // 🌟 Giấy bo (Custom): số lượng + gợi ý size khớp DB
+          giayBoQuantity: simpleCustom.giayBoQuantity,
+          onGiayBoQuantityChange: simpleCustom.setGiayBoQuantity,
+          giayBoSizeMatchLabel: simpleCustom.giayBoSizeMatch?.label ?? null,
+          giayBoSizeMatchPrice: simpleCustom.giayBoSizeMatch?.price ?? 0,
         }
       : {}),
 

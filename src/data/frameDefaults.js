@@ -44,12 +44,14 @@ export const frameComponentToggles = [
   { key: 'khung', label: 'Đóng khung', default: false },
   { key: 'tranhIn', label: 'In tranh', default: false },
   { key: 'micaKinh', label: 'Mica / Kính', default: false },
-  { key: 'van', label: 'Ván lót', default: false },
+  // 🌟 Ván lót: mặc định BẬT ở form Custom (luôn dùng Ván 4 ly khi bật).
+  { key: 'van', label: 'Ván lót', default: true },
   { key: 'giayBo', label: 'Giấy bo (matboard)', default: false },
   { key: 'satXi', label: 'Sắt xi', default: false },
   { key: 'son', label: 'Sơn', default: false },
-  { key: 'dongGoi', label: 'Đóng gói', default: false },
   { key: 'dongGoi', label: 'Đóng gói sản phẩm', default: false },
+  // 🌟 Hoàn thiện sản phẩm của khách: bật lên thì cộng thêm 30% vào tổng giá bán.
+  { key: 'hoanThien', label: 'Hoàn thiện sản phẩm của khách', default: false },
 ]
 
 // ==========================================

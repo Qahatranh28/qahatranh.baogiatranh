@@ -13,7 +13,12 @@ export function computeFrameCost(
   mode = 'simple', innerWidthCm = 0, innerHeightCm = 0,
   moebeGlassPrice = 0, moebeGlassLabel = '',
   moebeCorePrice = 0, moebeCoreLabel = '',
-  khungCategory = ''
+  khungCategory = '',
+  glassSheetMultiplier = 1,
+  // 🌟 Thêm tham số nhận cấu hình từ form Custom
+  customTierOption = '1',
+  customFomexPrice = 0,
+  customFomexLabel = 'Viền Fomex'
 ) {
   // 🌟 Đẩy luồng tính Khăn Lụa sang file riêng
   const isKhanLua = typeof khungCategory === 'string' && khungCategory.includes('Khăn Lụa')
@@ -24,7 +29,9 @@ export function computeFrameCost(
       customTranhInPrice, customTranhInLabel, customGlassPrice, customGlassLabel,
       customVanPrice, customVanLabel, customGiayBoPrice, customGiayBoLabel,
       customSatXiPrice, customSatXiLabel, mode, innerWidthCm, innerHeightCm,
-      moebeGlassPrice, moebeGlassLabel, moebeCorePrice, moebeCoreLabel, khungCategory
+      moebeGlassPrice, moebeGlassLabel, moebeCorePrice, moebeCoreLabel, khungCategory,
+      customFomexPrice,
+      customFomexLabel
     )
   }
 
@@ -56,6 +63,12 @@ export function computeFrameCost(
   }
 
   let khungPerM = Number(khungPerMOverride) > 0 ? Number(khungPerMOverride) : 0
+  
+  // 🌟 YÊU CẦU 1: NẾU CHỌN KIỂU 2 THÌ GIÁ VỐN KHUNG NHÂN ĐÔI (x2)
+  if (String(customTierOption) === '2') {
+    khungPerM = khungPerM * 2
+  }
+
   khungPerM = khungPerM * khungNameMultiplier
 
   const priceKeGoc = Number(settings['ke_goc'] || settings.keGocPerBo) || 0
@@ -84,16 +97,28 @@ export function computeFrameCost(
       const coreLabel = moebeCoreLabel || 'Vật liệu ruột Moebe'
       nvlTotal += addRow(coreLabel, 'm²', innerAreaM2, moebeCorePrice)
     }
+    nvlTotal += addRow('Viền Fomex (Moebe)', 'Bộ', 1, 10000)
   } else {
     if (toggles?.tranhIn && customTranhInPrice > 0) {
       nvlTotal += addRow(customTranhInLabel, 'm²', areaM2, customTranhInPrice)
     }
     if (toggles?.micaKinh && customGlassPrice > 0) {
-      nvlTotal += addRow(customGlassLabel, 'm²', areaM2, customGlassPrice)
+      const sheets = Number(glassSheetMultiplier) === 2 ? 2 : 1
+      const glassQty = areaM2 * sheets
+      const glassLbl = sheets === 2 ? `${customGlassLabel} (2 tấm)` : customGlassLabel
+      nvlTotal += addRow(glassLbl, 'm²', glassQty, customGlassPrice)
     }
     if (toggles?.van && customVanPrice > 0) {
       nvlTotal += addRow(customVanLabel, 'm²', areaM2, customVanPrice)
     }
+    
+    // 🌟 YÊU CẦU 2: TÍNH VIỀN FOMEX (BẢN RỘNG 2CM, CHIỀU DÀI THEO CHU VI KHUNG HOẶC DIỆN TÍCH)
+    // Bản rộng cố định 2cm = 0.02 mét. Diện tích viền fomex = Chu vi (mét) * 0.02 (mét)
+    const fomexAreaM2 = chuViM * 0.02
+    if (toggles?.vienFomex && String(customTierOption) === '1' && customFomexPrice > 0 && fomexAreaM2 > 0) {
+      nvlTotal += addRow(customFomexLabel || 'Viền Fomex', 'm²', fomexAreaM2, customFomexPrice)
+    }
+
     if (toggles?.giayBo && customGiayBoPrice > 0) {
       nvlTotal += addRow(customGiayBoLabel, 'm²', areaM2, customGiayBoPrice)
     }
@@ -113,11 +138,9 @@ export function computeFrameCost(
       if (priceDinhGhim > 0) nvlTotal += addRow('Đinh/ghim/ốc vít/NVL khác', 'Cái', soDinhGhim, priceDinhGhim)
     }
 
-    // 🌟 Mặc định: Khung lớn có 2 móc và có dây treo. Khung nhỏ có 1 móc và 0 dây treo.
     let mocTreoQty = isLarge ? 2 : 1
     let dayTreoQty = isLarge ? ((w + 20) / 100) : 0
 
-    // 🌟 Luật riêng cho Moebe: LUÔN LÀ 2 MÓC, VÀ KHÔNG CÓ DÂY TREO
     if (mode === 'moebe') {
       mocTreoQty = 2
       dayTreoQty = 0
@@ -154,8 +177,15 @@ export function computeFrameCost(
   
   const hasGlassOrBoard = mode === 'moebe' || toggles?.micaKinh || toggles?.van
   if (hasGlassOrBoard) {
-    const glassLaborArea = mode === 'moebe' ? areaM2 * 2 : areaM2
+    const sheets = Number(glassSheetMultiplier) === 2 ? 2 : 1
+    const glassLaborArea = mode === 'moebe' ? areaM2 * 2 : areaM2 * (toggles?.micaKinh ? sheets : 1)
     laborTotal += addLabor('Chi phí giờ công làm mica/kính/ván', glassLaborArea * 0.2)
+  }
+
+  // 🌟 YÊU CẦU 3: CHI PHÍ CÔNG NHÂN LÀM FOMEX (TƯƠNG TỰ CÔNG NHÂN LÀM VÁN LÓT)
+  const fomexAreaM2ForLabor = chuViM * 0.02
+  if (toggles?.vienFomex && String(customTierOption) === '1' && fomexAreaM2ForLabor > 0) {
+    laborTotal += addLabor('Chi phí giờ công làm viền fomex', fomexAreaM2ForLabor * 0.2)
   }
 
   if (mode !== 'moebe') {

@@ -18,7 +18,7 @@ export function useJerseyQuoteState({ settings, dbMaterialsList, canSeeCost }) {
   const [selectedJerseySizeId, setSelectedJerseySizeId] = useState(null)
   const [productName, setProductName] = useState('')
   const [quantity, setQuantity] = useState('1')
-  const [toggles, setToggles] = useState({ dongGoi: false })
+  const [toggles, setToggles] = useState({ dongGoi: true })
 
   useEffect(() => {
     async function load() {
@@ -27,7 +27,6 @@ export function useJerseyQuoteState({ settings, dbMaterialsList, canSeeCost }) {
         setFrameTypes(types)
         setJerseyPrices(prices)
         if (types.length > 0) {
-          // Ưu tiên giữ category mặc định 'composite_2x3' nếu nó thực sự có
           const hasDefaultCategory = types.some((f) => getCat(f) === 'composite_2x3')
           const firstCategory = hasDefaultCategory ? 'composite_2x3' : getCat(types[0])
           setSelectedCategory(firstCategory)
@@ -41,12 +40,18 @@ export function useJerseyQuoteState({ settings, dbMaterialsList, canSeeCost }) {
     load()
   }, [])
 
+  // 🌟 Tự động chuyển loại khung về "nhom_day" khi chọn "2 mặt cao cấp"
+  useEffect(() => {
+    if (tier === '2_faces_premium') {
+      setSelectedCategory('nhom_day')
+    }
+  }, [tier])
+
   const categoryOptions = useMemo(() => {
-    const allowedCategories = ['composite_2x3', 'nhom']
-    // Luôn hiển thị đủ 2 lựa chọn Composite 2x3 / Nhôm
+    const allowedCategories = ['composite_2x3', 'nhom', 'nhom_day']
     return allowedCategories.map((cat) => ({
       value: cat,
-      label: cat === 'nhom' ? 'Khung Nhôm' : 'Khung Composite 2x3',
+      label: cat === 'nhom' ? 'Khung Nhôm' : cat === 'nhom_day' ? 'Khung Nhôm Dày 3,5' : 'Khung Composite 2x3',
       hasFrames: frameTypes.some((f) => getCat(f) === cat),
     }))
   }, [frameTypes])
@@ -56,10 +61,8 @@ export function useJerseyQuoteState({ settings, dbMaterialsList, canSeeCost }) {
     if (!selectedCategory) return []
     return frameTypes.filter((f) => {
       const matchCat = getCat(f) === selectedCategory;
-      // Nhận diện khung mỏng (dựa vào tên chứa chữ "mỏng" hoặc "mong")
       const isThinFrame = f.name?.toLowerCase().includes('mỏng') || f.slug?.toLowerCase().includes('mong');
-      
-      return matchCat && !isThinFrame; // Bắt buộc đúng category VÀ không phải khung mỏng
+      return matchCat && !isThinFrame;
     })
   }, [frameTypes, selectedCategory])
 
@@ -102,14 +105,18 @@ export function useJerseyQuoteState({ settings, dbMaterialsList, canSeeCost }) {
     if (firstOfCategory) setSelectedFrameId(firstOfCategory.frame_id)
   }, [frameTypes])
 
+  // 🌟 ĐÃ TRUYỀN THÊM `tier` VÀO HÀM TÍNH CHI PHÍ ĐỂ NHÂN ĐÔI KHI LÀ 2 MẶT CAO CẤP
   const costResult = useMemo(
     () =>
-      computeJerseyCost(activeWidth, activeHeight, khungRate, isNhom, settings, dbMaterialsList, toggles),
-    [activeWidth, activeHeight, khungRate, isNhom, settings, dbMaterialsList, toggles]
+      computeJerseyCost(activeWidth, activeHeight, khungRate, isNhom, settings, dbMaterialsList, toggles, tier),
+    [activeWidth, activeHeight, khungRate, isNhom, settings, dbMaterialsList, toggles, tier]
   )
 
   const unitPrice = useMemo(() => {
     if (!selectedJerseySize) return 0
+    if (tier === '2_faces_premium') {
+      return selectedJerseySize.price2FacesPremium || selectedJerseySize.pricePremium || 0
+    }
     return tier === 'premium' ? selectedJerseySize.pricePremium : selectedJerseySize.priceBasic
   }, [selectedJerseySize, tier])
 
@@ -123,18 +130,17 @@ export function useJerseyQuoteState({ settings, dbMaterialsList, canSeeCost }) {
   const reset = useCallback(() => {
     setProductName('')
     setQuantity('1')
-    setToggles({ dongGoi: false })
+    setToggles({ dongGoi: true })
     setWidth('')
     setHeight('')
   }, [])
 
   const buildCartItem = useCallback(() => {
     const qty = parseInt(quantity, 10) || 1
-    const tierLabel = tier === 'premium' ? 'Cao cấp' : 'Cơ bản'
+    const tierLabel = tier === '2_faces_premium' ? '2 mặt cao cấp' : tier === 'premium' ? 'Cao cấp' : 'Cơ bản'
     const name =
       productName.trim() ||
       `Khung áo đấu ${tierLabel} — ${selectedJerseySize?.sizeLabel || ''} — ${selectedFrame?.name || ''}`.trim()
-
     return {
       id: crypto.randomUUID(),
       name,
@@ -178,7 +184,6 @@ export function useJerseyQuoteState({ settings, dbMaterialsList, canSeeCost }) {
     selectedJerseySize != null &&
     selectedFrame != null
 
-  // 🌟 SỬA LỖI Ở ĐÂY: Trả về categoryOptions để component bên ngoài nhận được dữ liệu
   return {
     productName,
     setProductName,
@@ -190,7 +195,7 @@ export function useJerseyQuoteState({ settings, dbMaterialsList, canSeeCost }) {
     setTier,
     frameTypes,
     filteredFrameTypes,
-    categoryOptions, // <--- ĐÃ THÊM DÒNG NÀY
+    categoryOptions,
     selectedCategory,
     setSelectedCategory,
     handleFrameCategoryChange,

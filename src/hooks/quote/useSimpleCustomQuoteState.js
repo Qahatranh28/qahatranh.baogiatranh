@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { getStaticFrameImage } from '../../utils/imageMapper.js'
 import {
   khungTypeOptions,
-  isKinhType,
   isNhomType,
 } from '../../data/frameDefaults.js'
 import { computeFrameCost } from '../../utils/frameCosting.js'
@@ -16,11 +15,12 @@ import {
   OVERSIZE_THRESHOLD_CM,
 } from '../../config/quoteDefaults.js'
 import { parseDimensionsFromSizeName } from '../../utils/sizeParsing.js'
-import { getGlassMicaDetail, getMica2LiDetail, getMica4LiDetail } from '../../services/glassMicaService.js'
+import { getMica2LiDetail, getMica4LiDetail } from '../../services/glassMicaService.js'
 import { getTranhInDetail } from '../../services/tranhInService.js'
-import { getVanDetail, getVan4LyDetail } from '../../services/vanService.js'
+import { getVan4LyDetail } from '../../services/vanService.js'
 import { getGiayBoDetail } from '../../services/giayBoService.js'
 import { getSatXiDetail } from '../../services/satXiService.js'
+import { fetchMaterialSizePrices } from '../../services/materialSizePriceService.js'
 
 export function useSimpleCustomQuoteState({
   mode,
@@ -48,12 +48,20 @@ export function useSimpleCustomQuoteState({
   const [oddWidth, setOddWidth] = useState('')
   const [oddHeight, setOddHeight] = useState('')
   const [quantity, setQuantity] = useState('1')
-  const [toggles, setToggles] = useState(defaultToggles)
   
+  // Tắt mặc định công tắc Ván lót (van: false) khi vừa mở form
+  const [toggles, setToggles] = useState({ ...defaultToggles, van: false })
+  
+  // Nút bật/tắt "In tranh" riêng cho Khung tiêu chuẩn
   const [simpleTranhInOn, setSimpleTranhInOn] = useState(true)
+  
+  // Giấy bo (Custom)
+  const [giayBoQuantity, setGiayBoQuantity] = useState('1')
+  const [giayBoSizePrices, setGiayBoSizePrices] = useState([])
   const [selections, setSelections] = useState(() => ({
     ...defaultSelections,
     khungType: 'Khung Composite Mỏng Đen',
+    customTierOption: '1', // Mặc định kiểu 1
   }))
 
   useEffect(() => {
@@ -80,22 +88,12 @@ export function useSimpleCustomQuoteState({
     })
   }, [dynamicTranhInOptions, dynamicVanOptions, dynamicGiayBoOptions, dynamicGlassMicaOptions])
 
-  // 🌟 TRẢ VỀ ĐÚNG MẢNG STRING ĐỂ KHÔNG BỊ KẸT UI
   const currentTypeOptions = useMemo(() => {
-    const rawInCat = rawCatalog?.filter(
-      (c) => c.category === khungCategory || c.category_name === khungCategory
-    ) || []
-    
-    if (rawInCat.length > 0) {
-      return rawInCat.map(c => c.name) // Chỉ trả về tên (chuỗi)
-    }
-
     const fromDb = activeTypesByCategory[khungCategory]
     if (fromDb && fromDb.length > 0) return fromDb
     return getKhungTypesByCategory(khungCategory) || khungTypeOptions
-  }, [rawCatalog, khungCategory, activeTypesByCategory])
+  }, [activeTypesByCategory, khungCategory])
 
-  // 🌟 HÀM KIỂM TRA LỖI NAY ĐÃ NHẬN DIỆN ĐÚNG CHUỖI
   useEffect(() => {
     if (currentTypeOptions.length > 0 && !currentTypeOptions.includes(selections.khungType)) {
       setSelections((prev) => ({ ...prev, khungType: currentTypeOptions[0] }))
@@ -103,7 +101,22 @@ export function useSimpleCustomQuoteState({
   }, [currentTypeOptions])
 
   const activeKhungType = selections.khungType
-  
+
+  // Tải bảng giá theo size từ DB mỗi khi đổi loại giấy bo
+  useEffect(() => {
+    let cancelled = false
+    if (!selections.giayBoType) {
+      setGiayBoSizePrices([])
+      return
+    }
+    fetchMaterialSizePrices(selections.giayBoType).then((rows) => {
+      if (!cancelled) setGiayBoSizePrices(rows)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [selections.giayBoType])
+
   const simpleToggleState = useMemo(
     () => ({
       ...simpleToggles,
@@ -113,7 +126,8 @@ export function useSimpleCustomQuoteState({
     [simpleTranhInOn]
   )
   const activeToggles = mode === 'simple' ? simpleToggleState : toggles
-  const isKinh = mode === 'simple' ? false : isKinhType(selections.micaKinhType)
+  
+  const isKinh = false
   const isNhom = isNhomType(activeKhungType)
 
   const currentSizes = useMemo(() => {
@@ -188,59 +202,80 @@ export function useSimpleCustomQuoteState({
     }
   }, [mode, sizeLabel, activeKhungType, presetDims])
 
-  // Lấy đơn giá khung chính xác
+  // Kiểm tra kích thước khổ tối đa 120 x 240 cm cho Mica
+  const isMicaSizeExceeded = useMemo(() => {
+    const w = parseFloat(activeWidth) || 0;
+    const h = parseFloat(activeHeight) || 0;
+    const minDim = Math.min(w, h);
+    const maxDim = Math.max(w, h);
+    return minDim > 120 || maxDim > 240;
+  }, [activeWidth, activeHeight]);
+
+  // Tự động tắt Mica nếu kích thước vượt khổ
+  useEffect(() => {
+    if (isMicaSizeExceeded && toggles.micaKinh) {
+      setToggles((prev) => ({ ...prev, micaKinh: false }));
+    }
+  }, [isMicaSizeExceeded, toggles.micaKinh]);
+
   const catalogItem = rawCatalog?.find(
-    (c) => 
-      c.frame_id === activeKhungType || 
-      c.name === activeKhungType ||
-      c.name?.trim().toLowerCase() === activeKhungType?.trim().toLowerCase()
+    (c) => c.name?.trim().toLowerCase() === activeKhungType?.trim().toLowerCase()
   )
   const khungRate = catalogItem && Number(catalogItem.price_cost) > 0 ? Number(catalogItem.price_cost) : 0
 
   const isSilkScarf = typeof khungCategory === 'string' && khungCategory.includes('Khăn Lụa')
   const glassMat =
-    mode === 'simple'
-      ? isSilkScarf && activeWidth > 85 && activeHeight > 85
-        ? getMica4LiDetail(dbMaterialsList)
-        : getMica2LiDetail(dbMaterialsList)
-      : getGlassMicaDetail(selections.micaKinhType, dbMaterialsList)
+    isSilkScarf && activeWidth > 85 && activeHeight > 85
+      ? getMica4LiDetail(dbMaterialsList)
+      : getMica2LiDetail(dbMaterialsList)
+  const glassSheetMultiplier = mode === 'custom' && Number(selections.micaSheets) === 2 ? 2 : 1
   const activeTranhInType = mode === 'simple' ? 'tranh_in_5ly_mo' : selections.tranhInType
   const tranhInMat = getTranhInDetail(activeTranhInType, dbMaterialsList)
-  const vanMat = mode === 'simple' ? getVan4LyDetail(dbMaterialsList) : getVanDetail(selections.vanLy, dbMaterialsList)
+  const vanMat = getVan4LyDetail(dbMaterialsList)
   const giayBoMat = getGiayBoDetail(selections.giayBoType, dbMaterialsList)
   const satXiMat = getSatXiDetail(dbMaterialsList, settings)
 
+  // 🌟 Lấy chi tiết vật liệu Fomex từ DB (dựa vào id_material hoặc tên chứa 'fomex')
+  const fomexMat = useMemo(() => {
+    if (!Array.isArray(dbMaterialsList)) return { price: 0, label: 'Viền Fomex' }
+    const found = dbMaterialsList.find(
+      (m) => m.id_material === 'fomex' || m.id_material?.includes('fomex') || m.name?.toLowerCase().includes('fomex')
+    )
+    return {
+      price: found ? Number(found.price_cost || found.price || 0) : 0,
+      label: found?.name || 'Viền Fomex',
+    }
+  }, [dbMaterialsList])
+
+  // Giấy bo (Custom)
+  const giayBoSizeMatch = useMemo(() => {
+    if (mode !== 'custom' || !activeToggles?.giayBo) return null
+    return findRoundUpStandardSize(giayBoSizePrices, activeWidth, activeHeight)
+  }, [mode, activeToggles?.giayBo, giayBoSizePrices, activeWidth, activeHeight])
+
+  const giayBoSellAddon = useMemo(() => {
+    if (mode !== 'custom' || !activeToggles?.giayBo || !giayBoSizeMatch) return 0
+    const qty = parseInt(giayBoQuantity, 10) || 1
+    return (giayBoSizeMatch.price || 0) * qty
+  }, [mode, activeToggles?.giayBo, giayBoSizeMatch, giayBoQuantity])
+
+  // Bảng Chi tiết Vật tư (Giá vốn) chính -> Có truyền thêm Fomex và Kiểu
   const costResult = useMemo(
     () =>
       computeFrameCost(
-        activeWidth,
-        activeHeight,
-        activeToggles,
-        settings,
-        isKinh,
-        khungRate,
-        1,
-        isNhom,
-        tranhInMat.price,
-        tranhInMat.label,
-        glassMat.price,
-        glassMat.label,
-        vanMat.price,
-        vanMat.label,
-        giayBoMat.price,
-        giayBoMat.label,
-        satXiMat.price,
-        satXiMat.label,
-        mode,
-        0,
-        0,
-        0,
-        '',
-        0,
-        '',
-        khungCategory
+        activeWidth, activeHeight, activeToggles, settings, isKinh, khungRate, 1, isNhom,
+        tranhInMat.price, tranhInMat.label, glassMat.price, glassMat.label, vanMat.price, vanMat.label,
+        giayBoMat.price, giayBoMat.label, satXiMat.price, satXiMat.label, mode,
+        0, 0, 0, '', 0, '', khungCategory, glassSheetMultiplier,
+        selections.customTierOption || '1',
+        fomexMat.price,
+        fomexMat.label
       ),
-    [activeWidth, activeHeight, activeToggles, settings, isKinh, khungRate, isNhom, tranhInMat, glassMat, vanMat, giayBoMat, satXiMat, mode, khungCategory]
+    [
+      activeWidth, activeHeight, activeToggles, settings, isKinh, khungRate, isNhom,
+      tranhInMat, glassMat, vanMat, giayBoMat, satXiMat, mode, khungCategory, glassSheetMultiplier,
+      selections.customTierOption, fomexMat
+    ]
   )
 
   const pickStandardPrice = useCallback(
@@ -282,33 +317,61 @@ export function useSimpleCustomQuoteState({
     }
     return null
   }, [
-    mode,
-    isOddSize,
-    oddSizeMatch,
-    selectedPreset,
-    standardPrices,
-    activeKhungType,
-    khungCategory,
-    sizeLabel,
-    pickStandardPrice,
+    mode, isOddSize, oddSizeMatch, selectedPreset, standardPrices,
+    activeKhungType, khungCategory, sizeLabel, pickStandardPrice,
   ])
 
+  // TÍNH ĐƠN GIÁ BÁN (unitPrice) — Chạy ngầm hàm tính giá vốn KHÔNG GỒM GIẤY BO để tách giá
   const unitPrice = useMemo(() => {
+    const costWithoutGiayBo = computeFrameCost(
+      activeWidth, activeHeight,
+      { ...activeToggles, giayBo: false },
+      settings, isKinh, khungRate, 1, isNhom,
+      tranhInMat.price, tranhInMat.label, glassMat.price, glassMat.label, vanMat.price, vanMat.label,
+      giayBoMat.price, giayBoMat.label, satXiMat.price, satXiMat.label, mode,
+      0, 0, 0, '', 0, '', khungCategory, glassSheetMultiplier,
+      selections.customTierOption || '1',
+      fomexMat.price,
+      fomexMat.label
+    );
+
     const S = (activeWidth * activeHeight) / 10000;
     const BaseAdjust = 9874 - 107286 * S;
-    const totalCost = costResult.grandTotal || 0;
+    const totalCost = costWithoutGiayBo.grandTotal || 0;
+    
     let price = (totalCost / 0.30) + BaseAdjust;
+    
     const hasPrint = mode === 'simple' ? simpleTranhInOn : Boolean(activeToggles?.tranhIn);
 
     if (hasPrint) {
       const PrintAdjust = 56250 - 318016 * S;
       price = price + PrintAdjust;
     }
-    const beautifulPrice = Math.ceil(price / 10000) * 10000 - 1000;
-    const customCalculatedSell = Math.max(0, beautifulPrice);
-    return mode === 'simple' && standardPrice && standardPrice > 0 ? standardPrice : customCalculatedSell;
-  }, [costResult, standardPrice, mode, activeWidth, activeHeight, simpleTranhInOn, activeToggles]);
 
+    const beautifulPrice = Math.ceil(price / 10000) * 10000 - 1000;
+    let customCalculatedSell = Math.max(0, beautifulPrice);
+
+    let finalPrice = mode === 'simple' && standardPrice && standardPrice > 0 
+      ? standardPrice 
+      : customCalculatedSell;
+
+    if (mode === 'custom' && activeToggles?.giayBo) {
+      finalPrice += giayBoSellAddon;
+    }
+
+    if (mode === 'custom' && activeToggles?.hoanThien) {
+      finalPrice = Math.round(finalPrice * 1.3);
+    }
+
+    return finalPrice;
+  }, [
+    costResult, standardPrice, mode, activeWidth, activeHeight, 
+    simpleTranhInOn, activeToggles, settings, isKinh, khungRate, isNhom,
+    tranhInMat, glassMat, vanMat, giayBoMat, satXiMat, khungCategory, glassSheetMultiplier, giayBoSellAddon,
+    selections.customTierOption, fomexMat
+  ]);
+
+  // THÀNH TIỀN (lineTotal) ĐẶT SAU unitPrice
   const lineTotal = (parseInt(quantity, 10) || 0) * unitPrice;
 
   const previewImage =
@@ -318,9 +381,17 @@ export function useSimpleCustomQuoteState({
   const hasAnyComponent = Object.values(activeToggles).some(Boolean)
   const canAdd = activeWidth > 0 && activeHeight > 0 && (parseInt(quantity, 10) || 0) > 0 && hasAnyComponent
 
+  // Chặn bật công tắc Mica nếu kích thước vượt khổ 120 x 240 cm
   const handleToggleChange = useCallback((key, value) => {
+    if (key === 'micaKinh' && value === true) {
+      if (isMicaSizeExceeded) {
+        alert('Kích thước vượt quá khổ Mica tối đa cho phép (120 x 240 cm). Không thể bật Mica!');
+        return;
+      }
+    }
+
     setToggles((prev) => ({ ...prev, [key]: value }))
-  }, [])
+  }, [isMicaSizeExceeded])
 
   const handleSelectionChange = useCallback(
     (key, value) => {
@@ -337,22 +408,15 @@ export function useSimpleCustomQuoteState({
     [activeGetSizes, sizeLabel]
   )
 
-  // 🌟 CHUẨN HÓA MẢNG STRING KHI ĐỔI DANH MỤC
   const handleKhungCategoryChange = useCallback(
     (category) => {
       setKhungCategory(category)
-      
-      const rawInCat = rawCatalog?.filter(c => c.category === category || c.category_name === category) || []
-      const typesInCategory = rawInCat.length > 0 
-        ? rawInCat.map(c => c.name) 
-        : (activeTypesByCategory[category] || getKhungTypesByCategory(category) || [])
-        
+      const typesInCategory = activeTypesByCategory[category] || getKhungTypesByCategory(category) || []
       let newKhungType = selections.khungType
       if (typesInCategory.length && !typesInCategory.includes(selections.khungType)) {
         newKhungType = typesInCategory[0]
         setSelections((prev) => ({ ...prev, khungType: newKhungType }))
       }
-      
       const newSizeOptions = (typeof activeGetSizes === 'function' ? activeGetSizes(newKhungType) : []) || []
       if (Array.isArray(newSizeOptions) && newSizeOptions.length > 0) {
         const firstLabel = typeof newSizeOptions[0] === 'object' ? newSizeOptions[0].label : newSizeOptions[0]
@@ -360,7 +424,7 @@ export function useSimpleCustomQuoteState({
         if (!hasCurrentLabel) setSizeLabel(firstLabel)
       }
     },
-    [rawCatalog, activeTypesByCategory, selections.khungType, activeGetSizes, sizeLabel]
+    [activeTypesByCategory, selections.khungType, activeGetSizes, sizeLabel]
   )
 
   const handleModeChangeSideEffects = useCallback(
@@ -382,14 +446,16 @@ export function useSimpleCustomQuoteState({
       setProductName('')
       setKhungCategory(nextCategory)
       setQuantity('1')
-      setToggles(defaultToggles)
+      setToggles({ ...defaultToggles, van: false }) 
       setSimpleTranhInOn(true)
       setIsOddSize(false)
       setOddWidth('')
       setOddHeight('')
+      setGiayBoQuantity('1')
       setSelections({
         ...defaultSelections,
         khungType: nextType || defaultSelections.khungType,
+        customTierOption: '1',
       })
     },
     []
@@ -466,5 +532,9 @@ export function useSimpleCustomQuoteState({
     glassMat,
     vanMat,
     giayBoMat,
+    giayBoQuantity,
+    setGiayBoQuantity,
+    giayBoSizeMatch,
+    giayBoSellAddon,
   }
 }

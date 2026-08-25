@@ -56,6 +56,9 @@ export function useOrders() {
               width: w,
               height: h,
               costBreakdown: breakdown,
+              // 🌟 ĐỌC DỮ LIỆU JSON TỪ SUPABASE TRẢ VỀ ĐỂ ĐƯA VÀO ĐƠN HÀNG
+              toggles: oi.toggles || null,
+              selections: oi.selections || null,
               ...breakdown
             }
           })
@@ -68,8 +71,6 @@ export function useOrders() {
             id: order.id_oder,
             customerName: order.customer_name || 'Khách lẻ',
             items: items,
-            // 🌟 items_subtotal = tổng tiền TRƯỚC chiết khấu/pallet (nếu bản ghi cũ
-            // chưa có cột này thì tạm lấy lại total_revenue như trước để không vỡ layout).
             itemsSubtotal:
               order.items_subtotal !== null && order.items_subtotal !== undefined
                 ? Number(order.items_subtotal) || 0
@@ -79,13 +80,11 @@ export function useOrders() {
             profit: order.total_profit || 0,
             margin: order.profit_margin || 0,
             createdAt: orderDate,
-            date: orderDate, // Đảm bảo hỗ trợ cả biến date nếu component cũ cần
+            date: orderDate,
             status: order.status || 'chua_chot',
-            idUser: order.id_user ?? null, // 🌟 định danh sale đã tạo báo giá này
-            // 🌟 Đọc lại phí đóng gói Pallet đã lưu — để OrderHistory hiện đúng dòng này.
+            idUser: order.id_user ?? null,
             palletPackagingFee: Number(order.pallet_packaging_fee) || 0,
             palletPackagingTierId: order.pallet_packaging_tier_id ?? null,
-            // 🌟 Đọc lại % chiết khấu đã lưu — để OrderHistory hiện đúng dòng "Chiết khấu".
             discountPercent: Number(order.discount_percent) || 0,
           }
         })
@@ -117,12 +116,7 @@ export function useOrders() {
           total_profit: orderData.profit || 0,
           profit_margin: orderData.margin || 0,
           status: 'chua_chot',
-          id_user: orderData.idUser ?? null, // 🌟 gắn báo giá này với user (sale) đang đăng nhập
-          // 🌟 Lưu phí đóng gói Pallet để Lịch sử báo giá hiện lại được đúng dòng này.
-          // ⚠️ Cần đảm bảo bảng 'oders' đã có các cột sau (nếu chưa có, hãy thêm trên Supabase):
-          //   - pallet_packaging_fee (numeric), pallet_packaging_tier_id (text)
-          //   - discount_percent (numeric) — % chiết khấu đã áp dụng
-          //   - items_subtotal (numeric) — tổng tiền TRƯỚC chiết khấu/pallet
+          id_user: orderData.idUser ?? null,
           pallet_packaging_fee: orderData.palletPackagingFee || 0,
           pallet_packaging_tier_id: orderData.palletPackagingTierId ?? null,
           discount_percent: orderData.discountPercent || 0,
@@ -144,7 +138,10 @@ export function useOrders() {
           unit_price: item.unitPrice || 0,                
           total_item_revenue: item.lineTotal || 0,        
           item_cost_price: item.cost || 0,                
-          item_breakdown_data: item.costBreakdown || null 
+          item_breakdown_data: item.costBreakdown || null,
+          // 🌟 GỬI KÈM DỮ LIỆU CÔNG TẮC LÊN BẢNG order_items CỦA SUPABASE
+          toggles: item.toggles || null,
+          selections: item.selections || null
         }))
 
         const { error: itemsError } = await supabase
@@ -187,7 +184,7 @@ export function useOrders() {
         .from('oders')
         .update({ status: newStatus })
         .eq('id_oder', orderId)
-        .select() // Thêm .select() để xem Supabase có thực sự update được dòng nào không
+        .select() 
 
       console.log("👉 Kết quả Supabase trả về sau update:", { data, error });
 

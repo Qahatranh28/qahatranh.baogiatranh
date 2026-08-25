@@ -1,6 +1,5 @@
 // src/utils/silkScarfCosting.js
 
-// 🌟 ĐỊNH MỨC GIỜ LÀM CHO TỪNG DÒNG KHĂN LỤA (Khai báo trực tiếp, không gọi từ defaults)
 const GIO_LAM_KHAN_RATES = {
   'Khăn Lụa Khung Classic': 2.5,
   'Khăn Lụa Khung Moebe': 4.0,
@@ -18,7 +17,9 @@ export function computeSilkScarfCost(
   customTranhInPrice, customTranhInLabel, customGlassPrice, customGlassLabel,
   customVanPrice, customVanLabel, customGiayBoPrice, customGiayBoLabel,
   customSatXiPrice, customSatXiLabel, mode, innerWidthCm, innerHeightCm,
-  moebeGlassPrice, moebeGlassLabel, moebeCorePrice, moebeCoreLabel, khungCategory
+  moebeGlassPrice, moebeGlassLabel, moebeCorePrice, moebeCoreLabel, khungCategory,
+  customFomexPrice = 0,
+  customFomexLabel = 'Viền Fomex'
 ) {
   const w = Number(widthCm) || 0
   const h = Number(heightCm) || 0
@@ -31,7 +32,6 @@ export function computeSilkScarfCost(
 
   const isLarge = Math.max(w, h) > 40
   
-  // Khăn lụa mặc định dùng viền nhôm, hao hụt +10%
   const tyLeHaoHutKhung = 0.1 
   const chieuDaiKhungCanM = chuViM * (1 + tyLeHaoHutKhung)
 
@@ -42,7 +42,6 @@ export function computeSilkScarfCost(
     return total
   }
 
-  // Đơn giá khung
   let khungPerM = Number(khungPerMOverride) > 0 ? Number(khungPerMOverride) : 0
   khungPerM = khungPerM * khungNameMultiplier
 
@@ -68,7 +67,7 @@ export function computeSilkScarfCost(
     nvlTotal += addRow(customVanLabel, 'm²', dienTichVanM2, customVanPrice)
   }
 
-  // 2. KÍNH/MICA (X2 mặt cho Moebe)
+  // 2. KÍNH/MICA
   if (customGlassPrice > 0) {
     const isMoebe = khungCategory === 'Khăn Lụa Khung Moebe'
     const glassQty = isMoebe ? areaM2 * 2 : areaM2
@@ -76,9 +75,9 @@ export function computeSilkScarfCost(
     nvlTotal += addRow(glassLbl, 'm²', glassQty, customGlassPrice)
   }
 
-  // 3. GIẤY BO
-  if (khungCategory === 'Khăn Lụa Khung Matboard' && customGiayBoPrice > 0) {
-    nvlTotal += addRow(customGiayBoLabel, 'm²', areaM2, customGiayBoPrice)
+  // 3. THAY THẾ GIẤY BO BẰNG VIỀN FOMEX CHO KHUNG MATBOARD (Tính theo diện tích areaM2 = Chiều dài x Chiều rộng)
+  if (khungCategory === 'Khăn Lụa Khung Matboard' && customFomexPrice > 0) {
+    nvlTotal += addRow(customFomexLabel || 'Viền Fomex', 'm²', areaM2, customFomexPrice)
   }
 
   // 4. PHỤ KIỆN & ĐÓNG GÓI
@@ -92,11 +91,9 @@ export function computeSilkScarfCost(
   if (isMakingFrame) {
     if (priceKeGoc > 0) nvlTotal += addRow('Bộ ke góc (khung nhôm)', 'Bộ', 1, priceKeGoc)
 
-    // 🌟 Mặc định cho Khăn lụa (Vẫn tính dây treo nếu là khung lớn)
     let mocTreoQty = isLarge ? 2 : 1
     let dayTreoQty = isLarge ? ((w + 20) / 100) : 0
 
-    // 🌟 Luật riêng: Khăn lụa Moebe luôn có 2 móc và KHÔNG dây treo
     if (khungCategory === 'Khăn Lụa Khung Moebe') {
       mocTreoQty = 2
       dayTreoQty = 0
@@ -133,11 +130,15 @@ export function computeSilkScarfCost(
   const glassLaborArea = (khungCategory === 'Khăn Lụa Khung Moebe') ? areaM2 * 2 : areaM2
   laborTotal += addLabor('Chi phí giờ công làm mica/kính/ván', glassLaborArea * 0.2)
 
+  // CHI PHÍ GIỜ CÔNG LÀM VIỀN FOMEX CHO KHUNG MATBOARD (Tính theo diện tích areaM2)
+  if (khungCategory === 'Khăn Lụa Khung Matboard' && areaM2 > 0) {
+    laborTotal += addLabor('Chi phí giờ công làm viền fomex', areaM2 * 0.25)
+  }
+
   if (hasDongGoi) {
     laborTotal += addLabor('Chi phí giờ công đóng gói', areaM2 * 0.5)
   }
 
-  // 🌟 GIỜ CÔNG LÀM KHĂN LỤA
   const soGioLamKhan = GIO_LAM_KHAN_RATES[khungCategory] || 0
   if (soGioLamKhan > 0) {
     laborTotal += addLabor(`Công nhân làm khăn (${khungCategory})`, soGioLamKhan)

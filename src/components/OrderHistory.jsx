@@ -25,6 +25,7 @@ const COMPONENT_LABELS = {
   satXi: 'Sắt xi',
   son: 'Sơn',
   dongGoi: 'Đóng gói',
+  hoanThien: 'Hoàn thiện', // 🌟 Thêm nhãn này để hiện tag
 }
 
 function selectedComponentTags(item) {
@@ -32,7 +33,6 @@ function selectedComponentTags(item) {
     return ['Đóng gói Pallet']
   }
 
-  // Nếu là chế độ Moebe, hiển thị chi tiết Kính và Ruột
   if (item.mode === 'moebe' && item.selections) {
     const labels = []
     if (item.selections.micaKinhId) labels.push(`Kính/Mica: ${item.selections.micaKinhId}`)
@@ -128,11 +128,8 @@ function ItemCostBreakdown({ item }) {
 export default function OrderHistory({ orders, onDelete, isAdmin, canSeeMargin = isAdmin, onUpdateStatus, currentUser, isSaleRole }) {
   const [expandedId, setExpandedId] = useState(null)
   const [expandedItemId, setExpandedItemId] = useState(null)
-  // 🌟 Chỉ cần tải tên sale khi có quyền xem (admin/editor) — dùng để hiện "Người báo giá"
   const { nameById } = useSalesUsers()
 
-  // 🌟 Nếu đang đăng nhập bằng role "sale": chỉ xem được các đơn do CHÍNH mình tạo,
-  // không thấy đơn của sale khác hay khách vãng lai.
   const scopedOrders = useMemo(() => {
     if (isSaleRole && currentUser) {
       return orders.filter((o) => o.idUser === currentUser.id)
@@ -218,7 +215,6 @@ export default function OrderHistory({ orders, onDelete, isAdmin, canSeeMargin =
         </div>
       </div>
 
-      {/* Tổng kết theo bộ lọc hiện tại */}
       <div className={`grid ${canSeeMargin ? 'grid-cols-2' : 'grid-cols-1'} gap-4 mb-6`}>
         <div className="bg-paper rounded-lg p-4">
           <p className="text-xs text-blueprint/60 mb-1">Doanh thu</p>
@@ -234,9 +230,9 @@ export default function OrderHistory({ orders, onDelete, isAdmin, canSeeMargin =
 
       <div className="space-y-3">
         {filteredOrders.map((order) => {
-          
           const isOpen = expandedId === order.id
           const isLowMargin = order.margin < 55
+          
           return (
             <div key={order.id} className="border border-line rounded-lg overflow-hidden">
               <div className="w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-white hover:bg-paper transition-colors">
@@ -256,15 +252,13 @@ export default function OrderHistory({ orders, onDelete, isAdmin, canSeeMargin =
                   </p>
                 </button>
 
-                {/* Phần điều khiển trạng thái & mở rộng */}
                 <div className="flex items-center gap-4 shrink-0">
-                  {/* Dropdown trạng thái Đã chốt / Chưa chốt đồng bộ DB */}
                   <select
                     value={order.status === 'da_chot' ? 'da_chot' : 'chua_chot'}
                     onChange={(e) => {
-                      const newStatus = e.target.value // 1️⃣ Khai báo biến trước
+                      const newStatus = e.target.value
                       if (onUpdateStatus) {
-                        onUpdateStatus(order.id, newStatus) // 2️⃣ Sử dụng biến sau
+                        onUpdateStatus(order.id, newStatus)
                       }
                     }}
                     className={`px-2.5 py-1 rounded-md font-mono text-xs uppercase tracking-wider font-semibold cursor-pointer outline-none transition-colors ${
@@ -338,6 +332,20 @@ export default function OrderHistory({ orders, onDelete, isAdmin, canSeeMargin =
                         const tags = selectedComponentTags(item)
                         const itemKey = `${order.id}:${item.id}`
                         const itemOpen = expandedItemId === itemKey
+                        
+                        // 🌟 IN RA CONSOLE ĐỂ KIỂM TRA DỮ LIỆU BỊ THIẾU
+            
+
+                        // 🌟 LOGIC MỚI: Tự động tính lại đơn giá nếu trong DB bị mất biến unitPrice
+                        const unitPriceSafe = item.unitPrice || Math.round(item.lineTotal / (item.quantity || 1));
+                        
+                        // 🌟 LOGIC MỚI: Kiểm tra an toàn xem công tắc hoàn thiện có tồn tại không
+                        const isHoanThien = item.toggles && item.toggles.hoanThien === true;
+
+                        const phuThuHoanThien = isHoanThien && unitPriceSafe > 0
+                          ? unitPriceSafe - Math.round(unitPriceSafe / 1.3)
+                          : 0;
+
                         return (
                           <Fragment key={item.id}>
                             <tr className="border-t border-line/60">
@@ -346,6 +354,13 @@ export default function OrderHistory({ orders, onDelete, isAdmin, canSeeMargin =
                                 {tags.length > 0 && (
                                   <p className="text-xs text-blueprint/40 font-mono mt-0.5">
                                     {tags.join(' · ')}
+                                  </p>
+                                )}
+                                
+                                {/* 🌟 DÒNG PHỤ THU HIỂN THỊ Ở ĐÂY */}
+                                {phuThuHoanThien > 0 && (
+                                  <p className="text-[11px] font-mono font-bold text-[#ff4f25] mt-1">
+                                    ↳ Phụ thu hoàn thiện: +{formatVND(phuThuHoanThien)}/sp
                                   </p>
                                 )}
                               </td>
