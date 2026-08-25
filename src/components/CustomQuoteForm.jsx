@@ -252,7 +252,7 @@ export default function CustomQuoteForm({
                               : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-[#ff4f25]'
                           }`}
                         >
-                          Kiểu {tier}
+                          Khung {tier}
                         </button>
                       ))}
                     </div>
@@ -288,10 +288,10 @@ export default function CustomQuoteForm({
                 {/* 🌟 NỘI DUNG LƯU Ý CHO TỪNG KIỂU */}
                 <div className="bg-amber-50 border border-amber-200/60 rounded-md p-2">
                   <p className="text-[11px] text-amber-800 leading-relaxed">
-                    <span className="font-bold">Lưu ý ({currentTier === '1' ? 'Kiểu 1' : 'Kiểu 2'}):</span>{' '}
+                    <span className="font-bold">Lưu ý ({currentTier === '1' ? '1 Khung' : '2 khung'}):</span>{' '}
                     {currentTier === '1' 
-                      ? 'Áp dụng thiết kế chuẩn form đơn, hỗ trợ tùy chọn chèn viền fomex bên trong.'
-                      : 'Áp dụng thiết kế cấu trúc kép đặc biệt, không hỗ trợ chèn viền fomex.'}
+                      ? 'Áp dụng sản phẩm khung tranh bình thường, viền fomex chỉ bật lên nếu sản phẩm đó là khung hộp phần nền trong là màu trắng.'
+                      : 'Áp dụng sản phẩm khung hộp đèn, 2 khung ghép lại.'}
                   </p>
                 </div>
 
