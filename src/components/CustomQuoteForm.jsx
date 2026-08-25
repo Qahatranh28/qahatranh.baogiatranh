@@ -52,7 +52,7 @@ export default function CustomQuoteForm({
     return shortName.trim();
   };
 
-  // Thumbnail vật liệu nằm góc phải
+  // 🌟 Thumbnail vật liệu nổi lên phía trên góc phải, hiển thị trọn vẹn không bị cắt
   const renderCornerThumbnail = (show, materialKey) => {
     if (!show) return null
 
@@ -70,11 +70,11 @@ export default function CustomQuoteForm({
     if (!imgUrl) imgUrl = '/images/default.png';
 
     return (
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
+      <div className="absolute -top-3 -right-2 z-30 pointer-events-none drop-shadow-md">
         <img
           src={imgUrl}
           alt={materialKey}
-          className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg border-2 border-white object-cover shadow-md bg-gray-50"
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 border-white object-cover bg-white"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = '/images/default.png';
@@ -102,11 +102,14 @@ export default function CustomQuoteForm({
     )
   }
 
-  // 🌟 ToggleCard tối ưu: Tiêu đề và công tắc gom lại một cụm sát nhau bằng inline-flex
+  // 🌟 ToggleCard tối ưu: Tiêu đề và công tắc sát nhau, phần thân cho phép hiển thị nổi thumbnail lên trên
   const ToggleCard = ({ toggleKey, label, thumbnailKey, children, caption }) => (
-    <div className="relative rounded-lg border border-gray-200 overflow-hidden shadow-sm bg-white">
+    <div className="relative rounded-lg border border-gray-200 shadow-sm bg-white mt-3">
+      {/* Thumbnail nổi lên trên góc phải */}
+      {thumbnailKey && renderCornerThumbnail(toggles[toggleKey], thumbnailKey)}
+
       <div
-        className={`bg-white px-3.5 py-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors ${
+        className={`bg-white px-3.5 py-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors rounded-lg ${
           thumbnailKey && toggles[toggleKey] ? 'pr-14' : ''
         }`}
         onClick={() => onToggleChange(toggleKey, !toggles[toggleKey])}
@@ -144,11 +147,8 @@ export default function CustomQuoteForm({
         </div>
       </div>
 
-      {/* Thumbnail hiển thị ở góc bên phải khi bật công tắc */}
-      {thumbnailKey && renderCornerThumbnail(toggles[toggleKey], thumbnailKey)}
-
       {toggles[toggleKey] && children && (
-        <div className="p-3 bg-gray-50/60 border-t border-gray-100">{children}</div>
+        <div className="p-3 bg-gray-50/60 border-t border-gray-100 rounded-b-lg">{children}</div>
       )}
     </div>
   )
@@ -210,7 +210,7 @@ export default function CustomQuoteForm({
         </div>
       </div>
 
-      <div className="space-y-2.5">
+      <div className="space-y-3 pt-2">
 
         {/* 1. KHUNG */}
         <ToggleCard toggleKey="khung" label="Khung">
