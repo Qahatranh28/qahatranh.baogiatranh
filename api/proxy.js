@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
-  // Cấu hình Header CORS để tránh bị chặn
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  // Cấu hình CORS
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
@@ -9,8 +9,7 @@ export default async function handler(req, res) {
   );
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
@@ -18,7 +17,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // URL đầy đủ của Lark Suite đã được đưa vào đây
     const targetUrl = 'https://open-jp.larksuite.com/anycross/trigger/callback/YjMxMjcxZTcwMjc2Yzk3OGFjOWNlNjM3NzhlMGI3ZmMw'; 
 
     const response = await fetch(targetUrl, {
