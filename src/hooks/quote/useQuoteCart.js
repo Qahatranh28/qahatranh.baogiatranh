@@ -52,9 +52,13 @@ export function useQuoteCart({ isAdmin, user, saveOrder }) {
   }, [])
 
   const handleExport = useCallback(
-    (customerName) => {
-      if (!canExport) return
-      
+  (customerName) => {
+    console.log("👉 ĐÃ BẤM NÚT XUẤT! Tiến hành kiểm tra điều kiện canExport...");
+    
+    if (!canExport) {
+      console.log("❌ Bị chặn vì canExport đang là false");
+      return; 
+    }
       // 1. LƯU LOCAL/DATABASE CŨ (Giữ nguyên)
       saveOrder({
         customerName: customerName.trim(),
