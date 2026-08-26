@@ -420,8 +420,8 @@ export default function CustomQuoteForm({
         {/* 9. HOÀN THIỆN SẢN PHẨM CỦA KHÁCH */}
         <ToggleCard
           toggleKey="hoanThien"
-          label="Hoàn thiện sản phẩm của khách"
-          caption={toggles.hoanThien ? 'Đã cộng thêm 30% vào tổng giá bán' : 'Bật để cộng thêm 30% giá bán'}
+          label="Phí hoàn thiện sản phẩm của khách"
+          caption={toggles.hoanThien ? 'Đã cộng thêm 30% vào tổng giá bán' : 'Bật khi sản phẩm yêu cầu độ khó cao như(thiết kế khung riêng, đóng khung vật phẩm đặc biệt...)'}
         />
       </div>
 
