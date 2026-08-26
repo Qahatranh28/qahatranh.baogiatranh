@@ -54,6 +54,8 @@ export function useQuoteCart({ isAdmin, user, saveOrder }) {
   const handleExport = useCallback(
     (customerName) => {
       if (!canExport) return
+      
+      // 1. LƯU LOCAL/DATABASE CŨ (Giữ nguyên)
       saveOrder({
         customerName: customerName.trim(),
         items,
@@ -67,6 +69,34 @@ export function useQuoteCart({ isAdmin, user, saveOrder }) {
         palletPackagingTierId: palletPackagingEnabled ? palletPackagingTierId : null,
         idUser: user?.id ?? null,
       })
+
+      // -------------------------------------------------------------
+      // 🌟 2. ĐOẠN CODE THÊM MỚI: ĐỒNG BỘ DỮ LIỆU SANG LARK SUITE 🌟
+      // -------------------------------------------------------------
+      try {
+        const orderData = {
+          customerName: customerName.trim() || 'Khách lẻ',
+          totalItems: items.length,
+          itemsSubtotal: itemsSubtotal,
+          discountPercent: discount,
+          itemsTotal: itemsTotal,
+          palletFee: palletPackagingFee,
+        };
+
+        fetch('/api/proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        })
+        .then(res => res.json())
+        .then(data => console.log("Đồng bộ Lark thành công!", data))
+        .catch(err => console.error("Lỗi đồng bộ Lark:", err));
+      } catch (error) {
+        console.error("Lỗi đóng gói dữ liệu Lark:", error);
+      }
+      // -------------------------------------------------------------
+
+      // 3. RESET FORM
       setExportMessage(`Đã lưu báo giá cho "${customerName.trim() || 'khách lẻ'}". Bắt đầu đơn mới.`)
       setItems([])
       setDiscountPercent('0')
