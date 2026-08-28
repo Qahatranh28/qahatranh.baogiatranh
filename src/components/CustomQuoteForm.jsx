@@ -102,7 +102,7 @@ export default function CustomQuoteForm({
     )
   }
 
-  // 🌟 ToggleCard tối ưu: Tích hợp cơ chế chặn click khi bị khóa và thông báo cảnh báo
+  // 🌟 ToggleCard tối ưu: Đã cô lập sự kiện click để không bị nhảy layout/cuộn trang
   const ToggleCard = ({ toggleKey, label, thumbnailKey, children, caption, disabled = false }) => (
     <div className={`relative rounded-lg border border-gray-200 shadow-sm bg-white mt-3 ${disabled ? 'opacity-70' : ''}`}>
       {/* Thumbnail nổi lên trên góc phải */}
@@ -112,7 +112,8 @@ export default function CustomQuoteForm({
         className={`bg-white px-3.5 py-2.5 flex items-center justify-between rounded-lg ${
           thumbnailKey && toggles[toggleKey] ? 'pr-14' : ''
         } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 transition-colors'}`}
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
           if (disabled && (toggleKey === 'van' || toggleKey === 'giayBo') && toggles.vienFomex) {
             alert('⚠️ Không thể tắt Ván lót hoặc Giấy bo khi đang bật Nền trắng!');
             return;
@@ -332,7 +333,7 @@ export default function CustomQuoteForm({
                   <p className="text-[11px] text-amber-800 leading-relaxed">
                     <span className="font-bold">Lưu ý ({currentTier === '1' ? '1 Khung' : 'Khung hộp đèn'}):</span>{' '}
                     {currentTier === '1' 
-                      ? 'Áp dụng khung tranh bình thường, nền trắng chỉ bật khi sản phẩm khung tranh có ruột lót nền trắng.'
+                      ? 'Áp dụng khung tranh bình thường, khi bật nền trắng sẽ tự động bật ván lót và giấy bo trắng 0.8ly.'
                       : 'Áp dụng sản phẩm khung hộp đèn, 2 khung ghép lại.'}
                   </p>
                 </div>
