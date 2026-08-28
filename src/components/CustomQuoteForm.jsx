@@ -102,61 +102,60 @@ export default function CustomQuoteForm({
     )
   }
 
-  // 🌟 ToggleCard tối ưu: Đã cô lập sự kiện click để không bị nhảy layout/cuộn trang
+  // 🌟 ToggleCard đã khôi phục lại khả năng click toàn khung div mà KHÔNG bị nhảy cuộn trang
   const ToggleCard = ({ toggleKey, label, thumbnailKey, children, caption, disabled = false }) => (
     <div className={`relative rounded-lg border border-gray-200 shadow-sm bg-white mt-3 ${disabled ? 'opacity-70' : ''}`}>
       {/* Thumbnail nổi lên trên góc phải */}
       {thumbnailKey && renderCornerThumbnail(toggles[toggleKey], thumbnailKey)}
 
       <div
-        className={`bg-white px-3.5 py-2.5 flex items-center justify-between rounded-lg ${
+        className={`bg-white px-3.5 py-2.5 flex items-center justify-between rounded-lg select-none ${
           thumbnailKey && toggles[toggleKey] ? 'pr-14' : ''
         } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 transition-colors'}`}
         onClick={(e) => {
-          e.stopPropagation();
+          e.preventDefault(); // Chặn hành vi mặc định gây cuộn nhảy trang của trình duyệt
           if (disabled && (toggleKey === 'van' || toggleKey === 'giayBo') && toggles.vienFomex) {
             alert('⚠️ Không thể tắt Ván lót hoặc Giấy bo khi đang bật Nền trắng!');
             return;
           }
-          if (!disabled) onToggleChange(toggleKey, !toggles[toggleKey])
+          if (!disabled) onToggleChange(toggleKey, !toggles[toggleKey]);
         }}
       >
-        {/* Nhóm tiêu đề và nút công tắc nằm sát cạnh nhau */}
-        <div className="inline-flex items-center gap-2.5 min-w-0">
-          <div className="min-w-0">
-            <span className="font-bold text-xs uppercase text-gray-800 tracking-widest select-none">
-              {label}
-            </span>
-            {caption && (
-              <p className="text-[10px] text-gray-400 mt-0.5 truncate">{caption}</p>
-            )}
-          </div>
-
-          {/* Nút công tắc bám ngay bên cạnh tiêu đề */}
-          <button
-            type="button"
-            role="switch"
-            disabled={disabled}
-            aria-checked={Boolean(toggles[toggleKey])}
-            onClick={(e) => {
-              e.stopPropagation()
-              if (disabled && (toggleKey === 'van' || toggleKey === 'giayBo') && toggles.vienFomex) {
-                alert('⚠️ Không thể tắt Ván lót hoặc Giấy bo khi đang bật Nền trắng!');
-                return;
-              }
-              if (!disabled) onToggleChange(toggleKey, !toggles[toggleKey])
-            }}
-            className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-              toggles[toggleKey] ? 'bg-[#ff4f25]' : 'bg-gray-300'
-            } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            <span
-              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                toggles[toggleKey] ? 'translate-x-4' : 'translate-x-0'
-              }`}
-            />
-          </button>
+        {/* Nhóm tiêu đề */}
+        <div className="min-w-0 pointer-events-none">
+          <span className="font-bold text-xs uppercase text-gray-800 tracking-widest">
+            {label}
+          </span>
+          {caption && (
+            <p className="text-[10px] text-gray-400 mt-0.5 truncate">{caption}</p>
+          )}
         </div>
+
+        {/* Nút công tắc */}
+        <button
+          type="button"
+          role="switch"
+          disabled={disabled}
+          aria-checked={Boolean(toggles[toggleKey])}
+          onClick={(e) => {
+            e.stopPropagation(); // Cô lập sự kiện để không bị đúp click
+            e.preventDefault();
+            if (disabled && (toggleKey === 'van' || toggleKey === 'giayBo') && toggles.vienFomex) {
+              alert('⚠️ Không thể tắt Ván lót hoặc Giấy bo khi đang bật Nền trắng!');
+              return;
+            }
+            if (!disabled) onToggleChange(toggleKey, !toggles[toggleKey]);
+          }}
+          className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+            toggles[toggleKey] ? 'bg-[#ff4f25]' : 'bg-gray-300'
+          } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+              toggles[toggleKey] ? 'translate-x-4' : 'translate-x-0'
+            }`}
+          />
+        </button>
       </div>
 
       {toggles[toggleKey] && children && (
@@ -269,7 +268,7 @@ export default function CustomQuoteForm({
                     <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl border border-gray-200/80 shadow-inner">
                       {[
                         { id: '1', label: '1 Khung' },
-                        { id: '2', label: 'Khung che ổ điện' }
+                        { id: '2', label: 'Khung hộp đèn' }
                       ].map((item) => (
                         <button
                           key={item.id}
