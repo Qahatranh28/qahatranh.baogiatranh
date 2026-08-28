@@ -268,7 +268,7 @@ export default function CustomQuoteForm({
                     <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl border border-gray-200/80 shadow-inner">
                       {[
                         { id: '1', label: '1 Khung' },
-                        { id: '2', label: 'Khung hộp đèn' }
+                        { id: '2', label: 'Khung che ổ điện' }
                       ].map((item) => (
                         <button
                           key={item.id}
