@@ -71,6 +71,29 @@ export default function JerseyQuoteForm({
     }
   }, [selectedCategory, frameTypes, selectedFrameId, onFrameChange]) 
 
+  // ========================================================
+  // 🌟 TÍNH TOÁN GIỚI HẠN KÍCH THƯỚC ÁO ĐẤU THEO PHÂN LOẠI
+  // ========================================================
+  const w = Number(width || 0);
+  const h = Number(height || 0);
+  const minEdge = Math.min(w, h);
+  const maxEdge = Math.max(w, h);
+
+  // Mặc định cho "1 mặt cơ bản"
+  let maxShortEdge = 90;
+  let maxLongEdge = 100;
+
+  // Nếu là cao cấp thì bóp giới hạn lại
+  const isPremium = tier === 'premium' || tier === '2_faces_premium';
+  if (isPremium) {
+    maxShortEdge = 70;
+    maxLongEdge = 90;
+  }
+
+  // Kiểm tra xem có đang bị vượt quá khổ không (chỉ kiểm tra khi user đã nhập số > 0)
+  const isOversized = (w > 0 || h > 0) && (minEdge > maxShortEdge || maxEdge > maxLongEdge);
+  // ========================================================
+
   return (
     <div className="space-y-6 animate-fade-in">
       
@@ -167,27 +190,50 @@ export default function JerseyQuoteForm({
       </div>
 
       {/* KÍCH THƯỚC */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2 pl-1">Chiều rộng (cm)</label>
-          <input
-            type="number"
-            value={width ?? ''}
-            onChange={(e) => onWidthChange?.(e.target.value)}
-            placeholder="Rộng"
-            className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-[#ff4f25] focus:ring-4 focus:ring-[#ff4f25]/15 bg-white font-mono shadow-sm transition-all text-center"
-          />
+      <div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2 pl-1">Chiều rộng (cm)</label>
+            <input
+              type="number"
+              value={width ?? ''}
+              onChange={(e) => onWidthChange?.(e.target.value)}
+              placeholder="Rộng"
+              className={`w-full border rounded-xl px-4 py-3.5 text-sm outline-none focus:ring-4 bg-white font-mono shadow-sm transition-all text-center ${
+                isOversized 
+                  ? 'border-red-500 text-red-600 focus:border-red-500 focus:ring-red-500/15' 
+                  : 'border-gray-200 focus:border-[#ff4f25] focus:ring-[#ff4f25]/15'
+              }`}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2 pl-1">Chiều dài (cm)</label>
+            <input
+              type="number"
+              value={height ?? ''}
+              onChange={(e) => onHeightChange?.(e.target.value)}
+              placeholder="Dài"
+              className={`w-full border rounded-xl px-4 py-3.5 text-sm outline-none focus:ring-4 bg-white font-mono shadow-sm transition-all text-center ${
+                isOversized 
+                  ? 'border-red-500 text-red-600 focus:border-red-500 focus:ring-red-500/15' 
+                  : 'border-gray-200 focus:border-[#ff4f25] focus:ring-[#ff4f25]/15'
+              }`}
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2 pl-1">Chiều dài (cm)</label>
-          <input
-            type="number"
-            value={height ?? ''}
-            onChange={(e) => onHeightChange?.(e.target.value)}
-            placeholder="Dài"
-            className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-[#ff4f25] focus:ring-4 focus:ring-[#ff4f25]/15 bg-white font-mono shadow-sm transition-all text-center"
-          />
-        </div>
+        
+        {/* HIỂN THỊ CẢNH BÁO QUÁ KHỔ */}
+        {isOversized && (
+          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-500 shrink-0 mt-0.5">
+              <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+            </svg>
+            <p className="text-[11.5px] text-red-600 font-medium leading-relaxed">
+              Kích thước vượt quá giới hạn sản xuất của phân loại <strong>"{TIER_OPTIONS.find(t => t.id === tier)?.label}"</strong>. 
+              Kích thước tối đa cho phép là <strong>{maxShortEdge}x{maxLongEdge} cm</strong>. Vui lòng nhập lại!
+            </p>
+          </div>
+        )}
       </div>
 
       {/* SIZE ÁO ĐẤU */}

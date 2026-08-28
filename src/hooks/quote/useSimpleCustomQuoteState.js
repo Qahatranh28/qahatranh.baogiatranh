@@ -249,9 +249,29 @@ export function useSimpleCustomQuoteState({
 
   // Giấy bo (Custom)
   const giayBoSizeMatch = useMemo(() => {
-    if (mode !== 'custom' || !activeToggles?.giayBo) return null
-    return findRoundUpStandardSize(giayBoSizePrices, activeWidth, activeHeight)
-  }, [mode, activeToggles?.giayBo, giayBoSizePrices, activeWidth, activeHeight])
+    if (mode !== 'custom' || !activeToggles?.giayBo) return null;
+
+    // Chuẩn hóa chiều ngắn/dài để không phân biệt ngang/dọc
+    const minInput = Math.min(activeWidth, activeHeight);
+    const maxInput = Math.max(activeWidth, activeHeight);
+
+    // 1. Quá giới hạn max 75x105 -> Không trả về size nào (chặn tính giá)
+    if (minInput > 105 || maxInput > 105) {
+      return null; 
+    }
+
+    // 2. Kích thước > 70x100 nhưng vẫn <= 75x105 -> Ép lấy giá của dòng 70x100
+    if (minInput > 70 || maxInput > 100) {
+      return giayBoSizePrices.find(size => 
+        (size.width === 70 && size.height === 100) || 
+        (size.width === 100 && size.height === 70)
+      );
+    }
+
+    // 3. Các trường hợp nhỏ hơn 70x100 -> Vẫn giữ nguyên hàm tìm size gần nhất của bạn
+    return findRoundUpStandardSize(giayBoSizePrices, activeWidth, activeHeight);
+    
+  }, [mode, activeToggles?.giayBo, giayBoSizePrices, activeWidth, activeHeight]);
 
   const giayBoSellAddon = useMemo(() => {
     if (mode !== 'custom' || !activeToggles?.giayBo || !giayBoSizeMatch) return 0

@@ -102,17 +102,23 @@ export default function CustomQuoteForm({
     )
   }
 
-  // 🌟 ToggleCard tối ưu: Tiêu đề và công tắc sát nhau, phần thân cho phép hiển thị nổi thumbnail lên trên
-  const ToggleCard = ({ toggleKey, label, thumbnailKey, children, caption }) => (
-    <div className="relative rounded-lg border border-gray-200 shadow-sm bg-white mt-3">
+  // 🌟 ToggleCard tối ưu: Tích hợp cơ chế chặn click khi bị khóa và thông báo cảnh báo
+  const ToggleCard = ({ toggleKey, label, thumbnailKey, children, caption, disabled = false }) => (
+    <div className={`relative rounded-lg border border-gray-200 shadow-sm bg-white mt-3 ${disabled ? 'opacity-70' : ''}`}>
       {/* Thumbnail nổi lên trên góc phải */}
       {thumbnailKey && renderCornerThumbnail(toggles[toggleKey], thumbnailKey)}
 
       <div
-        className={`bg-white px-3.5 py-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors rounded-lg ${
+        className={`bg-white px-3.5 py-2.5 flex items-center justify-between rounded-lg ${
           thumbnailKey && toggles[toggleKey] ? 'pr-14' : ''
-        }`}
-        onClick={() => onToggleChange(toggleKey, !toggles[toggleKey])}
+        } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 transition-colors'}`}
+        onClick={() => {
+          if (disabled && (toggleKey === 'van' || toggleKey === 'giayBo') && toggles.vienFomex) {
+            alert('⚠️ Không thể tắt Ván lót hoặc Giấy bo khi đang bật Nền trắng!');
+            return;
+          }
+          if (!disabled) onToggleChange(toggleKey, !toggles[toggleKey])
+        }}
       >
         {/* Nhóm tiêu đề và nút công tắc nằm sát cạnh nhau */}
         <div className="inline-flex items-center gap-2.5 min-w-0">
@@ -129,14 +135,19 @@ export default function CustomQuoteForm({
           <button
             type="button"
             role="switch"
+            disabled={disabled}
             aria-checked={Boolean(toggles[toggleKey])}
             onClick={(e) => {
               e.stopPropagation()
-              onToggleChange(toggleKey, !toggles[toggleKey])
+              if (disabled && (toggleKey === 'van' || toggleKey === 'giayBo') && toggles.vienFomex) {
+                alert('⚠️ Không thể tắt Ván lót hoặc Giấy bo khi đang bật Nền trắng!');
+                return;
+              }
+              if (!disabled) onToggleChange(toggleKey, !toggles[toggleKey])
             }}
-            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+            className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
               toggles[toggleKey] ? 'bg-[#ff4f25]' : 'bg-gray-300'
-            }`}
+            } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <span
               className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
@@ -153,7 +164,21 @@ export default function CustomQuoteForm({
     </div>
   )
 
+  // 🌟 TÍNH TOÁN KHÓA GIẤY BO THEO KÍCH THƯỚC
+  const w = Number(width || 0);
+  const h = Number(height || 0);
+  const isGiayBoDisabled = Math.min(w, h) > 75 || Math.max(w, h) > 105;
   const currentTier = String(selections.customTierOption || '1');
+  
+  // Khóa Ván lót và Giấy bo nếu Nền trắng (vienFomex) đang bật
+  const isVanAndGiayBoLocked = Boolean(toggles.vienFomex);
+  
+  // Tự động tắt công tắc Giấy bo nếu kích thước bị vượt quá giới hạn
+  useEffect(() => {
+    if (isGiayBoDisabled && toggles.giayBo) {
+      onToggleChange('giayBo', false);
+    }
+  }, [isGiayBoDisabled, toggles.giayBo, onToggleChange]);
 
   return (
     <div>
@@ -230,46 +255,63 @@ export default function CustomQuoteForm({
               options={typeOptions.map(t => ({ value: t, label: formatDisplayName(t) }))}
             />
 
-            {/* 🌟 TÙY CHỌN RIÊNG CHO GỖ TỰ NHIÊN / COMPOSITE 2X3 */}
+            {/* TÙY CHỌN RIÊNG CHO GỖ TỰ NHIÊN / COMPOSITE 2X3 */}
             {(khungCategory === 'Khung Gỗ Tự Nhiên' || khungCategory === 'Khung Composite 2x3') && (
               <div className="bg-white border border-gray-200 rounded-lg p-3 space-y-3 mt-1 shadow-sm">
                 
-                {/* Kiểu & Công tắc Viền Fomex nằm chung 1 hàng */}
+                {/* Kiểu & Công tắc Nền trắng nằm chung 1 hàng */}
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
                       Kiểu tùy chọn
                     </label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {['1', '2'].map((tier) => (
+                    <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl border border-gray-200/80 shadow-inner">
+                      {[
+                        { id: '1', label: '1 Khung' },
+                        { id: '2', label: 'Khung hộp đèn' }
+                      ].map((item) => (
                         <button
-                          key={tier}
+                          key={item.id}
                           type="button"
-                          onClick={() => onSelectionChange('customTierOption', tier)}
-                          className={`py-1.5 rounded-md text-xs font-bold border transition-colors ${
-                            currentTier === tier
-                              ? 'bg-[#ff4f25] text-white border-transparent'
-                              : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-[#ff4f25]'
+                          onClick={() => onSelectionChange('customTierOption', item.id)}
+                          className={`py-2.5 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-300 ease-out flex items-center justify-center gap-1.5 ${
+                            currentTier === item.id
+                              ? 'bg-[#ff4f25] text-white shadow-md shadow-[#ff4f25]/30 scale-100'
+                              : 'text-gray-500 bg-transparent hover:text-gray-900 hover:bg-white/60 scale-95'
                           }`}
                         >
-                          Khung {tier}
+                          <span>{item.label}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* CHỈ HIỆN CÔNG TẮC VIỀN FOMEX KHI CHỌN KIỂU 1 */}
+                  {/* CHỈ HIỆN CÔNG TẮC KHI CHỌN KIỂU 1 */}
                   {currentTier === '1' && (
                     <div className="shrink-0 pt-3">
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
-                        Viền Fomex
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 text-right">
+                        Nền trắng
                       </label>
-                      <div className="flex items-center h-[30px]">
+                      <div className="flex items-center justify-end h-[30px]">
                         <button
                           type="button"
                           role="switch"
                           aria-checked={Boolean(toggles.vienFomex)}
-                          onClick={() => onToggleChange('vienFomex', !toggles.vienFomex)}
+                          onClick={() => {
+                            const nextState = !toggles.vienFomex;
+                            // 1. Bật/tắt công tắc nền trắng
+                            onToggleChange('vienFomex', nextState);
+                            
+                            // 2. Tự động bật ván lót, giấy bo và mặc định chọn giấy bo trắng 0.8ly
+                            if (nextState) {
+                              onToggleChange('van', true);
+                              onToggleChange('giayBo', true);
+                              onSelectionChange('giayBoType', 'giay_bo_trang_0_8ly');
+                            } else {
+                              onToggleChange('van', false);
+                              onToggleChange('giayBo', false);
+                            }
+                          }}
                           className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                             toggles.vienFomex ? 'bg-[#ff4f25]' : 'bg-gray-300'
                           }`}
@@ -285,12 +327,12 @@ export default function CustomQuoteForm({
                   )}
                 </div>
 
-                {/* 🌟 NỘI DUNG LƯU Ý CHO TỪNG KIỂU */}
+                {/* NỘI DUNG LƯU Ý CHO TỪNG KIỂU */}
                 <div className="bg-amber-50 border border-amber-200/60 rounded-md p-2">
                   <p className="text-[11px] text-amber-800 leading-relaxed">
-                    <span className="font-bold">Lưu ý ({currentTier === '1' ? '1 Khung' : '2 khung'}):</span>{' '}
+                    <span className="font-bold">Lưu ý ({currentTier === '1' ? '1 Khung' : 'Khung hộp đèn'}):</span>{' '}
                     {currentTier === '1' 
-                      ? 'Áp dụng sản phẩm khung tranh bình thường, viền fomex chỉ bật lên nếu sản phẩm đó là khung hộp phần nền trong là màu trắng.'
+                      ? 'Áp dụng khung tranh bình thường, nền trắng chỉ bật khi sản phẩm khung tranh có ruột lót nền trắng.'
                       : 'Áp dụng sản phẩm khung hộp đèn, 2 khung ghép lại.'}
                   </p>
                 </div>
@@ -344,16 +386,22 @@ export default function CustomQuoteForm({
           </div>
         </ToggleCard>
 
-        {/* 4. VÁN LÓT */}
+        {/* 4. VÁN LÓT (Bị khóa khi Nền trắng đang bật) */}
         <ToggleCard
           toggleKey="van"
           label="Ván lót"
           thumbnailKey="van_4ly"
-          caption="Mặc định Ván 4 ly"
+          caption={isVanAndGiayBoLocked ? "Đang bật tự động theo Nền trắng" : "Mặc định Ván 4 ly"}
+          disabled={isVanAndGiayBoLocked}
         />
 
-        {/* 5. GIẤY BO */}
-        <ToggleCard toggleKey="giayBo" label="Giấy bo" thumbnailKey={selections.giayBoType}>
+        {/* 5. GIẤY BO (Bị khóa khi quá khổ HOẶC Nền trắng đang bật) */}
+        <ToggleCard 
+          toggleKey="giayBo" 
+          label="Giấy bo" 
+          thumbnailKey={selections.giayBoType}
+          disabled={isGiayBoDisabled || isVanAndGiayBoLocked} 
+        >
           <div className="space-y-2.5">
             <div className="flex items-end gap-2">
               <div className="flex-1 min-w-0">
@@ -363,6 +411,7 @@ export default function CustomQuoteForm({
                   value={selections.giayBoType}
                   onChange={(val) => onSelectionChange('giayBoType', val)}
                   options={giayBoTypeOptions}
+                  disabled={isGiayBoDisabled || isVanAndGiayBoLocked}
                 />
               </div>
               
@@ -377,12 +426,17 @@ export default function CustomQuoteForm({
                   step="1"
                   value={giayBoQuantity}
                   onChange={(e) => onGiayBoQuantityChange?.(e.target.value)}
-                  className="w-full h-[42px] bg-white border border-gray-200 rounded-lg px-2 text-sm outline-none focus:border-[#ff4f25] font-mono font-bold text-center transition-colors"
+                  disabled={isGiayBoDisabled || isVanAndGiayBoLocked} 
+                  className="w-full h-[42px] bg-white border border-gray-200 rounded-lg px-2 text-sm outline-none focus:border-[#ff4f25] font-mono font-bold text-center transition-colors disabled:bg-gray-100 disabled:text-gray-400"
                 />
               </div>
             </div>
             
-            {giayBoSizeMatchLabel ? (
+            {isGiayBoDisabled ? (
+              <p className="text-[11px] text-red-500 font-medium">
+                Kích thước vượt quá khổ giấy bo tối đa (75x105 cm).
+              </p>
+            ) : giayBoSizeMatchLabel ? (
               <div className="bg-white rounded border border-gray-200 p-2.5 shadow-sm">
                 <p className="text-[11px] text-gray-500">
                   Size áp dụng: <span className="font-bold text-gray-700">{giayBoSizeMatchLabel}</span>
