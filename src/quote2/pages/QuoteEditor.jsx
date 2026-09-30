@@ -182,8 +182,8 @@ export default function QuoteEditor({
                 {cost && (
                   <>
                     <th className="text-right font-semibold py-2 px-2 w-24">Tiền lời (1sp)</th>
-                    <th className="text-right font-semibold py-2 px-2 w-28">Giá vốn (theo SL)</th>
-                    <th className="text-right font-semibold py-2 px-2 w-28">Tiền lời (theo SL)</th>
+                    <th className="text-right font-semibold py-2 px-2 w-28">Tổng giá vốn</th>
+                    <th className="text-right font-semibold py-2 px-2 w-28">Tổng tiền lời</th>
                     <th className="text-center font-semibold py-2 px-2 w-20">Biên sau CK</th>
                   </>
                 )}
