@@ -3,7 +3,7 @@ import CompanyHeader from '../CompanyHeader.jsx'
 import FitWidth from '../FitWidth.jsx'
 import { Ed, NumEd, MoneyEd, DateEd } from '../Ed.jsx'
 import { fmtMoney, fmtNum, moneyToWords } from '../../lib/format.js'
-import { fmtYmd, newDocItem } from '../../lib/docs.js'
+import { deliveryNotesOrDefault, fmtYmd, newDocItem } from '../../lib/docs.js'
 
 const blank = '—'
 const defaultIntro = 'Bên Mua xác nhận Bên Bán đã giao thành công, đầy đủ đơn hàng cụ thể như sau:'
@@ -22,6 +22,7 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
   const tax = Math.round(total * taxRate / 100)
   const grandTotal = total + tax
   const introText = data.introText ?? defaultIntro
+  const deliveryNotes = deliveryNotesOrDefault(data.confirmText)
 
   const set = (patch) => editor.setData((d) => ({ ...d, ...patch }))
   const setItem = (id, p) => editor.setData((d) => ({ ...d, items: d.items.map((i) => (i.id === id ? { ...i, ...p } : i)) }))
@@ -111,11 +112,11 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
                 <h2 className="text-[11px] uppercase tracking-wide text-[#6b7280] font-bold">Tổng tiền bằng chữ</h2>
                 <p className="font-bold text-[14px]">{moneyToWords(grandTotal)}.</p>
               </div>
-              {(edit || data.note?.trim() || data.confirmText?.trim()) && (
+              {(edit || data.note?.trim() || deliveryNotes.trim()) && (
                 <div className="text-[13px] leading-relaxed">
                   <h2 className="font-bold text-[15px] mb-1">Lưu ý</h2>
                   {(edit || data.note?.trim()) && <div>{edit ? <Ed value={data.note} onChange={(v) => set({ note: v })} multiline placeholder="Ghi chú giao hàng" /> : data.note.trim()}</div>}
-                  {(edit || data.confirmText?.trim()) && <div>{edit ? <Ed value={data.confirmText} onChange={(v) => set({ confirmText: v })} multiline placeholder="Lưu ý khi bàn giao" /> : data.confirmText.trim()}</div>}
+                  {(edit || deliveryNotes.trim()) && <div>{edit ? <Ed value={deliveryNotes} onChange={(v) => set({ confirmText: v })} multiline placeholder="Lưu ý khi bàn giao" /> : deliveryNotes.trim()}</div>}
                 </div>
               )}
             </div>

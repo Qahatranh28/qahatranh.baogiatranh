@@ -5,7 +5,7 @@ import TermsRowsEditor from '../components/TermsRowsEditor.jsx'
 import PreviewShell from '../components/PreviewShell.jsx'
 import QuoteSheet from '../components/sheets/QuoteSheet.jsx'
 import DeliverySheet from '../components/sheets/DeliverySheet.jsx'
-import { DOC_TYPES, newDocItem, toYmd, fromYmd, buildQuoteText } from '../lib/docs.js'
+import { DOC_TYPES, deliveryNotesOrDefault, newDocItem, toYmd, fromYmd, buildQuoteText } from '../lib/docs.js'
 import { calcQuote } from '../lib/calc.js'
 import { parseTerms, serializeTerms } from '../lib/richText.js'
 import { DEFAULT_TERMS, TAX_OPTIONS } from '../lib/defaults.js'
@@ -144,7 +144,7 @@ export default function DocEditor({ doc, data, setData, dirty, saving, editable,
         )}
         <div className="grid gap-3 mt-3 max-w-3xl">
           <Field label={isDelivery ? 'Ghi chú giao hàng' : 'Ghi chú hiển thị trên phiếu'}><textarea rows={2} className={inputCls} disabled={disabled} value={data.note || ''} onChange={(e) => set({ note: e.target.value })} /></Field>
-          {isDelivery && <Field label="Lời nhắc dưới bảng (ví dụ kiểm tra hàng khi nhận)"><textarea rows={2} className={inputCls} disabled={disabled} value={data.confirmText || ''} onChange={(e) => set({ confirmText: e.target.value })} /></Field>}
+          {isDelivery && <Field label="Lưu ý"><textarea rows={4} className={inputCls} disabled={disabled} value={deliveryNotesOrDefault(data.confirmText)} onChange={(e) => set({ confirmText: e.target.value })} /></Field>}
         </div>
       </Panel>
 

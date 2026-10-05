@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Card, Field, Btn, MoneyInput, inputCls } from './ui.jsx'
 import CompanyForm from './CompanyForm.jsx'
 import TermsRowsEditor from './TermsRowsEditor.jsx'
-import { DEFAULT_ORDER_QUOTE_CONTENT, newDocItem, toYmd, fromYmd, docTotals } from '../lib/docs.js'
+import { DEFAULT_ORDER_QUOTE_CONTENT, deliveryNotesOrDefault, newDocItem, toYmd, fromYmd, docTotals } from '../lib/docs.js'
 import { parseTerms, serializeTerms } from '../lib/richText.js'
 import { DEFAULT_TERMS, TAX_OPTIONS } from '../lib/defaults.js'
 import { fmtMoney } from '../lib/format.js'
@@ -139,7 +139,7 @@ export default function DocForm({ type, data, setData, disabled, orderMode = fal
         <ItemsEditor type={type} items={data.items} setItems={setItems} showPrice disabled={disabled} />
         <fieldset disabled={disabled} className="grid gap-3 mt-4">
           <Field label={isDelivery ? 'Ghi chú giao hàng' : 'Ghi chú hiển thị trên phiếu'}><textarea rows={2} className={inputCls} value={data.note || ''} onChange={(e) => set({ note: e.target.value })} /></Field>
-          {isDelivery && <Field label="Lời nhắc dưới bảng"><textarea rows={2} className={inputCls} value={data.confirmText || ''} onChange={(e) => set({ confirmText: e.target.value })} /></Field>}
+          {isDelivery && <Field label="Lưu ý"><textarea rows={4} className={inputCls} value={deliveryNotesOrDefault(data.confirmText)} onChange={(e) => set({ confirmText: e.target.value })} /></Field>}
         </fieldset>
       </Card>
 

@@ -64,6 +64,14 @@ export const DEFAULT_ORDER_QUOTE_CONTENT = {
   thankYou: 'Cảm ơn Quý khách!',
 }
 
+export const DEFAULT_DELIVERY_NOTES = [
+  '+ Bên Mua vui lòng đồng kiểm kỹ hàng hóa, số lượng và chất lượng khi nhận hàng.',
+  '+ Hàng sản xuất riêng theo nhu cầu, hàng mua rồi miễn đổi trả.',
+  '+ Mọi thắc mắc hay bất kỳ khiếu nại/phát sinh nào về đơn hàng sau khi đã thanh toán/bàn giao, Bên Bán không chịu trách nhiệm.',
+].join('\n')
+const LEGACY_DELIVERY_NOTE = 'Quý khách vui lòng kiểm tra số lượng, quy cách và tình trạng sản phẩm khi nhận hàng.'
+export const deliveryNotesOrDefault = (value) => !value || value === LEGACY_DELIVERY_NOTE ? DEFAULT_DELIVERY_NOTES : value
+
 export function buildQuoteDoc(quote, company, terms) {
   const ov = quote.previewOverrides || {}
   return {
@@ -100,7 +108,7 @@ export function buildDeliveryDoc(quote, company) {
     taxRate: n(quote.taxRate),
     collectAmount: 0,
     note: '',
-    confirmText: 'Quý khách vui lòng kiểm tra số lượng, quy cách và tình trạng sản phẩm khi nhận hàng.',
+    confirmText: DEFAULT_DELIVERY_NOTES,
   }
 }
 
