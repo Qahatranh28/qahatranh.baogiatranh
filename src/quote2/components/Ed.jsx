@@ -34,12 +34,12 @@ export function Ed({ value, onChange, placeholder, className = '', multiline = f
 }
 
 // Số (SL, %): giữ chuỗi đang gõ để gõ được "1." hoặc "2,5"
-export function NumEd({ value, onChange, className = '' }) {
+export function NumEd({ value, onChange, className = '', style }) {
   const [t, setT] = useState(String(value ?? ''))
   useEffect(() => { if (Number(String(t).replace(',', '.')) !== Number(value)) setT(String(value ?? '')) }, [value]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <input
-      className={`q2-ed ${className}`} inputMode="decimal" value={t}
+      className={`q2-ed ${className}`} style={style} inputMode="decimal" value={t}
       onChange={(e) => { setT(e.target.value); const n = Number(e.target.value.replace(',', '.')); onChange(Number.isFinite(n) ? n : 0) }}
     />
   )

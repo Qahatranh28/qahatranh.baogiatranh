@@ -49,7 +49,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
     />
     : value
   const percentage = (key, value) => edit
-    ? <span className="inline-flex items-center whitespace-nowrap"><NumEd value={value} onChange={(next) => changePercent(key, next)} className="q2-inline-input !inline-block !w-[3ch] shrink-0 text-right" />%</span>
+    ? <span className="inline-flex items-center whitespace-nowrap"><NumEd value={value} onChange={(next) => changePercent(key, next)} className="q2-inline-input !inline-block shrink-0 text-center" style={{ width: `${Math.max(2, String(value ?? '').length)}ch` }} />%</span>
     : `${fmtNum(value)}%`
   const amount = (value, large = false) => (
     <span className={`font-bold whitespace-nowrap ${large ? 'text-[26px] font-extrabold' : ''}`}>{fmtMoney(value)}</span>
@@ -169,10 +169,10 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
             <section className="rounded-xl bg-[#fafafa] px-4 py-3 space-y-1.5">
               {totalRow('Cộng tiền hàng (chưa bao gồm thuế):', totals.subtotal)}
               {Number(data.discountPercent) > 0 && totalRow(
-                <>Chiết khấu ({percentage('discountPercent',content.discountPercent)}):</>,
+                <>Chiết khấu: ({percentage('discountPercent',content.discountPercent)})</>,
                 -totals.discountAmount,
               )}
-              {totalRow(<>Thuế bán hàng {percentage('taxRate', content.taxRate)}:</>, totals.tax)}
+              {totalRow(<>Thuế bán hàng: {percentage('taxRate', content.taxRate)}</>, totals.tax)}
               <div className="rounded-lg bg-[#ff4f25] px-3 py-2.5 mt-2">
                 <div className="flex items-center justify-between gap-2 text-white">
                   <span className="font-bold text-[12px]">Tổng tiền thanh toán (đã gồm thuế):</span>
