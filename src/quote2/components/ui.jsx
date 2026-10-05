@@ -72,12 +72,12 @@ export function MoneyInput({ value, onChange, className = '', ...rest }) {
 
 export function Modal({ title, onClose, children, wide = false, footer }) {
   useEffect(() => {
-    const h = (e) => e.key === 'Escape' && onClose?.()
+    const h = (e) => e.key === 'Escape' && !document.querySelector('[data-q2-dialog]') && onClose?.()
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [onClose])
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>
+    <div data-q2-modal className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>
       <div className={`bg-white rounded-xl shadow-xl w-full ${wide ? 'max-w-2xl' : 'max-w-md'} max-h-[92vh] flex flex-col`}>
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e3e7ec]">
           <h3 className="font-bold text-[#1a1f2c]">{title}</h3>

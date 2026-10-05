@@ -19,6 +19,17 @@ const CARDS = [
     ),
   },
   {
+    id: 'docs',
+    title: 'Phiếu báo giá & giao hàng',
+    desc: 'Mỗi báo giá có 1 phiếu báo giá và 1 phiếu giao hàng. Bấm vào chữ để sửa, xem lớn, in hoặc gửi khách.',
+    badge: 'Cần đăng nhập',
+    icon: (
+      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <path d="M6 3h9l4 4v14H6zM14 3v5h5" /><path d="M9 13h7M9 17h4" />
+      </g>
+    ),
+  },
+  {
     id: 'guest',
     title: 'Khách xem giá',
     desc: 'Không cần đăng nhập. Chỉ xem bảng giá sản phẩm tiêu chuẩn.',
@@ -39,7 +50,7 @@ export default function ModeLanding({ onPick }) {
       <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1f2c] text-center">Hệ thống báo giá Qaha Tranh</h1>
       <p className="text-[#6b7280] mt-1 mb-8 text-center">Chọn cách bạn muốn vào hệ thống</p>
 
-      <div className="grid gap-4 md:grid-cols-3 w-full max-w-4xl">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 w-full max-w-6xl">
         {CARDS.map((c) => (
           <button
             key={c.id}

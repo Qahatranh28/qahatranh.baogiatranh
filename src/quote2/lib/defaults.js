@@ -22,29 +22,40 @@ export const LOST_REASONS = [
   'Khách hoãn / huỷ nhu cầu',
 ]
 
+// Mẫu theo bản thiết kế của Qaha Tranh. Mọi trường đều sửa được ở nút "Thông tin công ty".
 export const DEFAULT_COMPANY = {
   logoUrl: '/images/logoCompany.png',
-  name: 'QAHA TRANH',
-  tagline: 'Custom Framing Studio',
-  address: '',
-  phone: '',
-  email: '',
-  website: '',
-  taxCode: '',
+  name: 'CÔNG TY TNHH QUANG HÀ TRANH',
+  description: 'Tiên phong Khung khăn lụa HERMÈS & Giải pháp nghệ thuật cho không gian',
+  // mỗi dòng = 1 gạch đầu dòng (chấm cam) dưới phần mô tả
+  highlights: [
+    'Chế tác thủ công tỉ mỉ, hoàn thiện tinh xảo.',
+    'Trọn gói từ lên layout, in ấn, đóng khung đến lắp đặt.',
+    'Đồng hành cùng nhà ở, villa, khách sạn, resort & các công trình mang dấu ấn riêng.',
+  ].join('\n'),
+  website: 'qahatranh.com',
+  address: '14 đường D6, KDC Nam Long, P. Phước Long, TP.Hồ Chí Minh, Việt Nam',
+  hotline: '076 4844 258',
+  docTitle: 'BÁO GIÁ',
+  brandName: 'QAHATRANH',
   bankName: '',
   bankAccount: '',
   bankHolder: '',
+  qrUrl: '', // ảnh mã QR thanh toán (tải lên)
 }
 
-// Cố ý để trống: điều khoản là nội dung pháp lý/thương mại của công ty, do quản lý tự nhập
-// bằng nút "✎ Điều khoản" trong bản xem trước.
+// Cú pháp điều khoản: "- " = mục chính, "-- " = mục con, **chữ** = in đậm.
+// Người dùng không cần gõ cú pháp: trình chỉnh sửa có sẵn nút B / Mục chính / Mục con.
 export const DEFAULT_TERMS = {
-  title: 'Điều khoản & điều kiện',
-  body: '',
+  title: 'Điều khoản báo giá',
+  body: [
+    '- **Hiệu lực báo giá:** 14 ngày.',
+    '- **Giá cả:** Đã bao gồm VAT 8%.',
+    '- **Cam kết sản phẩm: 100% Chính hãng & Nhập khẩu** (Khung tranh cao cấp; Mực In Canon chuẩn màu, bền màu 10 năm).',
+    '- **Bảo hành: 12 tháng** (Đặc quyền 1 đổi 1 trong vòng 7 ngày đối với sản phẩm lỗi).',
+    '- **Thời gian giao hàng: 5 - 7 ngày** tùy số lượng (Hỗ trợ giao gấp theo yêu cầu riêng của khách hàng).',
+    '- **Tiến độ thanh toán:**',
+    '-- **Đợt 1:** Tạm ứng 50% ngay khi ký hợp đồng.',
+    '-- **Đợt 2:** Thanh toán 50% khi bàn giao tại showroom Qahatranh (Khách được duyệt trước ảnh/video thực tế sản phẩm trước khi giao tận nơi).',
+  ].join('\n'),
 }
-
-export const TERMS_PLACEHOLDER = [
-  'VD: Báo giá có hiệu lực trong … ngày kể từ ngày lập.',
-  'VD: Đặt cọc …% giá trị đơn hàng trước khi sản xuất.',
-  'VD: Thời gian sản xuất dự kiến … ngày làm việc.',
-].join('\n')

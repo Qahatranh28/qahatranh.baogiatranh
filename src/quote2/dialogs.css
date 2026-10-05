@@ -1,0 +1,25 @@
+/* Cửa sổ thông báo / xác nhận / tiến trình / toast của trang báo giá mới (xem components/Dialogs.jsx) */
+@keyframes q2-fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes q2-pop { from { opacity: 0; transform: translateY(10px) scale(.96) } to { opacity: 1; transform: none } }
+@keyframes q2-toast { from { opacity: 0; transform: translateX(24px) } to { opacity: 1; transform: none } }
+@keyframes q2-spin { to { transform: rotate(360deg) } }
+@keyframes q2-shimmer { from { transform: translateX(-100%) } to { transform: translateX(100%) } }
+@keyframes q2-draw { to { stroke-dashoffset: 0 } }
+@keyframes q2-scale-in { 0% { transform: scale(.55); opacity: 0 } 60% { transform: scale(1.08); opacity: 1 } 100% { transform: scale(1) } }
+@keyframes q2-countdown { from { transform: scaleX(1) } to { transform: scaleX(0) } }
+
+.q2-fade { animation: q2-fade .15s ease-out; }
+.q2-pop { animation: q2-pop .2s cubic-bezier(.2, .8, .2, 1); }
+.q2-toast-in { animation: q2-toast .22s ease-out; }
+.q2-spin { animation: q2-spin .85s linear infinite; }
+.q2-scale-in { animation: q2-scale-in .38s ease-out; }
+.q2-draw { stroke-dasharray: 32; stroke-dashoffset: 32; animation: q2-draw .45s .12s ease-out forwards; }
+.q2-shimmer { position: relative; overflow: hidden; }
+.q2-shimmer::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55), transparent); animation: q2-shimmer 1.25s ease-in-out infinite; }
+.q2-countdown { transform-origin: left; animation: q2-countdown linear forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .q2-fade, .q2-pop, .q2-toast-in, .q2-scale-in, .q2-draw, .q2-shimmer::after, .q2-countdown { animation: none !important; }
+  .q2-draw { stroke-dashoffset: 0; }
+  .q2-spin { animation-duration: 2.4s; }
+}

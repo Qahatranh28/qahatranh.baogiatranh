@@ -4,6 +4,7 @@ import { calcQuote, newItem } from '../lib/calc.js'
 import { fmtMoney, fmtPct, fmtNum, fmtDate } from '../lib/format.js'
 import { STATUS, TAX_OPTIONS, LOST_REASONS } from '../lib/defaults.js'
 import { canEditQuote } from '../lib/permissions.js'
+import { useDialog } from '../components/Dialogs.jsx'
 import { buildCustomers } from '../lib/customers.js'
 
 const Num = ({ n }) => (
@@ -46,15 +47,15 @@ function CustomerPicker({ quote, set, allQuotes, disabled }) {
   )
   return (
     <>
-      {box('customerName', 'Gõ tên để tìm khách cũ', 'Khách hàng')}
-      {box('customerPhone', 'Gõ SĐT để tìm khách cũ', 'Số điện thoại')}
+      {box('customerName', 'Nhập tên khách hàng', 'Khách hàng')}
+      {box('customerPhone', 'Nhập số điện thoại', 'Số điện thoại')}
     </>
   )
 }
 
 export default function QuoteEditor({
   quote, setQuote, dirty, saving, user, perms, allQuotes,
-  onSave, onBack, onNew, onClone, onPreview, onDelete,
+  onSave, onBack, onNew, onClone, onPreview, onDelete, orderExists, onOpenOrder,
 }) {
   const calc = useMemo(() => calcQuote(quote), [quote])
   const editable = canEditQuote(user, quote)
@@ -67,12 +68,22 @@ export default function QuoteEditor({
   const addRow = () => setQuote((q) => ({ ...q, items: [...q.items, newItem(q.items.length)] }))
   const delRow = (id) => setQuote((q) => ({ ...q, items: q.items.length > 1 ? q.items.filter((i) => i.id !== id) : q.items }))
 
-  const changeStatus = (next) => {
+  const dialog = useDialog()
+  const changeStatus = async (next) => {
     setStatusMsg('')
     if (next === quote.status) return
     if (next === 'won') {
       if (!perms.canApprove) return setStatusMsg('Chỉ quản lý được duyệt/chốt báo giá.')
-      if (!calc.passes && !window.confirm(`Biên lợi nhuận sau CK (${fmtPct(calc.marginAfter)}) chưa đạt mức tối thiểu ${quote.minMargin}%${calc.hasCost ? '' : ' (chưa nhập giá vốn)'}. Vẫn chốt?`)) return
+      if (!calc.passes) {
+        const ok = await dialog.confirm({
+          tone: 'warning', icon: 'warning', title: 'Biên lợi nhuận chưa đạt mức tối thiểu',
+          message: calc.hasCost
+            ? `Biên lợi nhuận sau chiết khấu hiện là ${fmtPct(calc.marginAfter)}, thấp hơn mức tối thiểu ${quote.minMargin}%. Bạn vẫn muốn chốt báo giá này?`
+            : `Chưa nhập giá vốn nên chưa thể kiểm tra biên lợi nhuận (mức tối thiểu ${quote.minMargin}%). Bạn vẫn muốn chốt báo giá này?`,
+          confirmText: 'Vẫn chốt đơn', cancelText: 'Xem lại',
+        })
+        if (!ok) return
+      }
     }
     set({ status: next, lostReason: next === 'lost' ? quote.lostReason : '' })
   }
@@ -98,6 +109,7 @@ export default function QuoteEditor({
             <Btn onClick={onClone} disabled={!quote.id}>Nhân bản</Btn>
             <Btn onClick={onNew}>Báo giá mới</Btn>
             <Btn onClick={onPreview}>Xem trước báo giá</Btn>
+            <Btn onClick={onOpenOrder}>{orderExists ? 'Mở phiếu' : 'Tạo phiếu'}</Btn>
             <Btn variant="primary" onClick={onSave} disabled={!editable || saving || (!dirty && !!quote.id)}>
               {saving ? 'Đang lưu…' : dirty || !quote.id ? 'Lưu báo giá' : 'Đã lưu ✓'}
             </Btn>
@@ -175,7 +187,7 @@ export default function QuoteEditor({
                 <th className="text-left font-semibold py-2 w-8">STT</th>
                 <th className="text-left font-semibold py-2 px-1 min-w-[200px]"><Num n={1} />Tên sản phẩm</th>
                 <th className="text-left font-semibold py-2 px-1 w-32"><Num n={2} />Kích thước</th>
-                <th className="text-right font-semibold py-2 px-1 w-20"><Num n={3} />SL</th>
+                <th className="text-right font-semibold py-2 px-1 w-12"><Num n={3} />SL</th>
                 {cost && <th className="text-right font-semibold py-2 px-1 w-32"><Num n={4} />Giá vốn (1sp)</th>}
                 <th className="text-right font-semibold py-2 px-1 w-32"><Num n={cost ? 5 : 4} />Đơn giá (1sp)</th>
                 <th className="text-right font-semibold py-2 px-2 w-28">Thành tiền</th>
@@ -194,9 +206,21 @@ export default function QuoteEditor({
               {calc.lines.map((l, idx) => (
                 <tr key={l.id} className="border-b border-[#eef0f3] align-middle">
                   <td className="py-2 text-[#6b7280]">{idx + 1}</td>
-                  <td className="py-1.5 px-1"><input list="q2-product-names" className={inputCls} disabled={!editable} value={l.name} onChange={(e) => setItem(l.id, { name: e.target.value })} /></td>
+                  {/* 🌟 Thay input thành textarea tự động mở rộng theo nội dung */}
+                  <td className="py-1.5 px-1">
+                    <textarea
+                      list="q2-product-names"
+                      rows={1}
+                      style={{ fieldSizing: 'content' }}
+                      className={`${inputCls} resize-y min-h-[38px] py-2 break-all`}
+                      disabled={!editable}
+                      value={l.name}
+                      onChange={(e) => setItem(l.id, { name: e.target.value })}
+                      placeholder="Nhập tên sản phẩm..."
+                    />
+                  </td>
                   <td className="py-1.5 px-1"><input className={inputCls} disabled={!editable} value={l.size} placeholder="55x80" onChange={(e) => setItem(l.id, { size: e.target.value })} /></td>
-                  <td className="py-1.5 px-1"><input type="number" min="0" className={`${inputCls} text-right`} disabled={!editable} value={l.quantity} onChange={(e) => setItem(l.id, { quantity: e.target.value === '' ? 0 : Number(e.target.value) })} /></td>
+                  <td className="py-1.5 px-1"><input type="number" min="0" className={`${inputCls} text-right px-1`} disabled={!editable} value={l.quantity} onChange={(e) => setItem(l.id, { quantity: e.target.value === '' ? 0 : Number(e.target.value) })} /></td>
                   {cost && <td className="py-1.5 px-1"><MoneyInput value={l.unitCost} disabled={!editable} onChange={(v) => setItem(l.id, { unitCost: v })} /></td>}
                   <td className="py-1.5 px-1">
                     <MoneyInput value={l.unitPrice} disabled={!editable} onChange={(v) => setItem(l.id, { unitPrice: v })}
@@ -258,7 +282,7 @@ export default function QuoteEditor({
                   <p className="text-5xl font-extrabold my-1.5">{fmtPct(calc.marginAfter)}</p>
                   <p className="text-sm">Biên lợi nhuận đơn hàng sau chiết khấu</p>
                   <p className="text-xs mt-1 opacity-90">
-                    Tiền lời sau CK {fmtMoney(calc.profitAfter)} · mức tối thiểu {quote.minMargin}% · thuế thu hộ không tính vào lời
+                    Tiền lời sau CK {fmtMoney(calc.profitAfter)} · mức tối thiểu ${quote.minMargin}% · thuế thu hộ không tính vào lời
                   </p>
                   {!calc.passes && calc.afterDiscount > 0 && (
                     <p className="text-xs mt-2 font-medium">

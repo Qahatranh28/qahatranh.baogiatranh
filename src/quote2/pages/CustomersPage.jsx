@@ -4,9 +4,8 @@ import { buildCustomers, phoneDigits } from '../lib/customers.js'
 import { calcQuote } from '../lib/calc.js'
 import { fmtMoney, fmtPct, fmtDate } from '../lib/format.js'
 
-export default function CustomersPage({ quotes, perms, onOpen, onClone, onNewForCustomer }) {
+export default function CustomersPage({ quotes, perms, selKey, onSelectKey, onOpen, onClone, onNewForCustomer }) {
   const [search, setSearch] = useState('')
-  const [selKey, setSelKey] = useState(null)
   const customers = useMemo(() => buildCustomers(quotes), [quotes])
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
@@ -24,7 +23,7 @@ export default function CustomersPage({ quotes, perms, onOpen, onClone, onNewFor
           <ul className="max-h-[60vh] overflow-auto -mx-1">
             {filtered.map((c) => (
               <li key={c.key}>
-                <button onClick={() => setSelKey(c.key)}
+                <button onClick={() => onSelectKey(c.key)}
                   className={`w-full text-left px-2 py-2.5 rounded-lg border-b border-[#eef0f3] flex justify-between gap-2 ${sel?.key === c.key ? 'bg-[#fff1ed]' : 'hover:bg-[#f7f8fa]'}`}>
                   <span>
                     <span className="block font-semibold text-sm">{c.name || '(chưa có tên)'}</span>

@@ -4,8 +4,10 @@ import TempPasswordBox from '../components/TempPasswordBox.jsx'
 import { useStaff } from '../hooks/useStaff.js'
 import { ROLE_LABELS } from '../lib/permissions.js'
 import { fmtDate } from '../lib/format.js'
+import { useDialog } from '../components/Dialogs.jsx'
 
 export default function AccountsPage({ me }) {
+  const dialog = useDialog()
   const { staff, requests, loading, error, createStaff, resetPassword, updateRole, setActive } = useStaff(true)
   const [form, setForm] = useState({ fullName: '', username: '', role: 'sale' })
   const [busy, setBusy] = useState(false)
@@ -25,7 +27,12 @@ export default function AccountsPage({ me }) {
   }
 
   const reset = async (row) => {
-    if (!window.confirm(`Cấp lại mật khẩu cho «${row.user}»? Mật khẩu cũ sẽ mất hiệu lực.`)) return
+    const ok = await dialog.confirm({
+      tone: 'warning', icon: 'key', title: `Cấp lại mật khẩu cho «${row.user}»?`,
+      message: 'Hệ thống sẽ tạo một mật khẩu tạm (hiệu lực 72 giờ). Mật khẩu cũ của tài khoản này sẽ mất hiệu lực ngay lập tức.',
+      confirmText: 'Cấp mật khẩu mới', cancelText: 'Huỷ',
+    })
+    if (!ok) return
     const res = await resetPassword(row)
     if (!res.ok) return setMsg(res.error)
     setTemp({ username: row.user, password: res.tempPassword })
