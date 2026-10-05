@@ -16,6 +16,17 @@ import DeliverySheet from '../components/sheets/DeliverySheet.jsx'
 const snap = (x) => JSON.stringify(x)
 const SLUG = { quote: 'bao-gia', delivery: 'giao-hang' }
 const StatusPill = ({ s }) => <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${ORDER_STATUS[s]?.cls || ''}`}>● {ORDER_STATUS[s]?.label || s}</span>
+const syncDeliveryAddress = (order) => {
+  const address = order?.quoteDoc?.company?.address
+  if (!order?.deliveryDoc || address === undefined) return order
+  return {
+    ...order,
+    deliveryDoc: {
+      ...order.deliveryDoc,
+      company: { ...order.deliveryDoc.company, address },
+    },
+  }
+}
 
 // Trang "Phiếu": cột trái = danh sách đơn + biểu mẫu; cột phải = tờ phiếu (bấm vào chữ để sửa); thanh dưới = tổng tiền + Lưu.
 // Mỗi báo giá = 1 đơn = 1 phiếu báo giá + 1 phiếu giao hàng.
@@ -58,8 +69,10 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
     return () => { alive = false }
   }, [idSeg]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const baseDraft = base ? { status: base.status, quoteDoc: base.quoteDoc, deliveryDoc: base.deliveryDoc } : null
-  const draft = idSeg ? drafts[idSeg] ?? baseDraft : null
+  const baseDraft = base ? syncDeliveryAddress({ status: base.status, quoteDoc: base.quoteDoc, deliveryDoc: base.deliveryDoc }) : null
+  const draft = idSeg
+    ? drafts[idSeg] ? syncDeliveryAddress(drafts[idSeg]) : baseDraft
+    : null
   const dirty = !!idSeg && !!drafts[idSeg] && !!baseDraft && snap(drafts[idSeg]) !== snap(baseDraft)
   const linkedQuote = base?.quoteId ? quotes.find((q) => q.id === base.quoteId) : null
   const savedDoc = draft?.[docKey] ?? null
@@ -69,7 +82,19 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
   const editable = !!base && canEditQuote(user, { ownerId: base.ownerId })
 
   const setOrder = (patch) => setDraft(idSeg, (d) => ({ ...d, ...patch }), baseDraft)
-  const setDoc = (u) => setDraft(idSeg, (d) => ({ ...d, [docKey]: typeof u === 'function' ? u(d[docKey]) : u }), baseDraft)
+  const setDoc = (u) => setDraft(idSeg, (d) => {
+    const current = d[docKey]
+    const nextDoc = typeof u === 'function' ? u(current) : u
+    const otherKey = docKey === 'quoteDoc' ? 'deliveryDoc' : 'quoteDoc'
+    const next = { ...d, [docKey]: nextDoc }
+    if (d[otherKey] && nextDoc?.company?.address !== current?.company?.address) {
+      next[otherKey] = {
+        ...d[otherKey],
+        company: { ...d[otherKey].company, address: nextDoc?.company?.address },
+      }
+    }
+    return syncDeliveryAddress(next)
+  }, baseDraft)
   const total = draft?.quoteDoc ? docTotals(draft.quoteDoc).grand : base?.amount || 0
 
   const save = async () => {

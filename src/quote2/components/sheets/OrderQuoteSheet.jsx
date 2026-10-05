@@ -89,7 +89,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
               {(edit || company.website) && <div className="flex gap-2"><ContactIcon><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></ContactIcon><span className="min-w-0"><b>Website: </b>{inlineField(company.website, (value) => setCompany('website', value))}</span></div>}
               {(edit || company.address) && <div className="flex gap-2"><ContactIcon><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></ContactIcon><span className="min-w-0 flex-1"><b>Địa chỉ: </b>{field(company.address, (value) => setCompany('address', value), 'q2-inline-address', true)}</span></div>}
               {(edit || company.hotline) && <div className="flex gap-2"><ContactIcon><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" /></ContactIcon><span className="min-w-0"><b>Hotline/Zalo: </b>{inlineField(company.hotline, (value) => setCompany('hotline', value))}</span></div>}
-              {(edit || company.email) && <div className="flex gap-2"><ContactIcon><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></ContactIcon><span className="min-w-0"><b>Email: </b>{inlineField(company.email, (value) => setCompany('email', value))}</span></div>}
+              {(edit || company.email) && <div className="q2-order-email flex gap-2"><ContactIcon><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></ContactIcon><span className="min-w-0 whitespace-nowrap"><b>Email: </b>{inlineField(company.email, (value) => setCompany('email', value))}</span></div>}
             </div>
             <div className="text-[11px] leading-tight">
               <div className="font-extrabold text-[20px]">{inlineField(data.title || 'BÁO GIÁ', (value) => set({ title: value }), 'font-extrabold text-[20px]')}</div>
@@ -97,7 +97,6 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
               <div className="mt-1"><b>Ngày: </b>{edit
                 ? <DateEd value={data.date} onChange={(value) => set({ date: value })} className="!inline-block !w-auto font-bold" />
                 : date}</div>
-              <div><b>Số: </b>{inlineField(data.code, (value) => set({ code: value }), 'font-bold')}</div>
             </div>
           </header>
 
@@ -116,8 +115,9 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
                 <tr className="bg-[#ff4f25] text-white">
                   <th className="w-10 px-2 py-2.5 text-left font-semibold">STT</th>
                   <th className="px-3 py-2.5 text-left font-semibold">Sản phẩm</th>
+                  <th className="w-24 px-2 py-2.5 text-center font-semibold">Kích thước</th>
                   <th className="w-16 px-2 py-2.5 text-center font-semibold">ĐVT</th>
-                  <th className="w-12 px-2 py-2.5 text-center font-semibold">SL</th>
+                  <th className="w-10 px-1 py-2.5 text-center font-semibold">SL</th>
                   <th className="w-28 px-3 py-2.5 text-right font-semibold">Đơn giá<br />(VND)</th>
                   <th className="w-32 px-3 py-2.5 text-right font-semibold">Thành tiền<br />(VND)</th>
                 </tr>
@@ -130,16 +130,16 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
                       <div className="flex items-start gap-1">
                         <div className="flex-1 min-w-0">
                           {edit
-                            ? <><Ed value={line.name} onChange={(value) => setItem(line.id, { name: value })} multiline placeholder="Tên sản phẩm" />
-                              <Ed value={line.size} onChange={(value) => setItem(line.id, { size: value })} placeholder="Quy cách / kích thước" className="text-xs text-[#6b7280]" /></>
-                            : <>{line.name}{line.size && <div className="text-xs">{line.size}</div>}</>}
+                            ? <Ed value={line.name} onChange={(value) => setItem(line.id, { name: value })} multiline placeholder="Tên sản phẩm" />
+                            : line.name}
                         </div>
                         {edit && lines.length > 1 && <button type="button" onClick={() => removeItem(line.id)} className="q2-noprint text-gray-400 hover:text-red-600 text-lg leading-none" title="Xoá dòng">×</button>}
                       </div>
                     </td>
+                    <td className="px-2 py-2.5 text-center">{field(line.size, (value) => setItem(line.id, { size: value }), 'text-center', false, 'Kích thước')}</td>
                     <td className="px-2 py-2.5 text-center">{field(line.unit || 'Tấm', (value) => setItem(line.id, { unit: value }), 'text-center', false, 'ĐVT')}</td>
                     <td className="px-2 py-2.5 text-center">{edit
-                      ? <NumEd value={line.quantity} onChange={(value) => setItem(line.id, { quantity: value })} className="!inline-block !w-10 text-center" />
+                      ? <NumEd value={line.quantity} onChange={(value) => setItem(line.id, { quantity: value })} className="!inline-block !w-8 text-center" />
                       : fmtNum(line.quantity)}</td>
                     <td className="px-3 py-2.5 text-right">{edit
                       ? <MoneyEd value={line.unitPrice} onChange={(value) => setItem(line.id, { unitPrice: value })} className="!inline-block !w-24 text-right" />
@@ -147,7 +147,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
                     <td className="px-3 py-2.5 text-right">{fmtNum(line.revenue)}</td>
                   </tr>
                 ))}
-                {!lines.length && <tr><td colSpan={6} className="px-3 py-5 text-center text-gray-400">Chưa có sản phẩm</td></tr>}
+                {!lines.length && <tr><td colSpan={7} className="px-3 py-5 text-center text-gray-400">Chưa có sản phẩm</td></tr>}
               </tbody>
             </table>
           </div>

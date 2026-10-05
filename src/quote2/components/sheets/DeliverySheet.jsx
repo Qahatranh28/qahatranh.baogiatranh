@@ -40,7 +40,7 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
         <article ref={ref} className={`q2-sheet q2-delivery-sheet ${edit ? 'q2-edit' : ''} w-[960px] bg-white shadow-xl px-10 py-9 text-[13px] text-[#1a1f2c] leading-relaxed space-y-5`}>
           <CompanyHeader
             company={company} code={data.code} date={data.deliveryDate} dateMode="ymd" title={data.title || 'PHIẾU GIAO HÀNG'} numberLabel="Số phiếu"
-            edit={edit} onCompany={setCompany} onTitle={(v) => set({ title: v })} onCode={(v) => set({ code: v })} onDate={(v) => set({ deliveryDate: v })}
+            edit={edit} showNumber={false} orderStyle onCompany={setCompany} onTitle={(v) => set({ title: v })} onCode={(v) => set({ code: v })} onDate={(v) => set({ deliveryDate: v })}
           />
 
           <section className="rounded-2xl bg-[#fdf3ef] px-5 py-4 grid grid-cols-2 gap-8">
@@ -48,7 +48,6 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
               <h2 className="text-[12px] uppercase font-bold tracking-wide text-[#6b7280] mb-1">Bên mua</h2>
               <div className="text-[19px] font-extrabold leading-tight text-[#ff4f25]">{edit ? <Ed value={data.customerName} onChange={(v) => set({ customerName: v })} placeholder="Tên khách hàng" /> : (data.customerName || '—')}</div>
               {(edit || data.customerTaxCode) && <div className="mt-1 flex gap-1"><span className="shrink-0">Mã số thuế:</span>{fill('customerTaxCode', 'mã số thuế')}</div>}
-              {(edit || data.refCode) && <div className="flex gap-1"><span className="shrink-0">Theo báo giá số:</span>{edit ? <Ed value={data.refCode} onChange={(v) => set({ refCode: v })} placeholder="mã báo giá" /> : <b>{data.refCode}</b>}</div>}
             </div>
             <div className="text-[13.5px]">
               <h2 className="text-[12px] uppercase font-bold tracking-wide text-[#6b7280] mb-1">Thông tin giao hàng</h2>

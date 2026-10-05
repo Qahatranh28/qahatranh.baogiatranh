@@ -14,6 +14,7 @@
 .q2-order-quote-sheet .q2-inline-input { display: inline-block !important; vertical-align: baseline; }
 .q2-order-quote-sheet .q2-inline-input::placeholder { color: #9ca3af; }
 .q2-order-quote-sheet .q2-inline-address { display: block; width: 100%; max-width: 100%; }
+.q2-order-quote-sheet .q2-order-email { white-space: nowrap; font-size: 12px; }
 .q2-delivery-sheet.q2-edit .q2-ed { border-bottom-color: transparent; }
 .q2-delivery-sheet.q2-edit .q2-ed:hover,
 .q2-delivery-sheet.q2-edit .q2-ed:focus { background: transparent; }
