@@ -125,9 +125,9 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
                 <b className="whitespace-nowrap">{fmtMoney(total)}</b>
               </div>
               <div className="flex justify-between items-center gap-3 py-1.5 text-[14px]">
-                <span className="text-[#4b5563]">Thuế bán hàng {edit
+                <span className="text-[#4b5563]">Thuế bán hàng: {edit
                   ? <span className="inline-flex items-center whitespace-nowrap"><NumEd value={taxRate} onChange={(v) => set({ taxRate: Math.max(0, v) })} className="q2-line w-10 text-right" />%</span>
-                  : `${fmtNum(taxRate)}%`}:</span>
+                  : `${fmtNum(taxRate)}%`}</span>
                 <b className="whitespace-nowrap">{fmtMoney(tax)}</b>
               </div>
               <div className="rounded-xl bg-[#ff4f25] px-4 py-3 mt-2">

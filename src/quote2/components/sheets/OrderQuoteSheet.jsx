@@ -169,7 +169,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
             <section className="rounded-xl bg-[#fafafa] px-4 py-3 space-y-1.5">
               {totalRow('Cộng tiền hàng (chưa bao gồm thuế):', totals.subtotal)}
               {Number(data.discountPercent) > 0 && totalRow(
-                <>Chiết khấu ({percentage('discountPercent', content.discountPercent)}):</>,
+                <>Chiết khấu ({percentage('discountPercent',content.discountPercent)}):</>,
                 -totals.discountAmount,
               )}
               {totalRow(<>Thuế bán hàng {percentage('taxRate', content.taxRate)}:</>, totals.tax)}
