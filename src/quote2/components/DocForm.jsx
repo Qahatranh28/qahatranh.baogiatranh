@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Card, Field, Btn, MoneyInput, inputCls } from './ui.jsx'
 import CompanyForm from './CompanyForm.jsx'
 import TermsRowsEditor from './TermsRowsEditor.jsx'
-import { newDocItem, toYmd, fromYmd, docTotals } from '../lib/docs.js'
+import { DEFAULT_ORDER_QUOTE_CONTENT, newDocItem, toYmd, fromYmd, docTotals } from '../lib/docs.js'
 import { parseTerms, serializeTerms } from '../lib/richText.js'
 import { DEFAULT_TERMS, TAX_OPTIONS } from '../lib/defaults.js'
 import { fmtMoney } from '../lib/format.js'
@@ -49,10 +49,9 @@ function ItemsEditor({ type, items, setItems, showPrice, disabled }) {
           <tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] text-left">
             <th className="py-2 w-8 font-semibold">STT</th>
             <th className="font-semibold px-1 min-w-[160px]">Sản phẩm</th>
-            <th className="font-semibold px-1 w-28">Kích thước</th>
+            <th className="font-semibold px-1 w-28">{type === 'delivery' ? 'ĐVT' : 'Kích thước'}</th>
             <th className="font-semibold px-1 w-16 text-right">SL</th>
             {showPrice && <th className="font-semibold px-1 w-32 text-right">Đơn giá (VND)</th>}
-            {type === 'delivery' && <th className="font-semibold px-1 w-40">Ghi chú</th>}
             <th className="w-6" />
           </tr>
         </thead>
@@ -61,10 +60,9 @@ function ItemsEditor({ type, items, setItems, showPrice, disabled }) {
             <tr key={it.id} className="border-b border-[#eef0f3]">
               <td className="py-2 text-[#6b7280]">{idx + 1}</td>
               <td className="py-1.5 px-1"><input disabled={disabled} className={inputCls} value={it.name} onChange={(e) => set(it.id, { name: e.target.value })} /></td>
-              <td className="py-1.5 px-1"><input disabled={disabled} className={inputCls} value={it.size} placeholder="55x80" onChange={(e) => set(it.id, { size: e.target.value })} /></td>
+              <td className="py-1.5 px-1"><input disabled={disabled} className={inputCls} value={type === 'delivery' ? (it.unit || 'Tấm') : it.size} placeholder={type === 'delivery' ? 'ĐVT' : '55x80'} onChange={(e) => set(it.id, type === 'delivery' ? { unit: e.target.value } : { size: e.target.value })} /></td>
               <td className="py-1.5 px-1"><input disabled={disabled} type="number" min="0" className={`${inputCls} text-right`} value={it.quantity} onChange={(e) => set(it.id, { quantity: num(e.target.value) })} /></td>
               {showPrice && <td className="py-1.5 px-1"><MoneyInput disabled={disabled} value={it.unitPrice} onChange={(v) => set(it.id, { unitPrice: v })} /></td>}
-              {type === 'delivery' && <td className="py-1.5 px-1"><input disabled={disabled} className={inputCls} value={it.note || ''} onChange={(e) => set(it.id, { note: e.target.value })} /></td>}
               <td className="py-2 text-right">{!disabled && items.length > 1 && <button onClick={() => setItems((its) => its.filter((i) => i.id !== it.id))} className="text-gray-400 hover:text-red-600 text-lg leading-none" aria-label="Xoá dòng">&times;</button>}</td>
             </tr>
           ))}
@@ -76,7 +74,7 @@ function ItemsEditor({ type, items, setItems, showPrice, disabled }) {
 }
 
 // Biểu mẫu sửa phiếu (cột trái). Dùng chung dữ liệu với tờ phiếu bên phải: sửa ở đâu cũng được.
-export default function DocForm({ type, data, setData, disabled }) {
+export default function DocForm({ type, data, setData, disabled, orderMode = false }) {
   const isDelivery = type === 'delivery'
   const set = (patch) => setData((d) => ({ ...d, ...patch }))
   const setCompany = (k, v) => setData((d) => ({ ...d, company: { ...d.company, [k]: v } }))
@@ -110,7 +108,6 @@ export default function DocForm({ type, data, setData, disabled }) {
               <div className="grid sm:grid-cols-2 gap-3">
                 <Field label="Địa chỉ giao hàng" className="sm:col-span-2"><input className={inputCls} value={data.deliveryAddress || ''} onChange={(e) => set({ deliveryAddress: e.target.value })} /></Field>
                 <Field label="Ngày giao"><input type="date" className={inputCls} value={data.deliveryDate || ''} onChange={(e) => set({ deliveryDate: e.target.value })} /></Field>
-                <Field label="Người giao hàng"><input className={inputCls} value={data.shipper || ''} onChange={(e) => set({ shipper: e.target.value })} /></Field>
                 <Field label="Người nhận hàng (ký nhận)"><input className={inputCls} value={data.receiver || ''} onChange={(e) => set({ receiver: e.target.value })} /></Field>
                 <Field label="Số tiền thu hộ khi giao (0 = không hiện)"><MoneyInput value={data.collectAmount} onChange={(v) => set({ collectAmount: v })} /></Field>
               </div>
@@ -139,21 +136,31 @@ export default function DocForm({ type, data, setData, disabled }) {
 
       <Card>
         <h3 className="font-bold text-[15px] mb-3">{isDelivery ? 'Sản phẩm giao' : 'Sản phẩm / dịch vụ'}</h3>
-        <ItemsEditor type={type} items={data.items} setItems={setItems} showPrice={!isDelivery || data.showPrices} disabled={disabled} />
+        <ItemsEditor type={type} items={data.items} setItems={setItems} showPrice disabled={disabled} />
         <fieldset disabled={disabled} className="grid gap-3 mt-4">
-          {isDelivery && (
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!data.showPrices} onChange={(e) => set({ showPrices: e.target.checked })} /> Hiển thị đơn giá & thành tiền trên phiếu</label>
-          )}
           <Field label={isDelivery ? 'Ghi chú giao hàng' : 'Ghi chú hiển thị trên phiếu'}><textarea rows={2} className={inputCls} value={data.note || ''} onChange={(e) => set({ note: e.target.value })} /></Field>
           {isDelivery && <Field label="Lời nhắc dưới bảng"><textarea rows={2} className={inputCls} value={data.confirmText || ''} onChange={(e) => set({ confirmText: e.target.value })} /></Field>}
         </fieldset>
       </Card>
 
-      {!isDelivery && (
+      {!isDelivery && (orderMode ? (
+        <Panel title="Điều khoản phiếu đơn hàng" sub="Chỉ áp dụng cho phiếu này, không thay đổi báo giá gốc" defaultOpen={false}>
+          <fieldset disabled={disabled}>
+            <Field label="Lưu ý / điều khoản áp dụng cho đơn hàng">
+              <textarea
+                className={`${inputCls} min-h-36`}
+                value={data.orderNotes ?? DEFAULT_ORDER_QUOTE_CONTENT.orderNotes}
+                onChange={(e) => set({ orderNotes: e.target.value })}
+                placeholder="Nhập mỗi lưu ý trên một dòng"
+              />
+            </Field>
+          </fieldset>
+        </Panel>
+      ) : (
         <Panel title="Điều khoản" sub="Mục chính / mục con, in đậm" defaultOpen={false}>
           <TermsSection terms={data.terms} onChange={(v) => set({ terms: v })} disabled={disabled} />
         </Panel>
-      )}
+      ))}
 
       <Panel title="Thông tin công ty & thanh toán" sub="Logo, liên hệ, ngân hàng, mã QR — chỉ đổi trên phiếu này" defaultOpen={false}>
         <fieldset disabled={disabled}><CompanyForm form={data.company} set={setCompany} hideDocTitle /></fieldset>

@@ -41,19 +41,44 @@ export const fmtYmd = (ymd) => (ymd ? `${ymd.slice(8, 10)}/${ymd.slice(5, 7)}/${
 const n = (v) => Number(v) || 0
 const usable = (i) => (i.name || '').trim() || n(i.unitPrice) > 0
 
+export const DEFAULT_ORDER_QUOTE_CONTENT = {
+  orderTitle: 'ĐƠN ĐẶT HÀNG',
+  customerTaxCode: '',
+  introText: 'Lời đầu tiên, Công ty chúng tôi xin trân trọng cảm ơn Quý khách hàng đã quan tâm đến sản phẩm/dịch vụ của Công ty. Chúng tôi xin gửi đến Quý khách hàng bảng báo giá như sau:',
+  orderNotes: [
+    'Bên Mua đặt cọc Đợt 1 cho Bên Bán để Bên Bán xác nhận sản xuất.',
+    'Sau khi sản xuất, Bên Bán gửi hình ảnh thành phẩm cho Bên Mua.',
+    'Bên Mua thanh toán phần còn lại trước khi Bên Bán vận chuyển hàng.',
+    'Báo giá có hiệu lực trong vòng 7 ngày kể từ ngày lập.',
+    'Báo giá chưa phải là xác nhận đơn hàng chính thức.',
+  ].join('\n'),
+  paymentMethod: 'Bên Mua thanh toán cho Bên Bán bằng hình thức chuyển khoản, tất cả các khoản thanh toán được thực hiện bằng Việt Nam Đồng. Thanh toán chia làm 2 đợt:',
+  depositPercent: 60,
+  depositNote: 'Bên Mua đặt cọc để được Bên Bán xác nhận sản xuất.',
+  remainingNote: 'Bên Mua thanh toán phần còn lại để được Bên Bán xác nhận giao hàng hóa.',
+  paymentInfo: 'Quý khách vui lòng chuyển khoản vào STK Công ty TNHH Quang Hà Tranh từ tài khoản công ty của Quý khách. Chúng tôi không nhận thanh toán từ tài khoản cá nhân. Sau khi chuyển khoản, vui lòng gửi hình ảnh giao dịch hoặc ủy nhiệm chi cho Bên Bán.',
+  qrCaption: 'Quét mã để đặt cọc Đợt 1',
+  paymentFootnote: '*Ghi chú: Đối với khoản tiền khách hàng thanh toán trước (nếu có) được xem là tiền đặt cọc để xác nhận sản xuất và chuẩn bị đơn hàng, chưa phát sinh giao hàng và chưa chuyển giao quyền sở hữu hàng hóa, do đó chưa thuộc thời điểm lập hóa đơn. Hóa đơn sẽ được xuất khi hàng hóa được bàn giao thành công, đầy đủ cho khách hàng.',
+  deliveryNote: '+ Bên Mua vui lòng đồng kiểm kê hàng hóa, số lượng và chất lượng khi nhận hàng.',
+  finalNote: '+ Hàng sản xuất riêng theo nhu cầu, hàng mua rồi miễn đổi trả. Mọi thắc mắc hay bất kỳ khiếu nại/phát sinh nào về đơn hàng sau khi đã thanh toán/bàn giao, Bên Bán không chịu trách nhiệm.',
+  thankYou: 'Cảm ơn Quý khách!',
+}
+
 export function buildQuoteDoc(quote, company, terms) {
   const ov = quote.previewOverrides || {}
   return {
     title: company.docTitle || 'BÁO GIÁ',
+    ...DEFAULT_ORDER_QUOTE_CONTENT,
     company: { ...company },
     terms: { ...terms, ...(ov.terms || {}) },
     code: quote.code,
     date: quote.createdAt,
     customerName: quote.customerName || '',
+    customerPhone: quote.customerPhone || '',
     discountPercent: n(quote.discountPercent),
     taxRate: n(quote.taxRate),
     note: quote.note || '',
-    items: quote.items.filter(usable).map((i) => ({ id: uid(), name: i.name, size: i.size, quantity: n(i.quantity), unitPrice: n(i.unitPrice) })),
+    items: quote.items.filter(usable).map((i) => ({ id: uid(), name: i.name, size: i.size, unit: 'Tấm', quantity: n(i.quantity), unitPrice: n(i.unitPrice) })),
   }
 }
 
@@ -66,12 +91,13 @@ export function buildDeliveryDoc(quote, company) {
     refCode: quote.code,
     customerName: quote.customerName || '',
     customerPhone: quote.customerPhone || '',
+    customerTaxCode: quote.customerTaxCode || quote.taxCode || '',
     deliveryAddress: '',
     deliveryDate: '',
+    introText: 'Bên Mua xác nhận Bên Bán đã giao thành công, đầy đủ đơn hàng cụ thể như sau:',
     receiver: '',
-    shipper: '',
-    items: quote.items.filter((i) => (i.name || '').trim()).map((i) => ({ id: uid(), name: i.name, size: i.size, quantity: n(i.quantity), unitPrice: n(i.unitPrice), note: '' })),
-    showPrices: false,
+    items: quote.items.filter((i) => (i.name || '').trim()).map((i) => ({ id: uid(), name: i.name, size: i.size, unit: i.unit || 'Tấm', quantity: n(i.quantity), unitPrice: n(i.unitPrice), note: '' })),
+    taxRate: n(quote.taxRate),
     collectAmount: 0,
     note: '',
     confirmText: 'Quý khách vui lòng kiểm tra số lượng, quy cách và tình trạng sản phẩm khi nhận hàng.',
@@ -104,7 +130,7 @@ export function docTotals(data) {
 
 export function newDocItem(type) {
   return type === 'delivery'
-    ? { id: uid(), name: '', size: '', quantity: 1, unitPrice: 0, note: '' }
+    ? { id: uid(), name: '', size: '', unit: 'Tấm', quantity: 1, unitPrice: 0, note: '' }
     : { id: uid(), name: '', size: '', quantity: 1, unitPrice: 0 }
 }
 

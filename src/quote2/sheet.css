@@ -7,6 +7,18 @@
 .q2-edit .q2-ed:focus { border-bottom-color: #ff4f25; }
 .q2-edit .q2-ed::placeholder { color: #d9a898; font-weight: 400; }
 .q2-edit .q2-overridden { border-bottom-color: #f59e0b; background: rgba(245, 158, 11, .14); }
+.q2-order-quote-sheet.q2-edit .q2-ed { border-bottom-color: transparent; }
+.q2-order-quote-sheet.q2-edit .q2-ed:hover,
+.q2-order-quote-sheet.q2-edit .q2-ed:focus { background: transparent; }
+.q2-order-quote-sheet.q2-edit .q2-ed::placeholder { color: #9ca3af; }
+.q2-order-quote-sheet .q2-inline-input { display: inline-block !important; vertical-align: baseline; }
+.q2-order-quote-sheet .q2-inline-input::placeholder { color: #9ca3af; }
+.q2-order-quote-sheet .q2-inline-address { display: block; width: 100%; max-width: 100%; }
+.q2-delivery-sheet.q2-edit .q2-ed { border-bottom-color: transparent; }
+.q2-delivery-sheet.q2-edit .q2-ed:hover,
+.q2-delivery-sheet.q2-edit .q2-ed:focus { background: transparent; }
+.q2-delivery-sheet.q2-edit .q2-ed::placeholder { color: #9ca3af; }
+.q2-delivery-sheet .q2-line { border-bottom: 0 !important; min-height: 0; }
 .q2-exporting .q2-ed { border-bottom-color: transparent !important; background: transparent !important; }
 .q2-exporting .q2-ed::placeholder { color: transparent !important; }
 .q2-exporting .q2-empty { display: none !important; }
@@ -16,4 +28,10 @@
   .q2-ed::placeholder { color: transparent !important; }
   .q2-empty { display: none !important; }
   .q2-line { border-bottom: 1px dotted #9ca3af !important; min-height: 1.3em; }
+  .q2-order-final { break-before: page; page-break-before: always; }
+  .q2-order-quote-sheet section,
+  .q2-order-quote-sheet table tr,
+  .q2-delivery-sheet section,
+  .q2-delivery-sheet table tr,
+  .q2-delivery-sheet footer { break-inside: avoid; page-break-inside: avoid; }
 }

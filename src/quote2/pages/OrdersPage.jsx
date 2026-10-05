@@ -10,7 +10,7 @@ import DocForm from '../components/DocForm.jsx'
 import PreviewShell from '../components/PreviewShell.jsx'
 import TermsEditModal from '../components/TermsEditModal.jsx'
 import CreateDocModal from '../components/CreateDocModal.jsx'
-import QuoteSheet from '../components/sheets/QuoteSheet.jsx'
+import OrderQuoteSheet from '../components/sheets/OrderQuoteSheet.jsx'
 import DeliverySheet from '../components/sheets/DeliverySheet.jsx'
 
 const snap = (x) => JSON.stringify(x)
@@ -61,9 +61,12 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
   const baseDraft = base ? { status: base.status, quoteDoc: base.quoteDoc, deliveryDoc: base.deliveryDoc } : null
   const draft = idSeg ? drafts[idSeg] ?? baseDraft : null
   const dirty = !!idSeg && !!drafts[idSeg] && !!baseDraft && snap(drafts[idSeg]) !== snap(baseDraft)
-  const doc = draft?.[docKey] ?? null
-  const editable = !!base && canEditQuote(user, { ownerId: base.ownerId })
   const linkedQuote = base?.quoteId ? quotes.find((q) => q.id === base.quoteId) : null
+  const savedDoc = draft?.[docKey] ?? null
+  const doc = savedDoc && tab === 'quote'
+    ? { ...savedDoc, customerPhone: savedDoc.customerPhone ?? linkedQuote?.customerPhone ?? '' }
+    : savedDoc
+  const editable = !!base && canEditQuote(user, { ownerId: base.ownerId })
 
   const setOrder = (patch) => setDraft(idSeg, (d) => ({ ...d, ...patch }), baseDraft)
   const setDoc = (u) => setDraft(idSeg, (d) => ({ ...d, [docKey]: typeof u === 'function' ? u(d[docKey]) : u }), baseDraft)
@@ -125,7 +128,7 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
 
   const editor = editable && doc ? { setData: setDoc, onEditTerms: () => setEditingTerms(true) } : undefined
   const renderSheet = (ref) => !doc ? null : tab === 'quote'
-    ? <QuoteSheet ref={ref} data={doc} company={doc.company} terms={doc.terms || {}} editor={editor} />
+    ? <OrderQuoteSheet ref={ref} data={doc} company={doc.company} editor={editor} />
     : <DeliverySheet ref={ref} data={doc} company={doc.company} editor={editor} />
 
   const missingBox = (
@@ -185,7 +188,7 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
                   ))}
                 </div>
               )}
-              {doc ? <DocForm key={`${base.id}-${tab}`} type={tab} data={doc} setData={setDoc} disabled={!editable} /> : missingBox}
+              {doc ? <DocForm key={`${base.id}-${tab}`} type={tab} data={doc} setData={setDoc} disabled={!editable} orderMode={tab === 'quote'} /> : missingBox}
             </>
           )}
         </div>
