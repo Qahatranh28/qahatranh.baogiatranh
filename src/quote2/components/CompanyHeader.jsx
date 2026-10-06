@@ -5,79 +5,101 @@ const Ic = ({ children }) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ff4f25" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">{children}</svg>
 )
 
-// Đầu trang: logo | tên + mô tả + gạch đầu dòng | liên hệ | tiêu đề + số + ngày.
-// Chế độ sửa (edit=true): mọi chữ là ô nhập. onCompany(k, v) sửa thông tin công ty; onTitle/onCode/onDate sửa phần góc phải.
+// Dùng chung header cho các chứng từ; phần thân và tiêu đề phụ có thể thay đổi theo từng loại phiếu.
 export default function CompanyHeader({
   company, code, date, title, numberLabel = 'Số báo giá', dateMode = 'iso',
-  edit = false, showNumber = true, orderStyle = false, onCompany, onTitle, onCode, onDate,
+  accentTitle, edit = false, showNumber = true, onCompany, onTitle, onCode, onDate, onAccentTitle,
 }) {
   const heading = title ?? company.docTitle ?? 'BÁO GIÁ'
-  const hotline = company.hotline || company.phone // phone: tên trường cũ
+  const subheading = accentTitle ?? company.brandName
+  const hotline = company.hotline || company.phone
   const lines = String(company.highlights || '').split('\n')
-  const bullets = edit ? lines : lines.map((s) => s.trim()).filter(Boolean)
-  const setBullet = (i, v) => onCompany('highlights', lines.map((l, k) => (k === i ? v : l)).join('\n'))
-  const delBullet = (i) => onCompany('highlights', lines.filter((_, k) => k !== i).join('\n'))
-  const addBullet = () => onCompany('highlights', [...lines.filter((l, k) => l.trim() || k < lines.length - 1), ''].join('\n'))
-  const F = (k, extra = {}) => edit
-    ? <Ed value={k === 'hotline' ? hotline : company[k]} onChange={(v) => onCompany(k, v)} {...extra} />
-    : <span>{k === 'hotline' ? hotline : company[k]}</span>
-  const show = (k) => edit || (k === 'hotline' ? hotline : company[k])
-  const opt = (k) => (edit && !(k === 'hotline' ? hotline : company[k]) ? 'q2-empty' : '')
+  const bullets = edit ? lines : lines.map((line) => line.trim()).filter(Boolean)
+  const setBullet = (index, value) => onCompany('highlights', lines.map((line, i) => i === index ? value : line).join('\n'))
+  const deleteBullet = (index) => onCompany('highlights', lines.filter((_, i) => i !== index).join('\n'))
+  const addBullet = () => onCompany('highlights', [...lines.filter((line, i) => line.trim() || i < lines.length - 1), ''].join('\n'))
+  const field = (key, extra = {}) => edit
+    ? <Ed value={key === 'hotline' ? hotline : company[key]} onChange={(value) => onCompany(key, value)} {...extra} />
+    : <span>{key === 'hotline' ? hotline : company[key]}</span>
+  const contactField = (key, placeholder) => {
+    const value = key === 'hotline' ? hotline : company[key]
+    return edit
+      ? <input
+        type="text"
+        value={value ?? ''}
+        placeholder={placeholder}
+        onChange={(event) => onCompany(key, event.target.value)}
+        className="q2-contact-input"
+        style={{ width: `${Math.max(4, String(value || placeholder || '').length + 1)}ch` }}
+      />
+      : <span>{value}</span>
+  }
+  const show = (key) => edit || (key === 'hotline' ? hotline : company[key])
+  const optionalClass = (key) => edit && !(key === 'hotline' ? hotline : company[key]) ? 'q2-empty' : ''
 
   return (
-    <header className={orderStyle
-      ? 'grid grid-cols-[120px_minmax(0,1.55fr)_minmax(0,.95fr)_190px] gap-3 items-start min-h-[190px]'
-      : 'grid gap-5 grid-cols-[130px_minmax(0,1fr)_220px_210px] items-start'}>
-      <div className={orderStyle ? 'flex flex-col items-center' : 'flex justify-center'}>
-        <ImgEd value={company.logoUrl} onChange={(v) => onCompany('logoUrl', v)} edit={edit} label="Logo" max={700}
-          className={orderStyle ? 'w-[120px] h-[118px]' : 'w-[130px]'}
-          imgClassName={orderStyle ? 'w-[120px] h-[118px] object-contain' : 'max-w-[140px] max-h-[100px] object-contain mx-auto'} />
+    <header className="-mr-4 grid grid-cols-[120px_minmax(0,1.8fr)_minmax(0,1fr)_180px] gap-3 items-start min-h-[190px]">
+      <div className="flex flex-col items-center">
+        <ImgEd value={company.logoUrl} onChange={(value) => onCompany('logoUrl', value)} edit={edit} label="Logo" max={700}
+          className="w-[120px] h-[118px]" imgClassName="w-[120px] h-[118px] object-contain" />
       </div>
 
-      <div className={orderStyle ? 'text-[14px] leading-[1.4]' : ''}>
-        <h1 className={orderStyle ? 'font-bold' : 'text-[17px] font-bold text-[#1a1f2c] leading-snug'}>{F('name', { multiline: true })}</h1>
-        {(edit || company.description) && <div className={`${orderStyle ? 'mt-1' : 'text-[13px] mt-1 leading-snug'} ${opt('description')}`}>{F('description', { multiline: true, placeholder: 'Mô tả ngắn' })}</div>}
-        {bullets.length > 0 || edit ? (
-          <ul className={orderStyle ? 'mt-1' : 'mt-1.5 space-y-0.5 text-[13px] leading-snug'}>
-            {bullets.map((b, i) => (
-              <li key={i} className={`${orderStyle ? 'flex gap-1' : 'flex gap-2'} group ${edit && !b.trim() ? 'q2-empty' : ''}`}>
-                {orderStyle
-                  ? <><span className="text-[#ff4f25]">•</span><span className="flex-1">{edit ? <Ed value={b} onChange={(v) => setBullet(i, v)} placeholder="Gạch đầu dòng" /> : b}</span></>
-                  : <><span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-[#ff4f25] shrink-0" />{edit ? <Ed value={b} onChange={(v) => setBullet(i, v)} placeholder="Gạch đầu dòng" /> : b}</>}
-                {edit && <button type="button" onClick={() => delBullet(i)} title="Xoá dòng" className="q2-noprint text-gray-300 hover:text-red-600 opacity-0 group-hover:opacity-100 leading-none">×</button>}
+      <div className="text-[14px] leading-[1.4]">
+        <h1 className="font-bold">{field('name', { multiline: true })}</h1>
+        {(edit || company.description) && <div className={`mt-1 ${optionalClass('description')}`}>{field('description', { multiline: true, placeholder: 'Mô tả ngắn' })}</div>}
+        {(bullets.length > 0 || edit) && (
+          <ul className="mt-1">
+            {bullets.map((line, index) => (
+              <li key={index} className={`flex gap-1 group ${edit && !line.trim() ? 'q2-empty' : ''}`}>
+                <span className="text-[#ff4f25]">•</span>
+                <span className="flex-1">{edit ? <Ed value={line} onChange={(value) => setBullet(index, value)} placeholder="Gạch đầu dòng" /> : line}</span>
+                {edit && <button type="button" onClick={() => deleteBullet(index)} title="Xoá dòng" className="q2-noprint text-gray-300 hover:text-red-600 opacity-0 group-hover:opacity-100 leading-none">×</button>}
               </li>
             ))}
-            {edit && <li className="q2-noprint"><button type="button" onClick={addBullet} className={orderStyle ? 'text-[10px] text-[#c2410c]' : 'text-[11px] text-[#c2410c] hover:underline'}>+ {orderStyle ? 'Thêm nội dung' : 'thêm gạch đầu dòng'}</button></li>}
+            {edit && <li className="q2-noprint"><button type="button" onClick={addBullet} className="text-[10px] text-[#c2410c]">+ Thêm nội dung</button></li>}
           </ul>
-        ) : null}
+        )}
       </div>
 
-      <ul className={orderStyle ? 'text-[13px] leading-[1.5] space-y-2' : 'space-y-2.5 text-[13px] leading-snug'}>
+      <ul className="text-[13px] leading-[1.5] space-y-2">
         {show('website') && (
-          <li className={`flex gap-2 ${opt('website')}`}><Ic><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></Ic><span className="shrink-0">{orderStyle ? <b>Website: </b> : 'Website:'}</span>{F('website', { placeholder: 'website' })}</li>
+          <li className={`flex gap-2 ${optionalClass('website')}`}>
+            <Ic><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></Ic>
+            <span className="whitespace-nowrap">Website: {contactField('website', 'website')}</span>
+          </li>
         )}
         {show('address') && (
-          <li className={`flex gap-2 ${opt('address')}`}>
+          <li className={`flex gap-2 ${optionalClass('address')}`}>
             <Ic><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></Ic>
-            <span className="q2-company-address min-w-0 flex-1">
-              <InlineAddress value={company.address} onChange={(value) => onCompany('address', value)} edit={edit} />
+            <span className="q2-company-address min-w-0">
+              <InlineAddress value={company.address} onChange={(value) => onCompany('address', value)} edit={edit} labelBold={false} />
             </span>
           </li>
         )}
         {show('hotline') && (
-          <li className={`flex gap-2 ${opt('hotline')}`}><Ic><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" /></Ic><span className="shrink-0">{orderStyle ? <b>Hotline/Zalo: </b> : 'Hotline/Zalo:'}</span>{F('hotline', { placeholder: 'số điện thoại' })}</li>
+          <li className={`flex gap-2 ${optionalClass('hotline')}`}>
+            <Ic><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.84.58 2.8.7A2 2 0 0 1 22 16.92z" /></Ic>
+            <span className="whitespace-nowrap">Hotline/Zalo: {contactField('hotline', 'số điện thoại')}</span>
+          </li>
         )}
         {show('email') && (
-          <li className={`flex gap-2 ${opt('email')}`}><Ic><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></Ic><span className="shrink-0">{orderStyle ? <b>Email: </b> : 'Email:'}</span>{F('email', { placeholder: 'email' })}</li>
+          <li className={`flex gap-2 ${optionalClass('email')}`}>
+            <Ic><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></Ic>
+            <span className="whitespace-nowrap">Email: {contactField('email', 'email')}</span>
+          </li>
         )}
       </ul>
 
-      <div>
-        <div className={`${orderStyle ? 'text-[20px]' : heading.length > 10 ? 'text-[21px]' : 'text-[26px]'} font-extrabold leading-none text-[#1a1f2c] whitespace-nowrap`}>
+      <div className="text-left justify-self-end w-fit max-w-full">
+        <div className="text-[20px] font-extrabold leading-tight text-[#1a1f2c]">
           {edit ? <Ed value={heading} onChange={onTitle} /> : heading}
         </div>
-        {(edit || company.brandName) && (
-          <div className={`${orderStyle ? 'text-[20px] leading-tight' : 'text-[26px] leading-tight'} font-extrabold text-[#ff4f25] ${opt('brandName')}`}>{F('brandName', { placeholder: 'THƯƠNG HIỆU' })}</div>
+        {(edit || subheading) && (
+          <div className="text-[20px] leading-tight font-extrabold text-[#ff4f25]">
+            {accentTitle !== undefined
+              ? (edit ? <Ed value={accentTitle} onChange={onAccentTitle} /> : accentTitle)
+              : field('brandName', { placeholder: 'THƯƠNG HIỆU' })}
+          </div>
         )}
         {showNumber && <div className="text-[13px] mt-2 flex gap-1.5"><span className="shrink-0">{numberLabel}:</span>{edit ? <Ed value={code} onChange={onCode} className="font-bold" /> : <b>{code}</b>}</div>}
         <div className="text-[13px] flex gap-1.5"><span className="shrink-0">Ngày:</span>{edit ? <DateEd value={date} onChange={onDate} mode={dateMode} className="font-bold" /> : <b>{dateMode === 'ymd' ? date : date ? fmtDate(date) : ''}</b>}</div>

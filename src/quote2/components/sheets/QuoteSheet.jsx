@@ -1,8 +1,7 @@
 import { forwardRef, useMemo } from 'react'
-import CompanyHeader from '../CompanyHeader.jsx'
+import DocumentSheet from '../DocumentSheet.jsx'
 import TermsBlock from '../TermsBlock.jsx'
 import PaymentBlock from '../PaymentBlock.jsx'
-import FitWidth from '../FitWidth.jsx'
 import { Ed, NumEd, MoneyEd } from '../Ed.jsx'
 import { parseTerms } from '../../lib/richText.js'
 import { docTotals, newDocItem } from '../../lib/docs.js'
@@ -39,13 +38,7 @@ const QuoteSheet = forwardRef(function QuoteSheet({ data, company, terms, editor
   ) : <span className={big ? 'text-[26px] font-extrabold leading-none whitespace-nowrap' : 'font-bold'}>{fmtMoney(value)}</span>
 
   return (
-    <div className="max-w-[960px] mx-auto">
-      <FitWidth width={960}>
-        <article ref={ref} className={`q2-sheet ${edit ? 'q2-edit' : ''} w-[960px] bg-white shadow-xl px-10 py-9 text-[13px] text-[#1a1f2c] leading-relaxed space-y-5`}>
-          <CompanyHeader
-            company={company} code={data.code} date={data.date} title={data.title}
-            edit={edit} onCompany={setCompany} onTitle={(v) => set({ title: v })} onCode={(v) => set({ code: v })} onDate={(v) => set({ date: v })}
-          />
+    <DocumentSheet ref={ref} data={data} company={company} editor={editor}>
 
           <section className="rounded-2xl bg-[#fdf1ed] px-6 py-4 flex items-center gap-4">
             <span className="w-12 h-12 rounded-full bg-[#ffd9cf] flex items-center justify-center shrink-0">
@@ -78,7 +71,9 @@ const QuoteSheet = forwardRef(function QuoteSheet({ data, company, terms, editor
                 ) : rows.map((l, i) => (
                   <tr key={l.id} className="border-t border-[#f3e4df]">
                     <td className="px-3 py-2.5 text-[#6b7280]">{i + 1}</td>
-                    <td className="px-3 py-2.5 font-medium">{edit ? <Ed value={l.name} onChange={(v) => setItem(l.id, { name: v })} multiline placeholder="Tên sản phẩm" /> : l.name}</td>
+                    <td className="px-3 py-2.5 font-medium">{edit
+                      ? <Ed value={l.name} onChange={(v) => setItem(l.id, { name: v })} multiline wrapText placeholder="Tên sản phẩm" />
+                      : <div className="break-words [overflow-wrap:anywhere]">{l.name}</div>}</td>
                     <td className="px-3 py-2.5 text-center">{edit ? <Ed value={l.size} onChange={(v) => setItem(l.id, { size: v })} className="text-center" placeholder="55x80" /> : l.size}</td>
                     <td className="px-3 py-2.5 text-center">{edit ? <NumEd value={l.quantity} onChange={(v) => setItem(l.id, { quantity: v })} className="text-center" /> : fmtNum(l.quantity)}</td>
                     <td className="px-3 py-2.5 text-right">
@@ -137,15 +132,21 @@ const QuoteSheet = forwardRef(function QuoteSheet({ data, company, terms, editor
             </div>
           </div>
 
-          <PaymentBlock company={company} code={data.code} edit={edit} onCompany={setCompany} transferNote={data.transferNote} onNote={(v) => set({ transferNote: v })} />
+          <PaymentBlock
+            company={company}
+            code={data.code}
+            edit={edit}
+            onCompany={setCompany}
+            transferNote={data.transferNote}
+            onNote={(v) => set({ transferNote: v })}
+            paymentNotice={company.paymentNotice ?? data.paymentNotice}
+          />
 
           <footer className="grid grid-cols-2 text-center pt-2">
             <div><p className="font-semibold">Khách hàng xác nhận</p><p className="text-[11px] text-[#6b7280]">(Ký, ghi rõ họ tên)</p><div className="h-16" /></div>
             <div><p className="font-semibold">Đại diện {company.brandName || company.name}</p><p className="text-[11px] text-[#6b7280]">(Ký, ghi rõ họ tên)</p><div className="h-16" /></div>
           </footer>
-        </article>
-      </FitWidth>
-    </div>
+    </DocumentSheet>
   )
 })
 export default QuoteSheet

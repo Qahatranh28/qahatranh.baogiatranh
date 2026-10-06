@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Card, Field, Btn, MoneyInput, inputCls } from '../components/ui.jsx'
+import { Card, Field, Btn, MoneyInput, AutoGrowTextarea, inputCls } from '../components/ui.jsx'
 import CompanyForm from '../components/CompanyForm.jsx'
 import TermsRowsEditor from '../components/TermsRowsEditor.jsx'
 import PreviewShell from '../components/PreviewShell.jsx'
 import QuoteSheet from '../components/sheets/QuoteSheet.jsx'
 import DeliverySheet from '../components/sheets/DeliverySheet.jsx'
-import { DOC_TYPES, deliveryNotesOrDefault, newDocItem, toYmd, fromYmd, buildQuoteText } from '../lib/docs.js'
+import { DOC_TYPES, deliveryNotesOrDefault, newDocItem, toYmd, fromYmd, buildQuoteText, withCentimeterUnit } from '../lib/docs.js'
 import { calcQuote } from '../lib/calc.js'
 import { parseTerms, serializeTerms } from '../lib/richText.js'
 import { DEFAULT_TERMS, TAX_OPTIONS } from '../lib/defaults.js'
@@ -46,7 +46,7 @@ function ItemsEditor({ type, items, setItems, showPrice }) {
         <thead>
           <tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] text-left">
             <th className="py-2 w-8 font-semibold">STT</th>
-            <th className="font-semibold px-1 min-w-[200px]">Tên sản phẩm{type === 'quote' ? ' / kích thước' : ''}</th>
+            <th className="font-semibold px-1 min-w-[200px]">Sản phẩm / kích thước</th>
             {type === 'delivery' && <th className="font-semibold px-1 w-32">ĐVT</th>}
             <th className="font-semibold px-1 w-20 text-right">SL</th>
             {showPrice && <th className="font-semibold px-1 w-36 text-right">Đơn giá</th>}
@@ -58,8 +58,8 @@ function ItemsEditor({ type, items, setItems, showPrice }) {
             <tr key={it.id} className="border-b border-[#eef0f3]">
               <td className="py-2 text-[#6b7280]">{idx + 1}</td>
               <td className="py-1.5 px-1">
-                <input className={inputCls} value={it.name} placeholder="Tên sản phẩm" onChange={(e) => set(it.id, { name: e.target.value })} />
-                {type === 'quote' && <input className={`${inputCls} mt-1`} value={it.size} placeholder="Kích thước (55x80 cm)" onChange={(e) => set(it.id, { size: e.target.value })} />}
+                <AutoGrowTextarea className="min-h-[40px] py-2" value={it.name} placeholder="Tên sản phẩm" onChange={(value) => set(it.id, { name: value })} />
+                <input className={`${inputCls} mt-1`} value={it.size || ''} placeholder="Kích thước (55x80 cm)" onChange={(e) => set(it.id, { size: e.target.value })} onBlur={(e) => set(it.id, { size: withCentimeterUnit(e.target.value) })} />
               </td>
               {type === 'delivery' && <td className="py-1.5 px-1"><input className={inputCls} value={it.unit || 'Tấm'} placeholder="ĐVT" onChange={(e) => set(it.id, { unit: e.target.value })} /></td>}
               <td className="py-1.5 px-1"><input type="number" min="0" className={`${inputCls} text-right`} value={it.quantity} onChange={(e) => set(it.id, { quantity: num(e.target.value) })} /></td>
@@ -131,9 +131,7 @@ export default function DocEditor({ doc, data, setData, dirty, saving, editable,
       <Panel title={isDelivery ? 'Sản phẩm giao' : 'Sản phẩm & giá'}>
         <ItemsEditor type={type} items={data.items} setItems={(u) => setData((d) => ({ ...d, items: typeof u === 'function' ? u(d.items) : u }))} showPrice />
         {isDelivery ? (
-          <div className="grid sm:grid-cols-2 gap-3 mt-4 max-w-3xl">
-            <Field label="Số tiền thu hộ khi giao (0 = không hiện)"><MoneyInput value={data.collectAmount} disabled={disabled} onChange={(v) => set({ collectAmount: v })} /></Field>
-          </div>
+          null
         ) : (
           <div className="grid sm:grid-cols-3 gap-3 mt-4 max-w-2xl">
             <Field label="Chiết khấu (%)"><input type="number" min="0" max="100" step="0.5" className={inputCls} disabled={disabled} value={data.discountPercent} onChange={(e) => set({ discountPercent: e.target.value === '' ? 0 : Number(e.target.value) })} /></Field>

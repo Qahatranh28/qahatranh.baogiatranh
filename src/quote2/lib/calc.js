@@ -1,4 +1,5 @@
 // Toàn bộ công thức tính của báo giá mới. Một nguồn duy nhất cho editor, preview, thống kê.
+import { DEFAULT_PAYMENT_NOTICE } from './defaults.js'
 
 const num = (v) => Number(v) || 0
 
@@ -85,6 +86,7 @@ export const newQuote = (user, defaults = {}) => ({
   id: null, // null = chưa lưu vào DB
   code: genQuoteCode(),
   customerName: '', customerPhone: '',
+  paymentNotice: DEFAULT_PAYMENT_NOTICE,
   discountPercent: 0,
   taxRate: defaults.taxRate ?? 8,
   minMargin: defaults.minMargin ?? 40,

@@ -1,29 +1,38 @@
-// Router rất nhỏ dựa trên URL dạng "#/moi/bao-gia/...".
-// Dùng hash để KHÔNG cần cấu hình máy chủ: nút Quay lại / Tiến tới / Tải lại (F5) / copy link đều hoạt động bình thường.
+// Router dựa trên đường dẫn thông thường, vd "/moi/bao-gia/...".
 import { useMemo, useSyncExternalStore } from 'react'
 
 const listeners = new Set()
 const notify = () => listeners.forEach((l) => l())
-if (typeof window !== 'undefined') window.addEventListener('popstate', notify) // cũng bắt cả đổi hash bằng tay
+if (typeof window !== 'undefined') {
+  const legacyRoute = window.location.hash
+  if (legacyRoute.startsWith('#/')) {
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${legacyRoute.slice(1)}${window.location.search}`,
+    )
+  }
+  window.addEventListener('popstate', notify)
+}
 
 const subscribe = (cb) => { listeners.add(cb); return () => listeners.delete(cb) }
-const getHash = () => window.location.hash
+const getPath = () => window.location.pathname
 
-export const parseHash = (h) =>
-  String(h || '').replace(/^#\/?/, '').split('/').filter(Boolean).map((s) => { try { return decodeURIComponent(s) } catch { return s } })
-export const toHash = (segs) => '#/' + segs.map((s) => encodeURIComponent(s)).join('/')
+export const parsePath = (path) =>
+  String(path || '').replace(/^\/+|\/+$/g, '').split('/').filter(Boolean).map((s) => { try { return decodeURIComponent(s) } catch { return s } })
+export const toPath = (segs) => '/' + segs.map((s) => encodeURIComponent(s)).join('/')
 
-// Trả về mảng đoạn đường dẫn, vd "#/moi/bao-gia/abc" -> ['moi','bao-gia','abc']
+// Trả về mảng đoạn đường dẫn, vd "/moi/bao-gia/abc" -> ['moi','bao-gia','abc']
 export function useRoute() {
-  const hash = useSyncExternalStore(subscribe, getHash, () => '')
-  return useMemo(() => parseHash(hash), [hash])
+  const path = useSyncExternalStore(subscribe, getPath, () => '')
+  return useMemo(() => parsePath(path), [path])
 }
 
 // navigate(['moi','bao-gia']) = thêm một mục lịch sử mới; { replace: true } = thay mục hiện tại
 export function navigate(segs, { replace = false } = {}) {
   const arr = Array.isArray(segs) ? segs : String(segs).split('/').filter(Boolean)
-  const url = toHash(arr)
-  if (url === window.location.hash || (arr.length === 0 && !window.location.hash)) return
+  const url = `${toPath(arr)}${window.location.search}`
+  if (toPath(arr) === window.location.pathname) return
   const i = window.history.state?.i ?? 0 // đếm độ sâu để biết còn "lùi" được trong chính web này không
   if (replace) window.history.replaceState({ i }, '', url)
   else window.history.pushState({ i: i + 1 }, '', url)

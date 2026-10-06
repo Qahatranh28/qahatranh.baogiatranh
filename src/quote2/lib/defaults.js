@@ -2,6 +2,7 @@
 
 export const DEFAULT_MIN_MARGIN = 40
 export const DEFAULT_TAX_RATE = 8
+export const DEFAULT_PAYMENT_NOTICE = 'Để hợp lệ chính sách thuế, quý khách cần CHUYỂN ĐÚNG SỐ TIỀN [CHUẨN SỐ LẺ] & GHI RÕ NỘI DUNG TÊN CÔNG TY của quý khách để trùng khớp giá trị hoá đơn GTGT sẽ phát hành!'
 export const TAX_OPTIONS = [
   { value: 0, label: 'Không VAT' },
   { value: 8, label: 'VAT – 8%' },
@@ -41,6 +42,7 @@ export const DEFAULT_COMPANY = {
   bankName: '',
   bankAccount: '',
   bankHolder: '',
+  paymentNotice: DEFAULT_PAYMENT_NOTICE,
   qrUrl: '', // ảnh mã QR thanh toán (tải lên)
 }
 

@@ -1,8 +1,9 @@
 import { Ed, ImgEd } from './Ed.jsx'
+import { DEFAULT_PAYMENT_NOTICE } from '../lib/defaults.js'
 
 // Thông tin thanh toán: ngân hàng, số tài khoản, chủ tài khoản, nội dung CK — bên cạnh là mã QR.
 // edit: mọi dòng là ô nhập. onCompany(k,v): sửa ngân hàng/STK/chủ TK/QR. transferNote + onNote: nội dung CK (mặc định = số phiếu)
-export default function PaymentBlock({ company, code, edit = false, onCompany, transferNote, onNote }) {
+export default function PaymentBlock({ company, code, edit = false, onCompany, transferNote, onNote, paymentNotice }) {
   const rows = [
     ['bankName', 'Ngân hàng'],
     ['bankAccount', 'Số tài khoản'],
@@ -12,6 +13,9 @@ export default function PaymentBlock({ company, code, edit = false, onCompany, t
   if (empty && !edit) return null
   return (
     <section className={`rounded-2xl border border-[#e5e7eb] px-6 py-5 ${empty ? 'q2-empty' : ''}`}>
+      <div className="text-[12px] leading-relaxed font-bold text-[#c2410c] text-left mb-3">
+        {paymentNotice ?? company.paymentNotice ?? DEFAULT_PAYMENT_NOTICE}
+      </div>
       <h2 className="text-base font-bold mb-3 text-center">Thông tin thanh toán</h2>
       <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-[13.5px]">
         <dl className="space-y-1.5 min-w-[320px]">
@@ -19,7 +23,7 @@ export default function PaymentBlock({ company, code, edit = false, onCompany, t
             (edit || company[k]) && (
               <div key={k} className={`flex gap-3 items-baseline ${edit && !company[k] ? 'q2-empty' : ''}`}>
                 <dt className="w-28 text-[#6b7280] shrink-0">{label}:</dt>
-                <dd className={`flex-1 ${k === 'bankAccount' ? 'font-bold text-base tracking-wide' : 'font-semibold'}`}>
+                <dd className={`flex-1 font-bold ${k === 'bankAccount' ? 'text-base tracking-wide' : ''}`}>
                   {edit ? <Ed value={company[k]} onChange={(v) => onCompany(k, v)} placeholder={label} /> : company[k]}
                 </dd>
               </div>

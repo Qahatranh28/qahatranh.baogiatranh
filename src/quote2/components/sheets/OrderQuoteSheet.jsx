@@ -1,24 +1,20 @@
 import { forwardRef, useMemo } from 'react'
-import FitWidth from '../FitWidth.jsx'
-import { DateEd, Ed, ImgEd, InlineAddress, MoneyEd, NumEd } from '../Ed.jsx'
+import DocumentSheet from '../DocumentSheet.jsx'
+import { Ed, ImgEd, MoneyEd, NumEd } from '../Ed.jsx'
 import { DEFAULT_ORDER_QUOTE_CONTENT, docTotals, newDocItem } from '../../lib/docs.js'
-import { fmtDate, fmtMoney, fmtNum, moneyToWords } from '../../lib/format.js'
-
-const ContactIcon = ({ children }) => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ff4f25" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">
-    {children}
-  </svg>
-)
+import { fmtMoney, fmtNum, moneyToWords } from '../../lib/format.js'
 
 const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, editor }, ref) {
   const edit = !!editor
   const totals = useMemo(() => docTotals(data), [data])
   const content = { ...DEFAULT_ORDER_QUOTE_CONTENT, ...data }
+  const qrCaption = content.qrCaption === 'Quét mã để đặt cọc Đợt 1'
+    ? DEFAULT_ORDER_QUOTE_CONTENT.qrCaption
+    : content.qrCaption
   const lines = edit ? totals.calc.lines : totals.calc.lines.filter((line) => line.name || line.unitPrice)
   const depositPercent = Math.min(100, Math.max(0, Number(content.depositPercent) || 0))
   const depositAmount = Math.round(totals.grand * depositPercent / 100)
   const remainingAmount = totals.grand - depositAmount
-  const date = data.date ? fmtDate(data.date) : ''
 
   const set = (patch) => editor.setData((d) => ({ ...d, ...patch }))
   const setCompany = (key, value) => editor.setData((d) => ({ ...d, company: { ...d.company, [key]: value } }))
@@ -62,44 +58,16 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
   )
 
   return (
-    <div className="max-w-[960px] mx-auto">
-      <FitWidth width={960}>
-        <article ref={ref} className={`q2-sheet q2-order-quote-sheet ${edit ? 'q2-edit' : ''} w-[960px] bg-white shadow-xl px-7 py-7 text-[13px] text-[#1a1f2c] leading-relaxed space-y-4`}>
-          <header className="grid grid-cols-[120px_minmax(0,1.55fr)_minmax(0,.95fr)_190px] gap-3 items-start min-h-[190px]">
-            <div className="flex flex-col items-center">
-              {edit
-                ? <ImgEd value={company.logoUrl} onChange={(value) => setCompany('logoUrl', value)} edit label="Logo" max={700} className="w-[120px] h-[118px]" imgClassName="w-[120px] h-[118px] object-contain" />
-                : company.logoUrl && <img src={company.logoUrl} alt="" className="w-[120px] h-[118px] object-contain" />}
-            </div>
-            <div className="text-[14px] leading-[1.4]">
-              <div className="font-bold">{inlineField(company.name, (value) => setCompany('name', value), 'font-bold')}</div>
-              <div className="mt-1">{field(company.description, (value) => setCompany('description', value), '', true)}</div>
-              {(company.highlights || edit) && <ul className="mt-1">
-                {String(company.highlights || '').split('\n').filter((line, index, all) => line || (edit && index === all.length - 1)).map((line, index) => (
-                  <li key={index} className="flex gap-1">
-                    <span className="text-[#ff4f25]">•</span>
-                    <span className="flex-1">{field(line, (value) => setCompany('highlights', String(company.highlights).split('\n').map((item, i) => i === index ? value : item).join('\n')), '', true)}</span>
-                    {edit && <button type="button" onClick={() => setCompany('highlights', String(company.highlights).split('\n').filter((_, i) => i !== index).join('\n'))} className="q2-noprint opacity-0 hover:opacity-100 text-gray-400 hover:text-red-600">×</button>}
-                  </li>
-                ))}
-                {edit && <li className="q2-noprint"><button type="button" onClick={() => setCompany('highlights', `${String(company.highlights || '').trimEnd()}\n`)} className="text-[10px] text-[#c2410c]">+ Thêm nội dung</button></li>}
-              </ul>}
-            </div>
-            <div className="text-[13px] leading-[1.5] space-y-2">
-              {(edit || company.website) && <div className="flex gap-2"><ContactIcon><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></ContactIcon><span className="min-w-0"><b>Website: </b>{inlineField(company.website, (value) => setCompany('website', value))}</span></div>}
-              {(edit || company.address) && <div className="flex gap-2"><ContactIcon><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></ContactIcon><span className="q2-company-address min-w-0 flex-1"><InlineAddress value={company.address} onChange={(value) => setCompany('address', value)} edit={edit} /></span></div>}
-              {(edit || company.hotline) && <div className="flex gap-2"><ContactIcon><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" /></ContactIcon><span className="min-w-0"><b>Hotline/Zalo: </b>{inlineField(company.hotline, (value) => setCompany('hotline', value))}</span></div>}
-              {(edit || company.email) && <div className="q2-order-email flex gap-2"><ContactIcon><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></ContactIcon><span className="min-w-0 whitespace-nowrap"><b>Email: </b>{inlineField(company.email, (value) => setCompany('email', value))}</span></div>}
-            </div>
-            <div className="text-[11px] leading-tight">
-              <div className="font-extrabold text-[20px]">{inlineField(data.title || 'BÁO GIÁ', (value) => set({ title: value }), 'font-extrabold text-[20px]')}</div>
-              <div className="font-extrabold text-[20px] text-[#ff4f25]">{inlineField(content.orderTitle, (value) => set({ orderTitle: value }), 'font-extrabold text-[20px] text-[#ff4f25]')}</div>
-              <div className="mt-1"><b>Ngày: </b>{edit
-                ? <DateEd value={data.date} onChange={(value) => set({ date: value })} className="!inline-block !w-auto font-bold" />
-                : date}</div>
-            </div>
-          </header>
-
+    <DocumentSheet
+      ref={ref}
+      data={data}
+      company={company}
+      editor={editor}
+      title={data.title}
+      accentTitle={content.orderTitle}
+      showNumber={false}
+      className="q2-order-quote-sheet"
+    >
           <section className="rounded-2xl bg-[#fdf3ef] px-6 py-4 text-[14px] leading-relaxed">
             <div className="text-[12px] uppercase font-bold tracking-wide text-[#6b7280]">Kính gửi</div>
             <div className="font-bold text-[17px] text-[#ff4f25]">{inlineField(data.customerName, (value) => set({ customerName: value }), 'font-bold text-[#ff4f25]', 'Tên khách hàng')}</div>
@@ -169,10 +137,6 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
             </div>
             <section className="rounded-xl bg-[#fafafa] px-4 py-3 space-y-1.5">
               {totalRow('Cộng tiền hàng (chưa bao gồm thuế):', totals.subtotal)}
-              {Number(data.discountPercent) > 0 && totalRow(
-                <>Chiết khấu: ({percentage('discountPercent',content.discountPercent)})</>,
-                -totals.discountAmount,
-              )}
               {totalRow(<>Thuế bán hàng: {percentage('taxRate', content.taxRate)}</>, totals.tax)}
               <div className="rounded-lg bg-[#ff4f25] px-3 py-2.5 mt-2">
                 <div className="flex items-center justify-between gap-2 text-white">
@@ -205,18 +169,20 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
           <section className="rounded-xl bg-[#fdf3ef] px-5 py-4">
             <div className="grid grid-cols-[1fr_170px] gap-4 items-center">
               <div className="text-[12px] leading-relaxed">
+                <div className="font-bold text-[#c2410c] text-left mb-2">
+                  {company.paymentNotice ?? content.paymentNotice}
+                </div>
                 <h2 className="text-[10px] uppercase tracking-wide text-[#6b7280] font-bold mb-1">Thông tin chuyển khoản</h2>
                 <div><span>Số tài khoản: </span>{inlineField(company.bankAccount, (value) => setCompany('bankAccount', value), 'font-extrabold text-[26px] text-[#ff4f25]')}</div>
                 <div>Chủ tài khoản: {inlineField(company.bankHolder, (value) => setCompany('bankHolder', value), 'font-bold')}</div>
-                <div>Ngân hàng: {inlineField(company.bankName, (value) => setCompany('bankName', value))}</div>
+                <div>Ngân hàng: {inlineField(company.bankName, (value) => setCompany('bankName', value), 'font-bold')}</div>
                 <div className="mt-2">{field(content.paymentInfo, (value) => set({ paymentInfo: value }), '', true)}</div>
               </div>
               {(company.qrUrl || edit) && (
                 <div className="text-center rounded-xl bg-white p-2">
                   <ImgEd value={company.qrUrl} onChange={(value) => setCompany('qrUrl', value)} edit={edit} label="Mã QR" max={500}
                     className="w-[150px] h-[150px] mx-auto" imgClassName="w-[150px] h-[150px] object-contain" />
-                  <div className="text-[10px] leading-tight mt-1">{field(content.qrCaption, (value) => set({ qrCaption: value }), 'text-center')}</div>
-                  <div className="font-bold text-[10px]">{fmtMoney(depositAmount)}</div>
+                  <div className="text-[10px] leading-tight mt-1">{field(qrCaption, (value) => set({ qrCaption: value }), 'text-center')}</div>
                 </div>
               )}
             </div>
@@ -230,9 +196,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
               <p className="text-center font-bold text-[#ff4f25] mt-5">{field(content.thankYou, (value) => set({ thankYou: value }))}</p>
             </div>
           </div>
-        </article>
-      </FitWidth>
-    </div>
+    </DocumentSheet>
   )
 })
 

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Card, Field, Btn, MoneyInput, inputCls } from './ui.jsx'
+import { Card, Field, Btn, MoneyInput, AutoGrowTextarea, inputCls } from './ui.jsx'
 import CompanyForm from './CompanyForm.jsx'
 import TermsRowsEditor from './TermsRowsEditor.jsx'
-import { DEFAULT_ORDER_QUOTE_CONTENT, deliveryNotesOrDefault, newDocItem, toYmd, fromYmd, docTotals } from '../lib/docs.js'
+import { DEFAULT_ORDER_QUOTE_CONTENT, deliveryNotesOrDefault, newDocItem, toYmd, fromYmd, docTotals, withCentimeterUnit } from '../lib/docs.js'
 import { parseTerms, serializeTerms } from '../lib/richText.js'
 import { DEFAULT_TERMS, TAX_OPTIONS } from '../lib/defaults.js'
 import { fmtMoney } from '../lib/format.js'
@@ -44,13 +44,14 @@ function ItemsEditor({ type, items, setItems, showPrice, disabled }) {
   const num = (v) => (v === '' ? 0 : Number(v))
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm min-w-[520px]">
+      <table className="w-full text-sm min-w-[680px]">
         <thead>
           <tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] text-left">
             <th className="py-2 w-8 font-semibold">STT</th>
             <th className="font-semibold px-1 min-w-[160px]">Sản phẩm</th>
-            <th className="font-semibold px-1 w-28">{type === 'delivery' ? 'ĐVT' : 'Kích thước'}</th>
-            <th className="font-semibold px-1 w-16 text-right">SL</th>
+            <th className="font-semibold px-1 w-28">Kích thước</th>
+            <th className="font-semibold px-1 w-[76px]">ĐVT</th>
+            <th className="font-semibold px-1 w-[56px] text-right">SL</th>
             {showPrice && <th className="font-semibold px-1 w-32 text-right">Đơn giá (VND)</th>}
             <th className="w-6" />
           </tr>
@@ -59,9 +60,10 @@ function ItemsEditor({ type, items, setItems, showPrice, disabled }) {
           {items.map((it, idx) => (
             <tr key={it.id} className="border-b border-[#eef0f3]">
               <td className="py-2 text-[#6b7280]">{idx + 1}</td>
-              <td className="py-1.5 px-1"><input disabled={disabled} className={inputCls} value={it.name} onChange={(e) => set(it.id, { name: e.target.value })} /></td>
-              <td className="py-1.5 px-1"><input disabled={disabled} className={inputCls} value={type === 'delivery' ? (it.unit || 'Tấm') : it.size} placeholder={type === 'delivery' ? 'ĐVT' : '55x80'} onChange={(e) => set(it.id, type === 'delivery' ? { unit: e.target.value } : { size: e.target.value })} /></td>
-              <td className="py-1.5 px-1"><input disabled={disabled} type="number" min="0" className={`${inputCls} text-right`} value={it.quantity} onChange={(e) => set(it.id, { quantity: num(e.target.value) })} /></td>
+              <td className="py-1.5 px-1"><AutoGrowTextarea disabled={disabled} className="min-h-[40px] py-2" value={it.name} onChange={(value) => set(it.id, { name: value })} placeholder="Tên sản phẩm" /></td>
+              <td className="py-1.5 px-1"><input disabled={disabled} className={inputCls} value={it.size || ''} placeholder="55x80" onChange={(e) => set(it.id, { size: e.target.value })} onBlur={(e) => set(it.id, { size: withCentimeterUnit(e.target.value) })} /></td>
+              <td className="py-1.5 px-1 w-[76px]"><input disabled={disabled} className={`${inputCls} !px-1.5 text-center`} value={it.unit || 'Tấm'} placeholder="ĐVT" onChange={(e) => set(it.id, { unit: e.target.value })} /></td>
+              <td className="py-1.5 px-1 w-[56px]"><input disabled={disabled} type="number" min="0" className={`${inputCls} !px-1 text-right`} value={it.quantity} onChange={(e) => set(it.id, { quantity: num(e.target.value) })} /></td>
               {showPrice && <td className="py-1.5 px-1"><MoneyInput disabled={disabled} value={it.unitPrice} onChange={(v) => set(it.id, { unitPrice: v })} /></td>}
               <td className="py-2 text-right">{!disabled && items.length > 1 && <button onClick={() => setItems((its) => its.filter((i) => i.id !== it.id))} className="text-gray-400 hover:text-red-600 text-lg leading-none" aria-label="Xoá dòng">&times;</button>}</td>
             </tr>
@@ -109,7 +111,6 @@ export default function DocForm({ type, data, setData, disabled, orderMode = fal
                 <Field label="Địa chỉ giao hàng" className="sm:col-span-2"><input className={inputCls} value={data.deliveryAddress || ''} onChange={(e) => set({ deliveryAddress: e.target.value })} /></Field>
                 <Field label="Ngày giao"><input type="date" className={inputCls} value={data.deliveryDate || ''} onChange={(e) => set({ deliveryDate: e.target.value })} /></Field>
                 <Field label="Người nhận hàng (ký nhận)"><input className={inputCls} value={data.receiver || ''} onChange={(e) => set({ receiver: e.target.value })} /></Field>
-                <Field label="Số tiền thu hộ khi giao (0 = không hiện)"><MoneyInput value={data.collectAmount} onChange={(v) => set({ collectAmount: v })} /></Field>
               </div>
             </>
           ) : (
@@ -163,7 +164,9 @@ export default function DocForm({ type, data, setData, disabled, orderMode = fal
       ))}
 
       <Panel title="Thông tin công ty & thanh toán" sub="Logo, liên hệ, ngân hàng, mã QR — chỉ đổi trên phiếu này" defaultOpen={false}>
-        <fieldset disabled={disabled}><CompanyForm form={data.company} set={setCompany} hideDocTitle /></fieldset>
+        <fieldset disabled={disabled} className="space-y-3">
+          <CompanyForm form={data.company} set={setCompany} hideDocTitle />
+        </fieldset>
       </Panel>
     </div>
   )

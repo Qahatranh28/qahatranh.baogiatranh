@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { STATUS } from '../lib/defaults.js'
 import { fmtNum, parseMoney } from '../lib/format.js'
 
@@ -65,6 +65,29 @@ export function MoneyInput({ value, onChange, className = '', ...rest }) {
       placeholder="0"
       onChange={(e) => onChange(parseMoney(e.target.value))}
       className={`${inputCls} text-right ${className}`}
+      {...rest}
+    />
+  )
+}
+
+export function AutoGrowTextarea({ value, onChange, placeholder, className = '', ...rest }) {
+  const ref = useRef(null)
+
+  useLayoutEffect(() => {
+    const textarea = ref.current
+    if (!textarea) return
+    textarea.style.height = 'auto'
+    textarea.style.height = `${textarea.scrollHeight}px`
+  }, [value])
+
+  return (
+    <textarea
+      ref={ref}
+      rows={1}
+      value={value || ''}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className={`${inputCls} resize-none overflow-hidden whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${className}`}
       {...rest}
     />
   )

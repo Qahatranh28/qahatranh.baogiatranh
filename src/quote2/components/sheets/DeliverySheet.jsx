@@ -1,6 +1,5 @@
 import { forwardRef, useMemo } from 'react'
-import CompanyHeader from '../CompanyHeader.jsx'
-import FitWidth from '../FitWidth.jsx'
+import DocumentSheet from '../DocumentSheet.jsx'
 import { Ed, NumEd, MoneyEd, DateEd, InlineAddress } from '../Ed.jsx'
 import { fmtMoney, fmtNum, moneyToWords } from '../../lib/format.js'
 import { deliveryNotesOrDefault, fmtYmd, newDocItem } from '../../lib/docs.js'
@@ -15,7 +14,6 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
   const edit = !!editor
   const items = useMemo(() => (edit ? data.items || [] : (data.items || []).filter((i) => (i.name || '').trim())), [data.items, edit])
   const total = items.reduce((t, i) => t + (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0), 0)
-  const cod = Number(data.collectAmount) || 0
   const cols = 6 + (edit ? 1 : 0)
   const th = 'px-3 py-3 font-semibold'
   const taxRate = Math.max(0, Number(data.taxRate) || 0)
@@ -28,7 +26,6 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
   const setItem = (id, p) => editor.setData((d) => ({ ...d, items: d.items.map((i) => (i.id === id ? { ...i, ...p } : i)) }))
   const addItem = () => editor.setData((d) => ({ ...d, items: [...d.items, newDocItem('delivery')] }))
   const delItem = (id) => editor.setData((d) => ({ ...d, items: d.items.length > 1 ? d.items.filter((i) => i.id !== id) : d.items }))
-  const setCompany = (k, v) => editor.setData((d) => ({ ...d, company: { ...d.company, [k]: v } }))
 
   // Ô thông tin chỉnh sửa trực tiếp trên phiếu.
   const fill = (k, ph, multiline) => edit
@@ -36,13 +33,18 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
     : <b>{data[k] || blank}</b>
 
   return (
-    <div className="max-w-[960px] mx-auto">
-      <FitWidth width={960}>
-        <article ref={ref} className={`q2-sheet q2-delivery-sheet ${edit ? 'q2-edit' : ''} w-[960px] bg-white shadow-xl px-10 py-9 text-[13px] text-[#1a1f2c] leading-relaxed space-y-5`}>
-          <CompanyHeader
-            company={company} code={data.code} date={data.deliveryDate} dateMode="ymd" title={data.title || 'PHIẾU GIAO HÀNG'} numberLabel="Số phiếu"
-            edit={edit} showNumber={false} orderStyle onCompany={setCompany} onTitle={(v) => set({ title: v })} onCode={(v) => set({ code: v })} onDate={(v) => set({ deliveryDate: v })}
-          />
+    <DocumentSheet
+      ref={ref}
+      data={data}
+      company={company}
+      editor={editor}
+      dateKey="deliveryDate"
+      dateMode="ymd"
+      title={data.title || 'PHIẾU GIAO HÀNG'}
+      numberLabel="Số phiếu"
+      showNumber={false}
+      className="q2-delivery-sheet"
+    >
 
           <section className="rounded-2xl bg-[#fdf3ef] px-5 py-4 grid grid-cols-2 gap-8">
             <div>
@@ -84,7 +86,7 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
                 {items.length === 0 ? (
                   <tr><td colSpan={cols} className="px-3 py-6 text-center text-[#9ca3af]">Chưa có sản phẩm</td></tr>
                 ) : items.map((l, i) => (
-                  <tr key={l.id || i} className="border-t border-[#f3e4df]">
+                  <tr key={l.id || i} className={`border-t border-[#f3e4df] ${i % 2 ? 'bg-[#f4f4f4]' : 'bg-white'}`}>
                     <td className="px-3 py-2.5 text-[#6b7280]">{i + 1}</td>
                     <td className="px-3 py-2.5 font-medium">
                       {edit
@@ -94,7 +96,9 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
                         ? <Ed value={l.size || ''} onChange={(v) => setItem(l.id, { size: v })} className="text-xs text-gray-500" placeholder="Kích thước" />
                         : l.size && <div className="mt-0.5 text-xs font-normal text-gray-500">{l.size}</div>}
                     </td>
-                    <td className="px-2 py-2.5 text-center">{edit ? <Ed value={l.unit || 'Tấm'} onChange={(v) => setItem(l.id, { unit: v })} className="text-center" placeholder="ĐVT" /> : (l.unit || 'Tấm')}</td>
+                    <td className="px-2 py-2.5 text-center">{edit
+                      ? <Ed value={l.unit || 'Tấm'} onChange={(v) => setItem(l.id, { unit: v })} className="text-center" placeholder="ĐVT" />
+                      : (l.unit || 'Tấm')}</td>
                     <td className="px-3 py-2.5 text-center font-bold">{edit ? <NumEd value={l.quantity} onChange={(v) => setItem(l.id, { quantity: v })} className="text-center font-bold" /> : fmtNum(l.quantity)}</td>
                     <td className="px-3 py-2.5 text-right">{edit ? <MoneyEd value={l.unitPrice} onChange={(v) => setItem(l.id, { unitPrice: v })} className="text-right w-24" /> : fmtMoney(l.unitPrice)}</td>
                     <td className="px-3 py-2.5 text-right font-bold">{fmtMoney((Number(l.quantity) || 0) * (Number(l.unitPrice) || 0))}</td>
@@ -147,15 +151,6 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
             </section>
           </section>
 
-          {(cod > 0 || edit) && (
-            <div className={`rounded-xl border border-[#f0d9d2] px-5 py-3 flex items-center justify-between gap-4 ${cod > 0 ? '' : 'q2-empty'}`}>
-              <div className="font-bold">Số tiền cần thu khi giao hàng</div>
-              {edit
-                ? <span className="flex items-center gap-1"><MoneyEd value={cod} onChange={(v) => set({ collectAmount: v })} className="text-right w-[180px] text-[20px] font-extrabold" /><span className="text-[20px] font-extrabold">đ</span></span>
-                : <span className="text-[20px] font-extrabold whitespace-nowrap">{fmtMoney(cod)}</span>}
-            </div>
-          )}
-
           <footer className="pt-2">
             <p className="text-right italic font-semibold mb-5">{data.deliveryDate
               ? `TP.HCM, ngày ${data.deliveryDate.slice(8, 10)} tháng ${data.deliveryDate.slice(5, 7)} năm ${data.deliveryDate.slice(0, 4)}`
@@ -175,9 +170,7 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
               </div>
             </div>
           </footer>
-        </article>
-      </FitWidth>
-    </div>
+    </DocumentSheet>
   )
 })
 export default DeliverySheet

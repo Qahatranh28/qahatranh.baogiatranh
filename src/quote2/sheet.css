@@ -1,13 +1,11 @@
 /* Ô sửa trực tiếp trên tờ phiếu (xem components/Ed.jsx). Chỉ hiện viền ở chế độ sửa; khi in / xuất ảnh thì ẩn. */
-:where(.q2-ed) { display: block; background: transparent; border: 0; border-bottom: 1px dashed transparent; outline: none;
+:where(.q2-ed) { display: block; background: transparent; border: 0; outline: none;
   padding: 0; margin: 0; font: inherit; color: inherit; resize: none; overflow: hidden; text-align: inherit;
   line-height: inherit; letter-spacing: inherit; border-radius: 2px; }
-.q2-edit .q2-ed { border-bottom-color: #ffc7b6; }
 .q2-edit .q2-ed:hover, .q2-edit .q2-ed:focus { background: rgba(255, 79, 37, .07); }
-.q2-edit .q2-ed:focus { border-bottom-color: #ff4f25; }
 .q2-edit .q2-ed::placeholder { color: #d9a898; font-weight: 400; }
-.q2-edit .q2-overridden { border-bottom-color: #f59e0b; background: rgba(245, 158, 11, .14); }
-.q2-order-quote-sheet.q2-edit .q2-ed { border-bottom-color: transparent; }
+.q2-edit .q2-overridden { background: rgba(245, 158, 11, .14); }
+.q2-order-quote-sheet.q2-edit .q2-ed { border-bottom: 0; }
 .q2-order-quote-sheet.q2-edit .q2-ed:hover,
 .q2-order-quote-sheet.q2-edit .q2-ed:focus { background: transparent; }
 .q2-order-quote-sheet.q2-edit .q2-ed::placeholder { color: #9ca3af; }
@@ -17,11 +15,13 @@
 .q2-order-quote-sheet .q2-order-email { white-space: nowrap; font-size: 12px; }
 .q2-address-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .q2-company-address { font-size: 13px; line-height: 1.5; }
-.q2-address-editable { border-bottom: 1px dashed transparent; border-radius: 2px; outline: none; }
-.q2-edit .q2-address-editable { border-bottom-color: #ffc7b6; }
+.q2-contact-input { display: inline-block; max-width: none; padding: 0; margin: 0; border: 0;
+  outline: none; background: transparent; color: inherit; font: inherit; line-height: inherit; vertical-align: baseline; }
+.q2-edit .q2-contact-input:focus { background: rgba(255, 79, 37, .07); }
+.q2-contact-input::placeholder { color: #d9a898; }
+.q2-address-editable { border-radius: 2px; outline: none; }
 .q2-address-editable:hover, .q2-address-editable:focus { background: rgba(255, 79, 37, .07); }
-.q2-address-editable:focus { border-bottom-color: #ff4f25; }
-.q2-delivery-sheet.q2-edit .q2-ed { border-bottom-color: transparent; }
+.q2-delivery-sheet.q2-edit .q2-ed { border-bottom: 0; }
 .q2-delivery-sheet.q2-edit .q2-ed:hover,
 .q2-delivery-sheet.q2-edit .q2-ed:focus { background: transparent; }
 .q2-delivery-sheet.q2-edit .q2-ed::placeholder { color: #9ca3af; }

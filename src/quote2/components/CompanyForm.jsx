@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Field, inputCls } from './ui.jsx'
 import { resizeImage } from '../lib/image.js'
+import { DEFAULT_PAYMENT_NOTICE } from '../lib/defaults.js'
 
 export function ImagePick({ label, value, onChange, hint, max }) {
   const [err, setErr] = useState('')
@@ -73,6 +74,9 @@ export default function CompanyForm({ form, set, hideDocTitle = false }) {
         {text('bankName', 'Ngân hàng')}
         {text('bankAccount', 'Số tài khoản')}
         {text('bankHolder', 'Chủ tài khoản')}
+        <Field label="Thông báo thanh toán hiển thị trên phiếu" className="sm:col-span-2">
+          <textarea rows={3} className={inputCls} value={form.paymentNotice ?? DEFAULT_PAYMENT_NOTICE} onChange={(e) => set('paymentNotice', e.target.value)} />
+        </Field>
         <ImagePick label="Mã QR thanh toán" value={form.qrUrl} onChange={(v) => set('qrUrl', v)} max={500} hint="Tải ảnh QR ngân hàng/VietQR của công ty." />
       </Section>
     </div>

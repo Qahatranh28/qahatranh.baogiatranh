@@ -270,7 +270,7 @@ export default function QuoteEditor({
           <div className="ml-auto text-sm font-bold">Tổng tiền: {fmtMoney(calc.subtotal)}</div>
         </div>
         <div className="mt-4 max-w-xl">
-          <Field label="Ghi chú hiển thị trên bản gửi khách (không bắt buộc)">
+          <Field label="Ghi chú hiển thị trên bản gửi khách (không bắt buộc)" className="mt-3">
             <textarea rows={2} className={inputCls} disabled={!editable} value={quote.note} onChange={(e) => set({ note: e.target.value })} />
           </Field>
         </div>

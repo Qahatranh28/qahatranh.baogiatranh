@@ -37,7 +37,7 @@ export function Ed({ value, onChange, placeholder, className = '', multiline = f
   )
 }
 
-export function InlineAddress({ value, onChange, label = 'Địa chỉ:', edit = true }) {
+export function InlineAddress({ value, onChange, label = 'Địa chỉ:', edit = true, labelBold = true }) {
   const ref = useRef(null)
   const text = value ?? ''
 
@@ -49,7 +49,7 @@ export function InlineAddress({ value, onChange, label = 'Địa chỉ:', edit =
 
   return (
     <span className="q2-address-text">
-      <b>{label} </b>
+      <span className={labelBold ? 'font-semibold' : ''}>{label} </span>
       {edit ? (
         <span
           ref={ref}

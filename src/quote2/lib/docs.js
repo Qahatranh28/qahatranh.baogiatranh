@@ -3,6 +3,7 @@
 import { calcQuote, uid } from './calc.js'
 import { parseTerms, stripBold } from './richText.js'
 import { fmtMoney, fmtNum, fmtDate } from './format.js'
+import { DEFAULT_PAYMENT_NOTICE } from './defaults.js'
 
 // Trạng thái của "đơn" (1 báo giá = 1 đơn gồm phiếu báo giá + phiếu giao hàng)
 export const ORDER_STATUS = {
@@ -16,6 +17,12 @@ export const ORDER_STATUS = {
 export const DOC_TYPES = {
   quote: { label: 'Phiếu báo giá', cls: 'bg-orange-100 text-[#c2410c]' },
   delivery: { label: 'Phiếu giao hàng', cls: 'bg-sky-100 text-sky-700' },
+}
+
+export function withCentimeterUnit(value) {
+  const size = String(value || '').trim()
+  if (!size || /cm$/i.test(size)) return size
+  return `${size} cm`
 }
 
 const rand = (n) => {
@@ -56,8 +63,9 @@ export const DEFAULT_ORDER_QUOTE_CONTENT = {
   depositPercent: 60,
   depositNote: 'Bên Mua đặt cọc để được Bên Bán xác nhận sản xuất.',
   remainingNote: 'Bên Mua thanh toán phần còn lại để được Bên Bán xác nhận giao hàng hóa.',
+  paymentNotice: DEFAULT_PAYMENT_NOTICE,
   paymentInfo: 'Quý khách vui lòng chuyển khoản vào STK Công ty TNHH Quang Hà Tranh từ tài khoản công ty của Quý khách. Chúng tôi không nhận thanh toán từ tài khoản cá nhân. Sau khi chuyển khoản, vui lòng gửi hình ảnh giao dịch hoặc ủy nhiệm chi cho Bên Bán.',
-  qrCaption: 'Quét mã để đặt cọc Đợt 1',
+  qrCaption: 'Quét mã để đặt cọc',
   paymentFootnote: '*Ghi chú: Đối với khoản tiền khách hàng thanh toán trước (nếu có) được xem là tiền đặt cọc để xác nhận sản xuất và chuẩn bị đơn hàng, chưa phát sinh giao hàng và chưa chuyển giao quyền sở hữu hàng hóa, do đó chưa thuộc thời điểm lập hóa đơn. Hóa đơn sẽ được xuất khi hàng hóa được bàn giao thành công, đầy đủ cho khách hàng.',
   deliveryNote: '+ Bên Mua vui lòng đồng kiểm kê hàng hóa, số lượng và chất lượng khi nhận hàng.',
   finalNote: '+ Hàng sản xuất riêng theo nhu cầu, hàng mua rồi miễn đổi trả. Mọi thắc mắc hay bất kỳ khiếu nại/phát sinh nào về đơn hàng sau khi đã thanh toán/bàn giao, Bên Bán không chịu trách nhiệm.',
@@ -86,6 +94,7 @@ export function buildQuoteDoc(quote, company, terms) {
     discountPercent: n(quote.discountPercent),
     taxRate: n(quote.taxRate),
     note: quote.note || '',
+    paymentNotice: quote.paymentNotice ?? DEFAULT_PAYMENT_NOTICE,
     items: quote.items.filter(usable).map((i) => ({ id: uid(), name: i.name, size: i.size, unit: 'Tấm', quantity: n(i.quantity), unitPrice: n(i.unitPrice) })),
   }
 }

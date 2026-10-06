@@ -10,6 +10,7 @@ xây dựng bằng React + Vite + Tailwind CSS.
   đó (lấy từ lịch sử) — khi chọn lại 1 sản phẩm cũ, vật liệu sẽ tự động chọn đúng theo lần gần nhất
 - **Chiết khấu (%) theo từng sản phẩm**, nhập ngay dưới ô chọn vật liệu — không cần quyền admin
 - Thêm nhiều sản phẩm vào 1 bảng báo giá, có thể xoá từng dòng
+- Báo giá, phiếu báo giá đơn đặt hàng và phiếu giao hàng dùng chung khung trang và header; nội dung từng loại chứng từ được trình bày riêng
 - **Xuất báo giá**: lưu đơn hàng hiện tại vào lịch sử, tự động bắt đầu đơn mới
 - **Lịch sử báo giá**: xem cho **mọi người dùng** (không cần đăng nhập admin), lọc theo tháng;
   khi đăng nhập admin sẽ thấy thêm giá vốn & biên lợi nhuận từng đơn
@@ -89,6 +90,10 @@ npm run dev
 ```bash
 npm run build
 ```
+
+Ứng dụng dùng URL không có dấu `#` (ví dụ `/moi/bao-gia`). Khi triển khai, máy chủ cần cấu hình
+chuyển các đường dẫn ứng dụng không khớp tệp tĩnh về `index.html`; nếu không, mở trực tiếp hoặc tải
+lại ở một đường dẫn con có thể trả về lỗi 404.
 
 ## Tuỳ chỉnh
 - Thêm/sửa vật liệu và đơn giá trong `src/data/materials.js`

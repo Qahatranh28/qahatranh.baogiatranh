@@ -249,7 +249,7 @@ function Workspace({ auth }) {
                 <Card className="!p-2">
                   <h2 className="font-bold text-sm mb-2">Xem trước báo giá</h2>
                   <p className="text-xs text-[#6b7280] mb-2">Bản xem trước cập nhật theo nội dung đang chỉnh sửa.</p>
-                  <div className="overflow-x-hidden">
+                  <div className="overflow-x-clip">
                     <QuoteSheet
                       data={{ ...draft, date: draft.createdAt }}
                       company={settings.company}
