@@ -1,6 +1,6 @@
 import { forwardRef, useMemo } from 'react'
 import FitWidth from '../FitWidth.jsx'
-import { DateEd, Ed, ImgEd, MoneyEd, NumEd } from '../Ed.jsx'
+import { DateEd, Ed, ImgEd, InlineAddress, MoneyEd, NumEd } from '../Ed.jsx'
 import { DEFAULT_ORDER_QUOTE_CONTENT, docTotals, newDocItem } from '../../lib/docs.js'
 import { fmtDate, fmtMoney, fmtNum, moneyToWords } from '../../lib/format.js'
 
@@ -87,7 +87,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
             </div>
             <div className="text-[13px] leading-[1.5] space-y-2">
               {(edit || company.website) && <div className="flex gap-2"><ContactIcon><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></ContactIcon><span className="min-w-0"><b>Website: </b>{inlineField(company.website, (value) => setCompany('website', value))}</span></div>}
-              {(edit || company.address) && <div className="flex gap-2"><ContactIcon><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></ContactIcon><span className="min-w-0 flex-1"><b>Địa chỉ: </b>{field(company.address, (value) => setCompany('address', value), 'q2-inline-address', true)}</span></div>}
+              {(edit || company.address) && <div className="flex gap-2"><ContactIcon><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></ContactIcon><span className="q2-company-address min-w-0 flex-1"><InlineAddress value={company.address} onChange={(value) => setCompany('address', value)} edit={edit} /></span></div>}
               {(edit || company.hotline) && <div className="flex gap-2"><ContactIcon><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" /></ContactIcon><span className="min-w-0"><b>Hotline/Zalo: </b>{inlineField(company.hotline, (value) => setCompany('hotline', value))}</span></div>}
               {(edit || company.email) && <div className="q2-order-email flex gap-2"><ContactIcon><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></ContactIcon><span className="min-w-0 whitespace-nowrap"><b>Email: </b>{inlineField(company.email, (value) => setCompany('email', value))}</span></div>}
             </div>
@@ -115,7 +115,6 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
                 <tr className="bg-[#ff4f25] text-white">
                   <th className="w-10 px-2 py-2.5 text-left font-semibold">STT</th>
                   <th className="px-3 py-2.5 text-left font-semibold">Sản phẩm</th>
-                  <th className="w-24 px-2 py-2.5 text-center font-semibold">Kích thước</th>
                   <th className="w-16 px-2 py-2.5 text-center font-semibold">ĐVT</th>
                   <th className="w-10 px-1 py-2.5 text-center font-semibold">SL</th>
                   <th className="w-28 px-3 py-2.5 text-right font-semibold">Đơn giá<br />(VND)</th>
@@ -130,13 +129,15 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
                       <div className="flex items-start gap-1">
                         <div className="flex-1 min-w-0">
                           {edit
-                            ? <Ed value={line.name} onChange={(value) => setItem(line.id, { name: value })} multiline placeholder="Tên sản phẩm" />
-                            : line.name}
+                            ? <Ed value={line.name} onChange={(value) => setItem(line.id, { name: value })} className="break-words [overflow-wrap:anywhere]" multiline wrapText placeholder="Tên sản phẩm" />
+                            : <div className="break-words [overflow-wrap:anywhere]">{line.name}</div>}
+                          {edit
+                            ? <Ed value={line.size} onChange={(value) => setItem(line.id, { size: value })} className="text-xs text-gray-500" placeholder="Kích thước" />
+                            : line.size && <div className="mt-0.5 text-xs font-normal text-gray-500">{line.size}</div>}
                         </div>
                         {edit && lines.length > 1 && <button type="button" onClick={() => removeItem(line.id)} className="q2-noprint text-gray-400 hover:text-red-600 text-lg leading-none" title="Xoá dòng">×</button>}
                       </div>
                     </td>
-                    <td className="px-2 py-2.5 text-center">{field(line.size, (value) => setItem(line.id, { size: value }), 'text-center', false, 'Kích thước')}</td>
                     <td className="px-2 py-2.5 text-center">{field(line.unit || 'Tấm', (value) => setItem(line.id, { unit: value }), 'text-center', false, 'ĐVT')}</td>
                     <td className="px-2 py-2.5 text-center">{edit
                       ? <NumEd value={line.quantity} onChange={(value) => setItem(line.id, { quantity: value })} className="!inline-block !w-8 text-center" />
@@ -147,7 +148,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
                     <td className="px-3 py-2.5 text-right">{fmtNum(line.revenue)}</td>
                   </tr>
                 ))}
-                {!lines.length && <tr><td colSpan={7} className="px-3 py-5 text-center text-gray-400">Chưa có sản phẩm</td></tr>}
+                {!lines.length && <tr><td colSpan={6} className="px-3 py-5 text-center text-gray-400">Chưa có sản phẩm</td></tr>}
               </tbody>
             </table>
           </div>
@@ -222,10 +223,12 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
           </section>
 
           <p className="text-[10px] leading-relaxed italic text-[#6b7280]">{field(content.paymentFootnote, (value) => set({ paymentFootnote: value }), '', true)}</p>
-          <p className="text-[11px]">{field(content.deliveryNote, (value) => set({ deliveryNote: value }))}</p>
-          <div className="q2-order-final">
-            <p className="text-[11px]">{field(content.finalNote, (value) => set({ finalNote: value }), '', true)}</p>
-            <p className="text-center font-bold text-[#ff4f25] mt-5">{field(content.thankYou, (value) => set({ thankYou: value }))}</p>
+          <div className="space-y-0.5">
+            <p className="text-[11px] leading-snug">{field(content.deliveryNote, (value) => set({ deliveryNote: value }))}</p>
+            <div className="q2-order-final">
+              <p className="text-[11px] leading-snug">{field(content.finalNote, (value) => set({ finalNote: value }), '', true)}</p>
+              <p className="text-center font-bold text-[#ff4f25] mt-5">{field(content.thankYou, (value) => set({ thankYou: value }))}</p>
+            </div>
           </div>
         </article>
       </FitWidth>

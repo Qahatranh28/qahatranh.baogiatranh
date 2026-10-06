@@ -27,7 +27,12 @@ export default function FitWidth({ width = 960, className = '', children }) {
       <div
         ref={inner}
         className="q2-fit-inner"
-        style={{ width, transform: `scale(${scale})`, transformOrigin: 'top left', marginLeft: scale < 1 ? 0 : `max(0px, calc((100% - ${width}px) / 2))` }}
+        style={{
+          width,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          marginLeft: `max(0px, calc((100% - ${width * scale}px) / 2))`,
+        }}
       >
         {children}
       </div>

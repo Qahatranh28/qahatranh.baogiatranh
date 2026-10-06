@@ -46,8 +46,8 @@ function ItemsEditor({ type, items, setItems, showPrice }) {
         <thead>
           <tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] text-left">
             <th className="py-2 w-8 font-semibold">STT</th>
-            <th className="font-semibold px-1 min-w-[200px]">Tên sản phẩm</th>
-            <th className="font-semibold px-1 w-32">{type === 'delivery' ? 'ĐVT' : 'Kích thước'}</th>
+            <th className="font-semibold px-1 min-w-[200px]">Tên sản phẩm{type === 'quote' ? ' / kích thước' : ''}</th>
+            {type === 'delivery' && <th className="font-semibold px-1 w-32">ĐVT</th>}
             <th className="font-semibold px-1 w-20 text-right">SL</th>
             {showPrice && <th className="font-semibold px-1 w-36 text-right">Đơn giá</th>}
             <th className="w-8" />
@@ -57,8 +57,11 @@ function ItemsEditor({ type, items, setItems, showPrice }) {
           {items.map((it, idx) => (
             <tr key={it.id} className="border-b border-[#eef0f3]">
               <td className="py-2 text-[#6b7280]">{idx + 1}</td>
-              <td className="py-1.5 px-1"><input className={inputCls} value={it.name} onChange={(e) => set(it.id, { name: e.target.value })} /></td>
-              <td className="py-1.5 px-1"><input className={inputCls} value={type === 'delivery' ? (it.unit || 'Tấm') : it.size} placeholder={type === 'delivery' ? 'ĐVT' : '55x80'} onChange={(e) => set(it.id, type === 'delivery' ? { unit: e.target.value } : { size: e.target.value })} /></td>
+              <td className="py-1.5 px-1">
+                <input className={inputCls} value={it.name} placeholder="Tên sản phẩm" onChange={(e) => set(it.id, { name: e.target.value })} />
+                {type === 'quote' && <input className={`${inputCls} mt-1`} value={it.size} placeholder="Kích thước (55x80 cm)" onChange={(e) => set(it.id, { size: e.target.value })} />}
+              </td>
+              {type === 'delivery' && <td className="py-1.5 px-1"><input className={inputCls} value={it.unit || 'Tấm'} placeholder="ĐVT" onChange={(e) => set(it.id, { unit: e.target.value })} /></td>}
               <td className="py-1.5 px-1"><input type="number" min="0" className={`${inputCls} text-right`} value={it.quantity} onChange={(e) => set(it.id, { quantity: num(e.target.value) })} /></td>
               {showPrice && <td className="py-1.5 px-1"><MoneyInput value={it.unitPrice} onChange={(v) => set(it.id, { unitPrice: v })} /></td>}
               <td className="py-2 text-right">{items.length > 1 && <button onClick={() => setItems((its) => its.filter((i) => i.id !== it.id))} className="text-gray-400 hover:text-red-600 text-lg leading-none" aria-label="Xoá dòng">&times;</button>}</td>

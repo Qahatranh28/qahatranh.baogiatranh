@@ -8,7 +8,7 @@ import '../sheet.css'
 // khi in / xuất ảnh thì viền biến mất (xem CSS trong PreviewShell).
 
 // Chữ tự giãn dòng (textarea 1 dòng, tự cao thêm khi xuống dòng). multiline=false: Enter không xuống dòng.
-export function Ed({ value, onChange, placeholder, className = '', multiline = false, optional = false }) {
+export function Ed({ value, onChange, placeholder, className = '', multiline = false, optional = false, wrapText = false }) {
   const ref = useRef(null)
   const fit = () => {
     const el = ref.current
@@ -24,12 +24,48 @@ export function Ed({ value, onChange, placeholder, className = '', multiline = f
   }, [])
   return (
     <textarea
-      ref={ref} rows={1} spellCheck={false} style={{ resize: 'none' }}
+      ref={ref} rows={1} spellCheck={false} wrap="soft"
+      style={{
+        resize: 'none',
+        ...(wrapText ? { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', wordBreak: 'break-word' } : {}),
+      }}
       className={`q2-ed w-full ${optional && !value ? 'q2-empty' : ''} ${className}`}
       value={value ?? ''} placeholder={placeholder}
       onChange={(e) => onChange(multiline ? e.target.value : e.target.value.replace(/\n/g, ' '))}
       onKeyDown={(e) => { if (!multiline && e.key === 'Enter') e.preventDefault() }}
     />
+  )
+}
+
+export function InlineAddress({ value, onChange, label = 'Địa chỉ:', edit = true }) {
+  const ref = useRef(null)
+  const text = value ?? ''
+
+  useLayoutEffect(() => {
+    if (ref.current && document.activeElement !== ref.current && ref.current.textContent !== text) {
+      ref.current.textContent = text
+    }
+  }, [text])
+
+  return (
+    <span className="q2-address-text">
+      <b>{label} </b>
+      {edit ? (
+        <span
+          ref={ref}
+          className="q2-address-editable"
+          contentEditable
+          suppressContentEditableWarning
+          role="textbox"
+          aria-label={label.replace(/:\s*$/, '')}
+          aria-multiline="true"
+          spellCheck={false}
+          onInput={(e) => onChange(e.currentTarget.textContent || '')}
+        >
+          {text}
+        </span>
+      ) : text}
+    </span>
   )
 }
 

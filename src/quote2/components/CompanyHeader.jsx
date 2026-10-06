@@ -1,5 +1,5 @@
 import { fmtDate } from '../lib/format.js'
-import { Ed, DateEd, ImgEd } from './Ed.jsx'
+import { Ed, DateEd, ImgEd, InlineAddress } from './Ed.jsx'
 
 const Ic = ({ children }) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ff4f25" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">{children}</svg>
@@ -59,9 +59,9 @@ export default function CompanyHeader({
         {show('address') && (
           <li className={`flex gap-2 ${opt('address')}`}>
             <Ic><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></Ic>
-            {orderStyle
-              ? <span className="min-w-0 flex-1"><b>Địa chỉ: </b>{F('address', { multiline: true, placeholder: 'địa chỉ' })}</span>
-              : <><span className="shrink-0">Địa chỉ:</span>{F('address', { multiline: true, placeholder: 'địa chỉ' })}</>}
+            <span className="q2-company-address min-w-0 flex-1">
+              <InlineAddress value={company.address} onChange={(value) => onCompany('address', value)} edit={edit} />
+            </span>
           </li>
         )}
         {show('hotline') && (

@@ -1,7 +1,7 @@
 import { forwardRef, useMemo } from 'react'
 import CompanyHeader from '../CompanyHeader.jsx'
 import FitWidth from '../FitWidth.jsx'
-import { Ed, NumEd, MoneyEd, DateEd } from '../Ed.jsx'
+import { Ed, NumEd, MoneyEd, DateEd, InlineAddress } from '../Ed.jsx'
 import { fmtMoney, fmtNum, moneyToWords } from '../../lib/format.js'
 import { deliveryNotesOrDefault, fmtYmd, newDocItem } from '../../lib/docs.js'
 
@@ -52,7 +52,7 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
             </div>
             <div className="text-[13.5px]">
               <h2 className="text-[12px] uppercase font-bold tracking-wide text-[#6b7280] mb-1">Thông tin giao hàng</h2>
-              <div className="flex gap-1"><span className="shrink-0">Địa chỉ giao:</span>{fill('deliveryAddress', 'địa chỉ giao hàng', true)}</div>
+              <div className="min-w-0"><InlineAddress label="Địa chỉ giao:" value={data.deliveryAddress} onChange={(v) => set({ deliveryAddress: v })} edit={edit} /></div>
               <div className="flex gap-1"><span className="shrink-0">Người nhận:</span>{fill('receiver', 'người nhận hàng')}</div>
               <div className="flex gap-1"><span className="shrink-0">Số điện thoại:</span>{fill('customerPhone', 'số điện thoại')}</div>
               <div className="flex gap-1"><span className="shrink-0">Ngày giao:</span><b>{edit
@@ -86,7 +86,14 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
                 ) : items.map((l, i) => (
                   <tr key={l.id || i} className="border-t border-[#f3e4df]">
                     <td className="px-3 py-2.5 text-[#6b7280]">{i + 1}</td>
-                    <td className="px-3 py-2.5 font-medium">{edit ? <Ed value={l.name} onChange={(v) => setItem(l.id, { name: v })} multiline placeholder="Tên sản phẩm" /> : l.name}</td>
+                    <td className="px-3 py-2.5 font-medium">
+                      {edit
+                        ? <Ed value={l.name} onChange={(v) => setItem(l.id, { name: v })} className="break-words [overflow-wrap:anywhere]" multiline wrapText placeholder="Tên sản phẩm" />
+                        : <div className="break-words [overflow-wrap:anywhere]">{l.name}</div>}
+                      {edit
+                        ? <Ed value={l.size || ''} onChange={(v) => setItem(l.id, { size: v })} className="text-xs text-gray-500" placeholder="Kích thước" />
+                        : l.size && <div className="mt-0.5 text-xs font-normal text-gray-500">{l.size}</div>}
+                    </td>
                     <td className="px-2 py-2.5 text-center">{edit ? <Ed value={l.unit || 'Tấm'} onChange={(v) => setItem(l.id, { unit: v })} className="text-center" placeholder="ĐVT" /> : (l.unit || 'Tấm')}</td>
                     <td className="px-3 py-2.5 text-center font-bold">{edit ? <NumEd value={l.quantity} onChange={(v) => setItem(l.id, { quantity: v })} className="text-center font-bold" /> : fmtNum(l.quantity)}</td>
                     <td className="px-3 py-2.5 text-right">{edit ? <MoneyEd value={l.unitPrice} onChange={(v) => setItem(l.id, { unitPrice: v })} className="text-right w-24" /> : fmtMoney(l.unitPrice)}</td>

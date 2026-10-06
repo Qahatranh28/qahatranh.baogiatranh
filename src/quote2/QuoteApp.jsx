@@ -13,6 +13,7 @@ import { DEFAULT_MIN_MARGIN, DEFAULT_TAX_RATE } from './lib/defaults.js'
 import LoginScreen from './components/LoginScreen.jsx'
 import ChangePasswordModal from './components/ChangePasswordModal.jsx'
 import QuotePreview from './components/QuotePreview.jsx'
+import QuoteSheet from './components/sheets/QuoteSheet.jsx'
 import CompanyEditModal from './components/CompanyEditModal.jsx'
 import { Btn, Card, Empty } from './components/ui.jsx'
 import { useDialog } from './components/Dialogs.jsx'
@@ -232,15 +233,32 @@ function Workspace({ auth }) {
         </div>
       </header>
 
-      <main className="max-w-7xl 2xl:max-w-[1500px] mx-auto px-4 pb-10 pt-2">
+      <main className={`${tab === 'quotes' && quoteId ? 'max-w-[1700px]' : 'max-w-7xl 2xl:max-w-[1500px]'} mx-auto px-4 pb-10 pt-2`}>
         {tab === 'quotes' && (quoteId ? (
           draft ? (
-            <QuoteEditor
-              quote={draft} setQuote={setQuote} dirty={dirty} saving={saving} user={user} perms={perms} allQuotes={quotes}
-              onSave={saveCurrent} onBack={() => goBack(['moi', SLUG.quotes])} onNew={() => startNew()} onClone={() => startClone(draft)}
-              onPreview={() => navigate(['moi', SLUG.quotes, quoteId, 'xem-truoc'])} onDelete={deleteCurrent}
-              orderExists={!!draft.id && !!orderOf(draft.id)} onOpenOrder={openOrderFromEditor}
-            />
+            <div className="grid gap-4 items-start lg:grid-cols-[minmax(0,.95fr)_minmax(0,1.05fr)]">
+              <div className="min-w-0">
+                <QuoteEditor
+                  quote={draft} setQuote={setQuote} dirty={dirty} saving={saving} user={user} perms={perms} allQuotes={quotes}
+                  onSave={saveCurrent} onBack={() => goBack(['moi', SLUG.quotes])} onNew={() => startNew()} onClone={() => startClone(draft)}
+                  onPreview={() => navigate(['moi', SLUG.quotes, quoteId, 'xem-truoc'])} onDelete={deleteCurrent}
+                  orderExists={!!draft.id && !!orderOf(draft.id)} onOpenOrder={openOrderFromEditor}
+                />
+              </div>
+              <aside className="min-w-0">
+                <Card className="!p-2">
+                  <h2 className="font-bold text-sm mb-2">Xem trước báo giá</h2>
+                  <p className="text-xs text-[#6b7280] mb-2">Bản xem trước cập nhật theo nội dung đang chỉnh sửa.</p>
+                  <div className="overflow-x-hidden">
+                    <QuoteSheet
+                      data={{ ...draft, date: draft.createdAt }}
+                      company={settings.company}
+                      terms={{ ...settings.terms, ...(draft.previewOverrides?.terms || {}) }}
+                    />
+                  </div>
+                </Card>
+              </aside>
+            </div>
           ) : quoteId === 'moi' || loading ? <Empty>Đang tải…</Empty>
             : <NotFound what="báo giá" onBack={() => navigate(['moi', SLUG.quotes], { replace: true })} />
         ) : (

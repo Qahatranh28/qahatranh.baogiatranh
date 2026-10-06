@@ -135,7 +135,7 @@ export default function DocForm({ type, data, setData, disabled, orderMode = fal
       </Card>
 
       <Card>
-        <h3 className="font-bold text-[15px] mb-3">{isDelivery ? 'Sản phẩm giao' : 'Sản phẩm / dịch vụ'}</h3>
+        <h3 className="font-bold text-[15px] mb-3">{isDelivery ? 'Sản phẩm giao' : 'Sản phẩm'}</h3>
         <ItemsEditor type={type} items={data.items} setItems={setItems} showPrice disabled={disabled} />
         <fieldset disabled={disabled} className="grid gap-3 mt-4">
           <Field label={isDelivery ? 'Ghi chú giao hàng' : 'Ghi chú hiển thị trên phiếu'}><textarea rows={2} className={inputCls} value={data.note || ''} onChange={(e) => set({ note: e.target.value })} /></Field>

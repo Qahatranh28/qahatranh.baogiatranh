@@ -208,7 +208,7 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
               {/* Chọn phiếu ngay trên cột trái khi xem trước đang ẩn */}
               {!showPreview && (
                 <div className="inline-flex bg-white border border-[#dfe3e8] rounded-xl p-1 gap-1">
-                  {[['quote', 'Phiếu báo giá'], ['delivery', 'Phiếu giao hàng']].map(([k, l]) => (
+                  {[['quote', 'Báo giá đơn đặt hàng'], ['delivery', 'Phiếu giao hàng']].map(([k, l]) => (
                     <button key={k} onClick={() => go(base.id, k)} className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold ${tab === k ? 'bg-[#ff4f25] text-white' : 'text-[#4b5563] hover:bg-[#f3f4f6]'}`}>{l}</button>
                   ))}
                 </div>
@@ -224,13 +224,13 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
             <Card className="!p-3">
               <div className="flex items-center gap-2 flex-wrap mb-2">
                 <div className="inline-flex bg-[#f3f4f6] rounded-xl p-1 gap-1">
-                  {[['quote', 'Phiếu báo giá'], ['delivery', 'Phiếu giao hàng']].map(([k, l]) => (
+                  {[['quote', 'Báo giá đơn đặt hàng'], ['delivery', 'Phiếu giao hàng']].map(([k, l]) => (
                     <button key={k} disabled={!base} onClick={() => base && go(base.id, k)} className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold ${tab === k ? 'bg-[#ff4f25] text-white' : 'text-[#4b5563] hover:bg-white'}`}>{l}</button>
                   ))}
                 </div>
                 <span className="ml-auto flex gap-2">
                   <Btn onClick={restore} disabled={!editable || !doc}>Khôi phục chữ</Btn>
-                  <Btn variant="primary" disabled={!doc} onClick={() => navigate(['phieu', idSeg, SLUG[tab], 'xem-lon'])}>Xem lớn & xuất file</Btn>
+                  <Btn variant="primary" disabled={!doc} onClick={() => navigate(['phieu', idSeg, SLUG[tab], 'xem-lon'])}>Xem & xuất file</Btn>
                 </span>
               </div>
               <p className="text-xs text-[#6b7280] mb-2">{editable ? 'Bấm vào chữ trên chứng từ để sửa.' : 'Chỉ xem.'}</p>

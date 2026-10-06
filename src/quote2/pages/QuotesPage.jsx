@@ -52,6 +52,7 @@ export default function QuotesPage({ quotes, loading, error, perms, onOpen, onNe
                 <th className="font-semibold">Khách hàng</th>
                 <th className="font-semibold">Sale phụ trách</th>
                 <th className="font-semibold text-center">Số SP</th>
+                <th className="font-semibold text-right whitespace-nowrap">Chiết khấu (%)</th>
                 <th className="font-semibold text-right">Tổng thanh toán</th>
                 {perms.canSeeCost && <th className="font-semibold text-right px-2">Biên sau Chiết khấu</th>}
                 <th className="font-semibold">Trạng thái</th>
@@ -66,6 +67,7 @@ export default function QuotesPage({ quotes, loading, error, perms, onOpen, onNe
                   <td>{x.customerName || <span className="text-[#9ca3af]">—</span>}{x.customerPhone && <div className="text-xs text-[#6b7280]">{x.customerPhone}</div>}</td>
                   <td>{x.ownerName || '—'}</td>
                   <td className="text-center">{c.itemCount}</td>
+                  <td className="text-right whitespace-nowrap">{fmtPct(x.discountPercent, 1)}</td>
                   <td className="text-right font-medium">{fmtMoney(c.grandTotal)}</td>
                   {perms.canSeeCost && <td className="text-right px-2">{c.hasCost ? fmtPct(c.marginAfter) : '—'}</td>}
                   <td>
