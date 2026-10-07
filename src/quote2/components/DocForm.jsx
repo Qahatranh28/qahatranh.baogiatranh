@@ -103,6 +103,7 @@ export default function DocForm({ type, data, setData, disabled, orderMode = fal
             <Field label="Tên khách hàng"><input className={inputCls} value={data.customerName || ''} onChange={(e) => set({ customerName: e.target.value })} /></Field>
             <Field label="Mã số thuế"><input className={inputCls} value={data.customerTaxCode || ''} onChange={(e) => set({ customerTaxCode: e.target.value })} /></Field>
             <Field label="Điện thoại"><input className={inputCls} value={data.customerPhone || ''} onChange={(e) => set({ customerPhone: e.target.value })} /></Field>
+            {!isDelivery && <Field label="Địa chỉ khách hàng" className="sm:col-span-2"><input className={inputCls} value={data.customerAddress || ''} onChange={(e) => set({ customerAddress: e.target.value })} /></Field>}
           </div>
 
           {isDelivery ? (

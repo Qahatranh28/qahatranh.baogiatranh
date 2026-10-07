@@ -38,7 +38,7 @@ export default function CompanyHeader({
   const optionalClass = (key) => edit && !(key === 'hotline' ? hotline : company[key]) ? 'q2-empty' : ''
 
   return (
-    <header className="-mr-4 grid grid-cols-[120px_minmax(0,1.8fr)_minmax(0,1fr)_180px] gap-3 items-start min-h-[190px]">
+    <header className="grid grid-cols-[120px_minmax(0,1.8fr)_minmax(0,1fr)_auto] gap-3 items-start min-h-[190px]">
       <div className="flex flex-col items-center">
         <ImgEd value={company.logoUrl} onChange={(value) => onCompany('logoUrl', value)} edit={edit} label="Logo" max={700}
           className="w-[120px] h-[118px]" imgClassName="w-[120px] h-[118px] object-contain" />
@@ -90,7 +90,7 @@ export default function CompanyHeader({
         )}
       </ul>
 
-      <div className="text-left justify-self-end w-fit max-w-full">
+      <div className="relative text-left justify-self-end w-fit max-w-full">
         <div className="text-[20px] font-extrabold leading-tight text-[#1a1f2c]">
           {edit ? <Ed value={heading} onChange={onTitle} /> : heading}
         </div>

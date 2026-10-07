@@ -51,6 +51,7 @@ const usable = (i) => (i.name || '').trim() || n(i.unitPrice) > 0
 export const DEFAULT_ORDER_QUOTE_CONTENT = {
   orderTitle: 'ĐƠN ĐẶT HÀNG',
   customerTaxCode: '',
+  customerAddress: '',
   introText: 'Lời đầu tiên, Công ty chúng tôi xin trân trọng cảm ơn Quý khách hàng đã quan tâm đến sản phẩm/dịch vụ của Công ty. Chúng tôi xin kính gửi đến Quý khách hàng bảng báo giá như sau:',
   orderNotes: [
     '- Bên Mua đặt cọc Đợt 1 cho Bên Bán để Bên Bán xác nhận sản xuất.',
@@ -65,7 +66,7 @@ export const DEFAULT_ORDER_QUOTE_CONTENT = {
   remainingNote: 'Bên Mua thanh toán phần còn lại để được Bên Bán xác nhận giao hàng hóa.',
   paymentNotice: DEFAULT_PAYMENT_NOTICE,
   paymentInfo: 'Quý khách vui lòng chuyển khoản vào STK Công ty TNHH Quang Hà Tranh từ tài khoản công ty của Quý khách. Chúng tôi không nhận thanh toán từ tài khoản cá nhân. Sau khi chuyển khoản, vui lòng gửi hình ảnh giao dịch hoặc ủy nhiệm chi cho Bên Bán.',
-  qrCaption: 'Quét mã để đặt cọc',
+  qrCaption: 'Quét mã để thanh toán',
   paymentFootnote: '*Ghi chú: Đối với khoản tiền khách hàng thanh toán trước (nếu có) được xem là tiền đặt cọc để xác nhận sản xuất và chuẩn bị đơn hàng, chưa phát sinh giao hàng và chưa chuyển giao quyền sở hữu hàng hóa, do đó chưa thuộc thời điểm lập hóa đơn. Hóa đơn sẽ được xuất khi hàng hóa được bàn giao thành công, đầy đủ cho khách hàng.',
   deliveryNote: '+ Bên Mua vui lòng đồng kiểm kê hàng hóa, số lượng và chất lượng khi nhận hàng.',
   finalNote: '+ Hàng sản xuất riêng theo nhu cầu, hàng mua rồi miễn đổi trả. Mọi thắc mắc hay bất kỳ khiếu nại/phát sinh nào về đơn hàng sau khi đã thanh toán/bàn giao, Bên Bán không chịu trách nhiệm.',
