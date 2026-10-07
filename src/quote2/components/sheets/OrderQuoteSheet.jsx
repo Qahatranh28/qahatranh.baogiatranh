@@ -141,7 +141,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
               {totalRow(<>Thuế bán hàng: {percentage('taxRate', content.taxRate)}</>, totals.tax)}
               <div className="rounded-lg bg-[#ff4f25] px-3 py-2.5 mt-2">
                 <div className="flex items-center justify-between gap-2 text-white">
-                  <span className="font-bold text-[12px]">Tổng tiền thanh toán (đã gồm thuế):</span>
+                  <span className="font-bold text-[12px]">Tổng tiền thanh toán<br />(đã gồm thuế):</span>
                   {amount(totals.grand, true)}
                 </div>
               </div>

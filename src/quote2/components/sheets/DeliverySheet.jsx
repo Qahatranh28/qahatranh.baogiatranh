@@ -143,7 +143,7 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
               </div>
               <div className="rounded-xl bg-[#ff4f25] px-4 py-3 mt-2">
                 <div className="flex items-center justify-between gap-3 text-white">
-                  <span className="font-bold text-[14px]">Tổng tiền thanh toán (đã gồm thuế):</span>
+                  <span className="font-bold text-[14px]">Tổng tiền thanh toán<br />(đã gồm thuế):</span>
                   <span className="text-[25px] font-extrabold whitespace-nowrap">{fmtMoney(grandTotal)}</span>
                 </div>
               </div>
