@@ -20,7 +20,7 @@ const CARDS = [
   },
   {
     id: 'docs',
-    title: 'Đơn hàng & Giao hàng', // 🌟 Rút gọn tiêu đề để không bị rớt dòng
+    title: 'Báo giá đơn đặt hàng và giao hàng', // 🌟 Rút gọn tiêu đề để không bị rớt dòng
     desc: 'Mỗi báo giá có 1 phiếu báo giá và 1 phiếu giao hàng. Bấm vào chữ để sửa, xem lớn, in hoặc gửi khách.',
     badge: 'Cần đăng nhập',
     icon: (
