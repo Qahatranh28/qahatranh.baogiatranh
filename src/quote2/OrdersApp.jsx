@@ -16,7 +16,7 @@ import OrdersPage from './pages/OrdersPage.jsx'
 
 const exit = () => navigate([])
 
-// Chế độ "Phiếu báo giá & giao hàng": #/phieu, #/phieu/<id>/bao-gia, #/phieu/<id>/giao-hang, #/phieu/<id>/giao-hang/xem-lon
+// Chế độ "Phiếu báo giá & giao hàng": #/phieu, #/phieu/<id>/bao-gia, #/phieu/<id>/giao-hang, #/phieu/<id>/giao-hang/view-full
 export default function OrdersApp() {
   const auth = useAdminAuth()
   if (!auth.user) return <LoginScreen onLogin={auth.login} onBack={exit} />

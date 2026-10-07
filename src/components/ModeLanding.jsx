@@ -1,8 +1,8 @@
 const CARDS = [
   {
     id: 'legacy',
-    title: 'Trang báo giá cũ',
-    desc: 'Tính giá khung theo vật liệu, kích thước như trước đây. Lịch sử lưu ở bảng cũ.',
+    title: 'Báo giá Sale',
+    desc: 'Tính giá khung theo vật liệu.',
     badge: null,
     icon: (
       <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none" />
@@ -10,7 +10,7 @@ const CARDS = [
   },
   {
     id: 'new',
-    title: 'Trang báo giá mới',
+    title: 'Báo giá Sale Admin',
     desc: 'Báo giá theo dòng sản phẩm, duyệt biên lợi nhuận, quản lý khách hàng, thống kê và bản xem trước gửi khách.',
     badge: 'Mới · cần đăng nhập',
     primary: true,
@@ -20,7 +20,7 @@ const CARDS = [
   },
   {
     id: 'docs',
-    title: 'Phiếu báo giá & giao hàng',
+    title: 'Đơn hàng & Giao hàng', // 🌟 Rút gọn tiêu đề để không bị rớt dòng
     desc: 'Mỗi báo giá có 1 phiếu báo giá và 1 phiếu giao hàng. Bấm vào chữ để sửa, xem lớn, in hoặc gửi khách.',
     badge: 'Cần đăng nhập',
     icon: (
@@ -31,7 +31,7 @@ const CARDS = [
   },
   {
     id: 'guest',
-    title: 'Khách xem giá',
+    title: 'Bảng giá Qahatranh',
     desc: 'Không cần đăng nhập. Chỉ xem bảng giá sản phẩm tiêu chuẩn.',
     badge: 'Không cần đăng nhập',
     icon: (
@@ -55,17 +55,19 @@ export default function ModeLanding({ onPick }) {
           <button
             key={c.id}
             onClick={() => onPick(c.id)}
-            className={`group text-left rounded-2xl p-6 border transition shadow-sm hover:shadow-lg hover:-translate-y-0.5 ${
+            className={`group text-left rounded-2xl p-6 border transition shadow-sm hover:shadow-lg hover:-translate-y-0.5 flex flex-col h-full ${
               c.primary ? 'bg-[#ff4f25] border-[#ff4f25] text-white' : 'bg-white border-[#e3e7ec] text-[#1a1f2c]'
             }`}
           >
             <span className={`inline-flex w-11 h-11 rounded-xl items-center justify-center mb-4 ${c.primary ? 'bg-white/20' : 'bg-[#f3f4f6]'}`}>
               <svg width="22" height="22" viewBox="0 0 24 24">{c.icon}</svg>
             </span>
-            <h2 className="font-bold text-lg">{c.title}</h2>
-            <p className={`text-sm mt-1.5 leading-relaxed ${c.primary ? 'text-white/85' : 'text-[#6b7280]'}`}>{c.desc}</p>
+            {/* 🌟 Ép tiêu đề nằm trên 1 dòng (whitespace-nowrap) và giới hạn độ rộng để tự động thêm dấu "..." nếu quá dài (truncate) */}
+            <h2 className="font-bold text-lg whitespace-nowrap truncate w-full" title={c.title}>{c.title}</h2>
+            {/* 🌟 Thêm flex-grow vào phần mô tả để đẩy badge xuống cuối cùng, giúp các thẻ luôn bằng nhau */}
+            <p className={`text-sm mt-1.5 leading-relaxed flex-grow ${c.primary ? 'text-white/85' : 'text-[#6b7280]'}`}>{c.desc}</p>
             {c.badge && (
-              <span className={`inline-block mt-4 text-[11px] font-semibold px-2.5 py-1 rounded-full ${c.primary ? 'bg-white text-[#ff4f25]' : 'bg-[#f3f4f6] text-[#4b5563]'}`}>
+              <span className={`inline-block mt-4 text-[11px] font-semibold px-2.5 py-1 rounded-full w-max ${c.primary ? 'bg-white text-[#ff4f25]' : 'bg-[#f3f4f6] text-[#4b5563]'}`}>
                 {c.badge}
               </span>
             )}

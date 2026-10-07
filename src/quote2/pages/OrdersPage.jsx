@@ -33,10 +33,10 @@ const syncDeliveryAddress = (order) => {
 export default function OrdersPage({ user, perms, orders, loading, error, quotes, settings, api, createFromQuote }) {
   const dialog = useDialog()
   const { toast } = dialog
-  const route = useRoute() // ['phieu', id, 'bao-gia'|'giao-hang', 'xem-lon']
+  const route = useRoute() // ['phieu', id, 'bao-gia'|'giao-hang', 'view-full']
   const [, idSeg, tabSeg, subSeg] = route
   const tab = tabSeg === 'giao-hang' ? 'delivery' : 'quote'
-  const big = subSeg === 'xem-lon'
+  const big = subSeg === 'view-full'
   const docKey = tab === 'quote' ? 'quoteDoc' : 'deliveryDoc'
 
   const { drafts, setDraft, clearDraft } = useDrafts('orders')
@@ -230,7 +230,7 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
                 </div>
                 <span className="ml-auto flex gap-2">
                   <Btn onClick={restore} disabled={!editable || !doc}>Khôi phục chữ</Btn>
-                  <Btn variant="primary" disabled={!doc} onClick={() => navigate(['phieu', idSeg, SLUG[tab], 'xem-lon'])}>Xem & xuất file</Btn>
+                  <Btn variant="primary" disabled={!doc} onClick={() => navigate(['phieu', idSeg, SLUG[tab], 'view-full'])}>Xem & xuất file</Btn>
                 </span>
               </div>
               <p className="text-xs text-[#6b7280] mb-2">{editable ? 'Bấm vào chữ trên chứng từ để sửa.' : 'Chỉ xem.'}</p>
@@ -251,7 +251,7 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
           </div>
           <span className={`text-sm ${dirty ? 'text-amber-700 font-semibold' : 'text-[#9ca3af]'}`}>{dirty ? '● Chưa lưu' : base ? 'Đã lưu' : ''}</span>
           <Btn onClick={() => setShowPreview((v) => !v)}>{showPreview ? 'Ẩn xem trước' : 'Hiện xem trước'}</Btn>
-          <Btn disabled={!doc} onClick={() => navigate(['phieu', idSeg, SLUG[tab], 'xem-lon'])}>Xem lớn</Btn>
+          <Btn disabled={!doc} onClick={() => navigate(['phieu', idSeg, SLUG[tab], 'view-full'])}>Xem lớn</Btn>
           <Btn variant="primary" onClick={save} disabled={!editable || !dirty || saving}>{saving ? 'Đang lưu…' : 'Lưu đơn'}</Btn>
         </div>
       </div>

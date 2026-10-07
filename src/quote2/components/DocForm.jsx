@@ -44,14 +44,14 @@ function ItemsEditor({ type, items, setItems, showPrice, disabled }) {
   const num = (v) => (v === '' ? 0 : Number(v))
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm min-w-[680px]">
+      <table className="w-max text-sm">
         <thead>
           <tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] text-left">
             <th className="py-2 w-8 font-semibold">STT</th>
-            <th className="font-semibold px-1 min-w-[160px]">Sản phẩm</th>
-            <th className="font-semibold px-1 w-28">Kích thước</th>
-            <th className="font-semibold px-1 w-[76px]">ĐVT</th>
-            <th className="font-semibold px-1 w-[56px] text-right">SL</th>
+            <th className="font-semibold px-1 w-[220px]">Sản phẩm</th>
+            <th className="font-semibold px-1 w-[92px]">Kích thước</th>
+            <th className="font-semibold px-1 w-[62px]">ĐVT</th>
+            <th className="font-semibold px-1 w-[42px] text-right">SL</th>
             {showPrice && <th className="font-semibold px-1 w-32 text-right">Đơn giá (VND)</th>}
             <th className="w-6" />
           </tr>
@@ -60,10 +60,10 @@ function ItemsEditor({ type, items, setItems, showPrice, disabled }) {
           {items.map((it, idx) => (
             <tr key={it.id} className="border-b border-[#eef0f3]">
               <td className="py-2 text-[#6b7280]">{idx + 1}</td>
-              <td className="py-1.5 px-1"><AutoGrowTextarea disabled={disabled} className="min-h-[40px] py-2" value={it.name} onChange={(value) => set(it.id, { name: value })} placeholder="Tên sản phẩm" /></td>
-              <td className="py-1.5 px-1"><input disabled={disabled} className={inputCls} value={it.size || ''} placeholder="55x80" onChange={(e) => set(it.id, { size: e.target.value })} onBlur={(e) => set(it.id, { size: withCentimeterUnit(e.target.value) })} /></td>
-              <td className="py-1.5 px-1 w-[76px]"><input disabled={disabled} className={`${inputCls} !px-1.5 text-center`} value={it.unit || 'Tấm'} placeholder="ĐVT" onChange={(e) => set(it.id, { unit: e.target.value })} /></td>
-              <td className="py-1.5 px-1 w-[56px]"><input disabled={disabled} type="number" min="0" className={`${inputCls} !px-1 text-right`} value={it.quantity} onChange={(e) => set(it.id, { quantity: num(e.target.value) })} /></td>
+              <td className="py-1.5 px-1 w-[220px]"><AutoGrowTextarea disabled={disabled} className="!w-[220px] min-h-[40px] py-2" value={it.name} onChange={(value) => set(it.id, { name: value })} placeholder="Tên sản phẩm" /></td>
+              <td className="py-1.5 px-1"><input disabled={disabled} className={`${inputCls} !w-[80px] !px-2`} value={it.size || ''} placeholder="55x80" onChange={(e) => set(it.id, { size: e.target.value })} onBlur={(e) => set(it.id, { size: withCentimeterUnit(e.target.value) })} /></td>
+              <td className="py-1.5 px-1 w-[62px]"><input disabled={disabled} className={`${inputCls} !w-[50px] !px-1.5 text-center`} value={it.unit || 'Tấm'} placeholder="ĐVT" onChange={(e) => set(it.id, { unit: e.target.value })} /></td>
+              <td className="py-1.5 px-1 w-[42px]"><input disabled={disabled} type="number" min="0" className={`${inputCls} !w-[30px] !px-1 text-right`} value={it.quantity} onChange={(e) => set(it.id, { quantity: num(e.target.value) })} /></td>
               {showPrice && <td className="py-1.5 px-1"><MoneyInput disabled={disabled} value={it.unitPrice} onChange={(v) => set(it.id, { unitPrice: v })} /></td>}
               <td className="py-2 text-right">{!disabled && items.length > 1 && <button onClick={() => setItems((its) => its.filter((i) => i.id !== it.id))} className="text-gray-400 hover:text-red-600 text-lg leading-none" aria-label="Xoá dòng">&times;</button>}</td>
             </tr>
@@ -138,10 +138,12 @@ export default function DocForm({ type, data, setData, disabled, orderMode = fal
       <Card>
         <h3 className="font-bold text-[15px] mb-3">{isDelivery ? 'Sản phẩm giao' : 'Sản phẩm'}</h3>
         <ItemsEditor type={type} items={data.items} setItems={setItems} showPrice disabled={disabled} />
-        <fieldset disabled={disabled} className="grid gap-3 mt-4">
-          <Field label={isDelivery ? 'Ghi chú giao hàng' : 'Ghi chú hiển thị trên phiếu'}><textarea rows={2} className={inputCls} value={data.note || ''} onChange={(e) => set({ note: e.target.value })} /></Field>
-          {isDelivery && <Field label="Lưu ý"><textarea rows={4} className={inputCls} value={deliveryNotesOrDefault(data.confirmText)} onChange={(e) => set({ confirmText: e.target.value })} /></Field>}
-        </fieldset>
+        {isDelivery && (
+          <fieldset disabled={disabled} className="grid gap-3 mt-4">
+            <Field label="Ghi chú giao hàng"><textarea rows={2} className={inputCls} value={data.note || ''} onChange={(e) => set({ note: e.target.value })} /></Field>
+            <Field label="Lưu ý"><textarea rows={4} className={inputCls} value={deliveryNotesOrDefault(data.confirmText)} onChange={(e) => set({ confirmText: e.target.value })} /></Field>
+          </fieldset>
+        )}
       </Card>
 
       {!isDelivery && (orderMode ? (
