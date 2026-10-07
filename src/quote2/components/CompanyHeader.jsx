@@ -65,27 +65,27 @@ export default function CompanyHeader({
         {show('website') && (
           <li className={`flex gap-2 ${optionalClass('website')}`}>
             <Ic><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></Ic>
-            <span className="whitespace-nowrap">Website: {contactField('website', 'website')}</span>
+            <span className="whitespace-nowrap"><strong>Website:</strong> {contactField('website', 'website')}</span>
           </li>
         )}
         {show('address') && (
           <li className={`flex gap-2 ${optionalClass('address')}`}>
             <Ic><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></Ic>
             <span className="q2-company-address min-w-0">
-              <InlineAddress value={company.address} onChange={(value) => onCompany('address', value)} edit={edit} labelBold={false} />
+              <InlineAddress value={company.address} onChange={(value) => onCompany('address', value)} edit={edit} />
             </span>
           </li>
         )}
         {show('hotline') && (
           <li className={`flex gap-2 ${optionalClass('hotline')}`}>
             <Ic><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.84.58 2.8.7A2 2 0 0 1 22 16.92z" /></Ic>
-            <span className="whitespace-nowrap">Hotline/Zalo: {contactField('hotline', 'số điện thoại')}</span>
+            <span className="whitespace-nowrap"><strong>Hotline/Zalo:</strong> {contactField('hotline', 'số điện thoại')}</span>
           </li>
         )}
         {show('email') && (
           <li className={`flex gap-2 ${optionalClass('email')}`}>
             <Ic><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></Ic>
-            <span className="whitespace-nowrap">Email: {contactField('email', 'email')}</span>
+            <span className="whitespace-nowrap"><strong>Email:</strong> {contactField('email', 'email')}</span>
           </li>
         )}
       </ul>

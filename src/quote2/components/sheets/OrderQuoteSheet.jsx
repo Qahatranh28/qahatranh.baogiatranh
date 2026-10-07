@@ -169,13 +169,13 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
           <section className="rounded-xl bg-[#fdf3ef] px-5 py-4">
             <div className="grid grid-cols-[1fr_170px] gap-4 items-center">
               <div className="text-[12px] leading-relaxed">
-                <div className="font-bold text-[#c2410c] text-left mb-2">
-                  {company.paymentNotice ?? content.paymentNotice}
-                </div>
                 <h2 className="text-[10px] uppercase tracking-wide text-[#6b7280] font-bold mb-1">Thông tin chuyển khoản</h2>
                 <div><span>Số tài khoản: </span>{inlineField(company.bankAccount, (value) => setCompany('bankAccount', value), 'font-extrabold text-[26px] text-[#ff4f25]')}</div>
                 <div>Chủ tài khoản: {inlineField(company.bankHolder, (value) => setCompany('bankHolder', value), 'font-bold')}</div>
                 <div>Ngân hàng: {inlineField(company.bankName, (value) => setCompany('bankName', value), 'font-bold')}</div>
+                <div className="font-bold text-[#c2410c] text-left mt-2">
+                  {company.paymentNotice ?? content.paymentNotice}
+                </div>
                 <div className="mt-2">{field(content.paymentInfo, (value) => set({ paymentInfo: value }), '', true)}</div>
               </div>
               {(company.qrUrl || edit) && (

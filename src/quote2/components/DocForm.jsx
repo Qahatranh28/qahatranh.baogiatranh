@@ -44,15 +44,15 @@ function ItemsEditor({ type, items, setItems, showPrice, disabled }) {
   const num = (v) => (v === '' ? 0 : Number(v))
   return (
     <div className="overflow-x-auto">
-      <table className="w-max text-sm">
+      <table className="w-full min-w-[640px] table-fixed text-sm">
         <thead>
           <tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] text-left">
             <th className="py-2 w-8 font-semibold">STT</th>
-            <th className="font-semibold px-1 w-[220px]">Sản phẩm</th>
-            <th className="font-semibold px-1 w-[92px]">Kích thước</th>
-            <th className="font-semibold px-1 w-[62px]">ĐVT</th>
-            <th className="font-semibold px-1 w-[42px] text-right">SL</th>
-            {showPrice && <th className="font-semibold px-1 w-32 text-right">Đơn giá (VND)</th>}
+            <th className="font-semibold px-0.5">Sản phẩm</th>
+            <th className="font-semibold px-0.5 w-[84px]">Kích thước</th>
+            <th className="font-semibold px-0.5 w-[54px]">ĐVT</th>
+            <th className="font-semibold px-0.5 w-[34px] text-right">SL</th>
+            {showPrice && <th className="font-semibold px-0.5 w-[152px] text-right">Đơn giá (VND)</th>}
             <th className="w-6" />
           </tr>
         </thead>
@@ -60,11 +60,11 @@ function ItemsEditor({ type, items, setItems, showPrice, disabled }) {
           {items.map((it, idx) => (
             <tr key={it.id} className="border-b border-[#eef0f3]">
               <td className="py-2 text-[#6b7280]">{idx + 1}</td>
-              <td className="py-1.5 px-1 w-[220px]"><AutoGrowTextarea disabled={disabled} className="!w-[220px] min-h-[40px] py-2" value={it.name} onChange={(value) => set(it.id, { name: value })} placeholder="Tên sản phẩm" /></td>
-              <td className="py-1.5 px-1"><input disabled={disabled} className={`${inputCls} !w-[80px] !px-2`} value={it.size || ''} placeholder="55x80" onChange={(e) => set(it.id, { size: e.target.value })} onBlur={(e) => set(it.id, { size: withCentimeterUnit(e.target.value) })} /></td>
-              <td className="py-1.5 px-1 w-[62px]"><input disabled={disabled} className={`${inputCls} !w-[50px] !px-1.5 text-center`} value={it.unit || 'Tấm'} placeholder="ĐVT" onChange={(e) => set(it.id, { unit: e.target.value })} /></td>
-              <td className="py-1.5 px-1 w-[42px]"><input disabled={disabled} type="number" min="0" className={`${inputCls} !w-[30px] !px-1 text-right`} value={it.quantity} onChange={(e) => set(it.id, { quantity: num(e.target.value) })} /></td>
-              {showPrice && <td className="py-1.5 px-1"><MoneyInput disabled={disabled} value={it.unitPrice} onChange={(v) => set(it.id, { unitPrice: v })} /></td>}
+              <td className="py-1.5 px-0.5"><AutoGrowTextarea disabled={disabled} className="!w-full min-h-[40px] py-2" value={it.name} onChange={(value) => set(it.id, { name: value })} placeholder="Tên sản phẩm" /></td>
+              <td className="py-1.5 px-0.5 w-[84px]"><input disabled={disabled} className={`${inputCls} !w-[80px] !px-2`} value={it.size || ''} placeholder="55x80" onChange={(e) => set(it.id, { size: e.target.value })} onBlur={(e) => set(it.id, { size: withCentimeterUnit(e.target.value) })} /></td>
+              <td className="py-1.5 px-0.5 w-[54px]"><input disabled={disabled} className={`${inputCls} !w-[50px] !px-1.5 text-center`} value={it.unit || 'Tấm'} placeholder="ĐVT" onChange={(e) => set(it.id, { unit: e.target.value })} /></td>
+              <td className="py-1.5 px-0.5 w-[34px]"><input disabled={disabled} type="number" min="0" className={`${inputCls} !w-[30px] !px-1 text-right`} value={it.quantity} onChange={(e) => set(it.id, { quantity: num(e.target.value) })} /></td>
+              {showPrice && <td className="py-1.5 px-0.5 w-[152px]"><MoneyInput disabled={disabled} value={it.unitPrice} onChange={(v) => set(it.id, { unitPrice: v })} /></td>}
               <td className="py-2 text-right">{!disabled && items.length > 1 && <button onClick={() => setItems((its) => its.filter((i) => i.id !== it.id))} className="text-gray-400 hover:text-red-600 text-lg leading-none" aria-label="Xoá dòng">&times;</button>}</td>
             </tr>
           ))}
