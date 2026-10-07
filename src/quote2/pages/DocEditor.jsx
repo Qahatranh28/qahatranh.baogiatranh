@@ -119,11 +119,11 @@ export default function DocEditor({ doc, data, setData, dirty, saving, editable,
       {isDelivery && (
         <Panel title="Giao nhận">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <Field label="Khách hàng / người nhận"><input className={inputCls} disabled={disabled} value={data.customerName || ''} onChange={(e) => set({ customerName: e.target.value })} /></Field>
+            <Field label="Tên khách hàng"><input className={inputCls} disabled={disabled} value={data.customerName || ''} onChange={(e) => set({ customerName: e.target.value })} /></Field>
             <Field label="Điện thoại"><input className={inputCls} disabled={disabled} value={data.customerPhone || ''} onChange={(e) => set({ customerPhone: e.target.value })} /></Field>
             <Field label="Ngày giao"><input type="date" className={inputCls} disabled={disabled} value={data.deliveryDate || ''} onChange={(e) => set({ deliveryDate: e.target.value })} /></Field>
             <Field label="Địa chỉ giao hàng" className="sm:col-span-2 lg:col-span-3"><input className={inputCls} disabled={disabled} value={data.deliveryAddress || ''} onChange={(e) => set({ deliveryAddress: e.target.value })} /></Field>
-            <Field label="Người nhận hàng (ký nhận)"><input className={inputCls} disabled={disabled} value={data.receiver || ''} onChange={(e) => set({ receiver: e.target.value })} /></Field>
+            <Field label="Tên người nhận (ký nhận)"><input className={inputCls} disabled={disabled} value={data.receiver || ''} onChange={(e) => set({ receiver: e.target.value })} /></Field>
           </div>
         </Panel>
       )}

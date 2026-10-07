@@ -2,10 +2,9 @@ import { forwardRef, useMemo } from 'react'
 import DocumentSheet from '../DocumentSheet.jsx'
 import { Ed, NumEd, MoneyEd, DateEd, InlineAddress } from '../Ed.jsx'
 import { fmtMoney, fmtNum, moneyToWords } from '../../lib/format.js'
-import { deliveryNotesOrDefault, fmtYmd, newDocItem } from '../../lib/docs.js'
+import { DEFAULT_DELIVERY_INTRO, deliveryNotesOrDefault, fmtYmd, newDocItem } from '../../lib/docs.js'
 
 const blank = '—'
-const defaultIntro = 'Bên Mua xác nhận Bên Bán đã giao thành công, đầy đủ đơn hàng cụ thể như sau:'
 
 // Phiếu giao hàng. editor: nếu có -> sửa trực tiếp trên tờ phiếu. { setData(updater) }
 // data: { title, code, date, refCode, customerName, customerPhone, deliveryAddress, deliveryDate(yyyy-mm-dd),
@@ -19,7 +18,7 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
   const taxRate = Math.max(0, Number(data.taxRate) || 0)
   const tax = Math.round(total * taxRate / 100)
   const grandTotal = total + tax
-  const introText = data.introText ?? defaultIntro
+  const introText = data.introText ?? DEFAULT_DELIVERY_INTRO
   const deliveryNotes = deliveryNotesOrDefault(data.confirmText)
 
   const set = (patch) => editor.setData((d) => ({ ...d, ...patch }))
@@ -29,8 +28,8 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
 
   // Ô thông tin chỉnh sửa trực tiếp trên phiếu.
   const fill = (k, ph, multiline) => edit
-    ? <Ed value={data[k]} onChange={(v) => set({ [k]: v })} placeholder={ph} multiline={multiline} className="font-semibold" />
-    : <b>{data[k] || blank}</b>
+    ? <Ed value={data[k]} onChange={(v) => set({ [k]: v })} placeholder={ph} multiline={multiline} className="font-normal" />
+    : <span>{data[k] || blank}</span>
 
   return (
     <DocumentSheet
@@ -50,16 +49,16 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
             <div>
               <h2 className="text-[12px] uppercase font-bold tracking-wide text-[#6b7280] mb-1">Bên mua</h2>
               <div className="text-[19px] font-extrabold leading-tight text-[#ff4f25]">{edit ? <Ed value={data.customerName} onChange={(v) => set({ customerName: v })} placeholder="Tên khách hàng" /> : (data.customerName || '—')}</div>
-              {(edit || data.customerTaxCode) && <div className="mt-1 flex gap-1"><span className="shrink-0">Mã số thuế:</span>{fill('customerTaxCode', 'mã số thuế')}</div>}
+              {(edit || data.customerTaxCode) && <div className="mt-1 flex gap-1"><span className="shrink-0 font-bold">Mã số thuế:</span>{fill('customerTaxCode', 'mã số thuế')}</div>}
             </div>
             <div className="text-[13.5px]">
               <h2 className="text-[12px] uppercase font-bold tracking-wide text-[#6b7280] mb-1">Thông tin giao hàng</h2>
               <div className="min-w-0"><InlineAddress label="Địa chỉ giao:" value={data.deliveryAddress} onChange={(v) => set({ deliveryAddress: v })} edit={edit} /></div>
-              <div className="flex gap-1"><span className="shrink-0">Người nhận:</span>{fill('receiver', 'người nhận hàng')}</div>
-              <div className="flex gap-1"><span className="shrink-0">Số điện thoại:</span>{fill('customerPhone', 'số điện thoại')}</div>
-              <div className="flex gap-1"><span className="shrink-0">Ngày giao:</span><b>{edit
-                ? <DateEd value={data.deliveryDate} onChange={(v) => set({ deliveryDate: v })} mode="ymd" className="font-semibold" />
-                : (data.deliveryDate ? fmtYmd(data.deliveryDate) : blank)}</b></div>
+              <div className="flex gap-1"><span className="shrink-0 font-bold">Người nhận:</span>{fill('receiver', 'người nhận hàng')}</div>
+              <div className="flex gap-1"><span className="shrink-0 font-bold">Số điện thoại:</span>{fill('customerPhone', 'số điện thoại')}</div>
+              <div className="flex gap-1"><span className="shrink-0 font-bold">Ngày giao:</span><span>{edit
+                ? <DateEd value={data.deliveryDate} onChange={(v) => set({ deliveryDate: v })} mode="ymd" className="font-normal" />
+                : (data.deliveryDate ? fmtYmd(data.deliveryDate) : blank)}</span></div>
             </div>
           </section>
 
@@ -117,7 +116,7 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
           </div>
           {edit && <div className="q2-noprint -mt-2"><button type="button" onClick={addItem} className="text-xs font-semibold text-[#c2410c] border border-dashed border-[#ffc7b6] rounded-lg px-3 py-1.5 hover:bg-[#fff4ef]">+ Thêm sản phẩm</button></div>}
 
-          <section className="q2-delivery-summary grid grid-cols-[.9fr_1.1fr] gap-5 items-stretch">
+          <section className="q2-delivery-summary grid grid-cols-[.9fr_1.1fr] gap-5 items-start">
             <div className="space-y-4">
               <div className="rounded-xl bg-[#fdf3ef] px-4 py-3">
                 <h2 className="text-[11px] uppercase tracking-wide text-[#6b7280] font-bold">Tổng tiền bằng chữ</h2>
@@ -126,8 +125,8 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
               {(edit || data.note?.trim() || deliveryNotes.trim()) && (
                 <div className="text-[13px] leading-relaxed">
                   <h2 className="font-bold text-[15px] mb-1">Lưu ý</h2>
-                  {(edit || data.note?.trim()) && <div>{edit ? <Ed value={data.note} onChange={(v) => set({ note: v })} multiline placeholder="Ghi chú giao hàng" /> : data.note.trim()}</div>}
-                  {(edit || deliveryNotes.trim()) && <div>{edit ? <Ed value={deliveryNotes} onChange={(v) => set({ confirmText: v })} multiline placeholder="Lưu ý khi bàn giao" /> : deliveryNotes.trim()}</div>}
+                  {(edit || data.note?.trim()) && <div className="whitespace-pre-line">{edit ? <Ed value={data.note} onChange={(v) => set({ note: v })} multiline placeholder="Ghi chú giao hàng" /> : data.note.trim()}</div>}
+                  {(edit || deliveryNotes.trim()) && <div className="whitespace-pre-line">{edit ? <Ed value={deliveryNotes} onChange={(v) => set({ confirmText: v })} multiline placeholder="Lưu ý khi bàn giao" /> : deliveryNotes.trim()}</div>}
                 </div>
               )}
             </div>

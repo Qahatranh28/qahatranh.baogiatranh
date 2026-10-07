@@ -51,7 +51,7 @@ const usable = (i) => (i.name || '').trim() || n(i.unitPrice) > 0
 export const DEFAULT_ORDER_QUOTE_CONTENT = {
   orderTitle: 'ĐƠN ĐẶT HÀNG',
   customerTaxCode: '',
-  introText: 'Lời đầu tiên, Công ty chúng tôi xin trân trọng cảm ơn Quý khách hàng đã quan tâm đến sản phẩm/dịch vụ của Công ty. Chúng tôi xin gửi đến Quý khách hàng bảng báo giá như sau:',
+  introText: 'Lời đầu tiên, Công ty chúng tôi xin trân trọng cảm ơn Quý khách hàng đã quan tâm đến sản phẩm/dịch vụ của Công ty. Chúng tôi xin kính gửi đến Quý khách hàng bảng báo giá như sau:',
   orderNotes: [
     '- Bên Mua đặt cọc Đợt 1 cho Bên Bán để Bên Bán xác nhận sản xuất.',
     '- Sau khi sản xuất, Bên Bán gửi hình ảnh thành phẩm cho Bên Mua.',
@@ -72,11 +72,17 @@ export const DEFAULT_ORDER_QUOTE_CONTENT = {
   thankYou: 'Cảm ơn Quý khách!',
 }
 
+export const orderFinalNotes = (content) => content.finalNotes ?? [
+  content.deliveryNote ?? DEFAULT_ORDER_QUOTE_CONTENT.deliveryNote,
+  content.finalNote ?? DEFAULT_ORDER_QUOTE_CONTENT.finalNote,
+].filter(Boolean).join('\n')
+
 export const DEFAULT_DELIVERY_NOTES = [
   '+ Bên Mua vui lòng đồng kiểm kỹ hàng hóa, số lượng và chất lượng khi nhận hàng.',
   '+ Hàng sản xuất riêng theo nhu cầu, hàng mua rồi miễn đổi trả.',
   '+ Mọi thắc mắc hay bất kỳ khiếu nại/phát sinh nào về đơn hàng sau khi đã thanh toán/bàn giao, Bên Bán không chịu trách nhiệm.',
 ].join('\n')
+export const DEFAULT_DELIVERY_INTRO = 'Bên Mua xác nhận Bên Bán đã giao thành công, đầy đủ đơn hàng cụ thể như sau:'
 const LEGACY_DELIVERY_NOTE = 'Quý khách vui lòng kiểm tra số lượng, quy cách và tình trạng sản phẩm khi nhận hàng.'
 export const deliveryNotesOrDefault = (value) => !value || value === LEGACY_DELIVERY_NOTE ? DEFAULT_DELIVERY_NOTES : value
 
@@ -111,7 +117,7 @@ export function buildDeliveryDoc(quote, company) {
     customerTaxCode: quote.customerTaxCode || quote.taxCode || '',
     deliveryAddress: '',
     deliveryDate: '',
-    introText: 'Bên Mua xác nhận Bên Bán đã giao thành công, đầy đủ đơn hàng cụ thể như sau:',
+    introText: DEFAULT_DELIVERY_INTRO,
     receiver: '',
     items: quote.items.filter((i) => (i.name || '').trim()).map((i) => ({ id: uid(), name: i.name, size: i.size, unit: i.unit || 'Tấm', quantity: n(i.quantity), unitPrice: n(i.unitPrice), note: '' })),
     taxRate: n(quote.taxRate),

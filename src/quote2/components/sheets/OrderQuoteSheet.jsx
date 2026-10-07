@@ -1,7 +1,7 @@
 import { forwardRef, useMemo } from 'react'
 import DocumentSheet from '../DocumentSheet.jsx'
 import { Ed, ImgEd, MoneyEd, NumEd } from '../Ed.jsx'
-import { DEFAULT_ORDER_QUOTE_CONTENT, docTotals, newDocItem } from '../../lib/docs.js'
+import { DEFAULT_ORDER_QUOTE_CONTENT, docTotals, newDocItem, orderFinalNotes } from '../../lib/docs.js'
 import { fmtMoney, fmtNum, moneyToWords } from '../../lib/format.js'
 
 const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, editor }, ref) {
@@ -132,7 +132,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
                 <h2 className="font-bold text-[12px] mb-1">Lưu ý</h2>
                 {edit
                   ? <Ed value={content.orderNotes} onChange={(value) => set({ orderNotes: value })} multiline placeholder="Mỗi dòng là một lưu ý" />
-                  : <ul>{String(content.orderNotes || '').split('\n').filter(Boolean).map((note, index) => <li key={index}>- {note}</li>)}</ul>}
+                  : <ul>{String(content.orderNotes || '').split('\n').map((note) => note.trim()).filter(Boolean).map((note, index) => <li key={index} className="whitespace-pre-line">{/^[-+•]\s*/.test(note) ? note : `- ${note}`}</li>)}</ul>}
               </section>
             </div>
             <section className="rounded-xl bg-[#fafafa] px-4 py-3 space-y-1.5">
@@ -190,9 +190,8 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
 
           <p className="text-[10px] leading-relaxed italic text-[#6b7280]">{field(content.paymentFootnote, (value) => set({ paymentFootnote: value }), '', true)}</p>
           <div className="space-y-0.5">
-            <p className="text-[11px] leading-snug">{field(content.deliveryNote, (value) => set({ deliveryNote: value }))}</p>
             <div className="q2-order-final">
-              <p className="text-[11px] leading-snug">{field(content.finalNote, (value) => set({ finalNote: value }), '', true)}</p>
+              <p className="text-[11px] leading-snug whitespace-pre-line">{field(orderFinalNotes(content), (value) => set({ finalNotes: value }), '', true)}</p>
               <p className="text-center font-bold text-[#ff4f25] mt-5">{field(content.thankYou, (value) => set({ thankYou: value }))}</p>
             </div>
           </div>

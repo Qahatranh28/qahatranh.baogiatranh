@@ -8,7 +8,6 @@ import { Card, Btn, inputCls, Empty } from '../components/ui.jsx'
 import { useDialog } from '../components/Dialogs.jsx'
 import DocForm from '../components/DocForm.jsx'
 import PreviewShell from '../components/PreviewShell.jsx'
-import TermsEditModal from '../components/TermsEditModal.jsx'
 import CreateDocModal from '../components/CreateDocModal.jsx'
 import OrderQuoteSheet from '../components/sheets/OrderQuoteSheet.jsx'
 import DeliverySheet from '../components/sheets/DeliverySheet.jsx'
@@ -28,7 +27,7 @@ const syncDeliveryAddress = (order) => {
   }
 }
 
-// Trang "Phiếu": cột trái = danh sách đơn + biểu mẫu; cột phải = tờ phiếu (bấm vào chữ để sửa); thanh dưới = tổng tiền + Lưu.
+// Trang "Phiếu": cột trái = danh sách đơn + biểu mẫu; cột phải = bản xem trước chỉ đọc; thanh dưới = tổng tiền + Lưu.
 // Mỗi báo giá = 1 đơn = 1 phiếu báo giá + 1 phiếu giao hàng.
 export default function OrdersPage({ user, perms, orders, loading, error, quotes, settings, api, createFromQuote }) {
   const dialog = useDialog()
@@ -46,7 +45,6 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
   const [showPreview, setShowPreview] = useState(true)
   const [creating, setCreating] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [editingTerms, setEditingTerms] = useState(false)
   const [search, setSearch] = useState('')
 
   // Chưa chọn đơn nào -> chọn đơn đầu tiên (thay thế mục lịch sử, không tạo thêm)
@@ -151,10 +149,9 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
     return orders.filter((o) => !s || [o.quoteCode, o.customerName, o.ownerName].some((v) => String(v || '').toLowerCase().includes(s)))
   }, [orders, search])
 
-  const editor = editable && doc ? { setData: setDoc, onEditTerms: () => setEditingTerms(true) } : undefined
   const renderSheet = (ref) => !doc ? null : tab === 'quote'
-    ? <OrderQuoteSheet ref={ref} data={doc} company={doc.company} editor={editor} />
-    : <DeliverySheet ref={ref} data={doc} company={doc.company} editor={editor} />
+    ? <OrderQuoteSheet ref={ref} data={doc} company={doc.company} />
+    : <DeliverySheet ref={ref} data={doc} company={doc.company} />
 
   const missingBox = (
     <Card><Empty>Đơn này chưa có {tab === 'quote' ? 'phiếu báo giá' : 'phiếu giao hàng'}.</Empty>
@@ -233,7 +230,7 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
                   <Btn variant="primary" disabled={!doc} onClick={() => navigate(['phieu', idSeg, SLUG[tab], 'view-full'])}>Xem & xuất file</Btn>
                 </span>
               </div>
-              <p className="text-xs text-[#6b7280] mb-2">{editable ? 'Bấm vào chữ trên chứng từ để sửa.' : 'Chỉ xem.'}</p>
+              <p className="text-xs text-[#6b7280] mb-2">{editable ? 'Chỉnh sửa nội dung bằng các ô nhập ở cột trái.' : 'Chỉ xem.'}</p>
               <div className="bg-[#e5e7eb] rounded-xl p-2 lg:max-h-[calc(100vh-190px)] overflow-auto">
                 {doc ? renderSheet(null) : <Empty>{base ? `Chưa có ${tab === 'quote' ? 'phiếu báo giá' : 'phiếu giao hàng'}.` : 'Chọn một đơn ở danh sách bên trái.'}</Empty>}
               </div>
@@ -258,7 +255,7 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
 
       {big && doc && (
         <PreviewShell
-          title={`${tab === 'quote' ? 'Phiếu báo giá' : 'Phiếu giao hàng'} ${doc.code} — bấm vào chữ để sửa`}
+          title={`${tab === 'quote' ? 'Phiếu báo giá' : 'Phiếu giao hàng'} ${doc.code}`}
           fileName={doc.code}
           closeLabel="← Quay lại"
           onClose={() => goBack(['phieu', idSeg, SLUG[tab]])}
@@ -269,14 +266,6 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
         </PreviewShell>
       )}
 
-      {editingTerms && doc && (
-        <TermsEditModal
-          current={doc.terms || {}} hasOverride={false} canEditQuote canEditDefaults={false}
-          onSaveQuote={(v) => { setDoc((d) => ({ ...d, terms: v })); return { ok: true } }}
-          onSaveDefault={() => ({ ok: true })} onResetQuote={() => {}}
-          onClose={() => setEditingTerms(false)}
-        />
-      )}
       {creating && <CreateDocModal quotes={quotes} orders={orders} busy={busy} onPick={pick} onClose={() => setCreating(false)} />}
     </div>
   )

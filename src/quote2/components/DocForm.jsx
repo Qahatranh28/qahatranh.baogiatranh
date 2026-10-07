@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Card, Field, Btn, MoneyInput, AutoGrowTextarea, inputCls } from './ui.jsx'
 import CompanyForm from './CompanyForm.jsx'
 import TermsRowsEditor from './TermsRowsEditor.jsx'
-import { DEFAULT_ORDER_QUOTE_CONTENT, deliveryNotesOrDefault, newDocItem, toYmd, fromYmd, docTotals, withCentimeterUnit } from '../lib/docs.js'
+import { DEFAULT_DELIVERY_INTRO, DEFAULT_ORDER_QUOTE_CONTENT, deliveryNotesOrDefault, newDocItem, orderFinalNotes, toYmd, fromYmd, docTotals, withCentimeterUnit } from '../lib/docs.js'
 import { parseTerms, serializeTerms } from '../lib/richText.js'
 import { DEFAULT_TERMS, TAX_OPTIONS } from '../lib/defaults.js'
 import { fmtMoney } from '../lib/format.js'
@@ -24,7 +24,7 @@ function Panel({ title, sub, children, defaultOpen = true }) {
 function TermsSection({ terms, onChange, disabled }) {
   const fromBody = () => { const r = parseTerms(terms?.body); return r.length ? r : [{ level: 1, text: '' }] }
   const [rows, setRows] = useState(fromBody)
-  // Điều khoản bị sửa từ nơi khác (nút ✎ trên tờ phiếu) -> nạp lại
+  // Nạp lại nếu điều khoản được cập nhật từ nguồn dữ liệu khác.
   useEffect(() => { if (serializeTerms(rows) !== (terms?.body || '')) setRows(fromBody()) }, [terms?.body]) // eslint-disable-line react-hooks/exhaustive-deps
   const sync = (u) => setRows((prev) => {
     const next = typeof u === 'function' ? u(prev) : u
@@ -75,7 +75,7 @@ function ItemsEditor({ type, items, setItems, showPrice, disabled }) {
   )
 }
 
-// Biểu mẫu sửa phiếu (cột trái). Dùng chung dữ liệu với tờ phiếu bên phải: sửa ở đâu cũng được.
+// Biểu mẫu sửa phiếu ở cột trái; tờ phiếu bên phải chỉ hiển thị dữ liệu xem trước.
 export default function DocForm({ type, data, setData, disabled, orderMode = false }) {
   const isDelivery = type === 'delivery'
   const set = (patch) => setData((d) => ({ ...d, ...patch }))
@@ -94,14 +94,15 @@ export default function DocForm({ type, data, setData, disabled, orderMode = fal
           <div className="grid sm:grid-cols-2 gap-3">
             <Field label="Tiêu đề (góc phải, chữ đen)"><input className={inputCls} value={data.title || ''} onChange={(e) => set({ title: e.target.value })} /></Field>
             <Field label={isDelivery ? 'Số phiếu' : 'Số báo giá'}><input className={inputCls} value={data.code || ''} onChange={(e) => set({ code: e.target.value })} /></Field>
-            <Field label="Ngày lập"><input type="date" className={inputCls} value={toYmd(data.date)} onChange={(e) => set({ date: fromYmd(e.target.value) })} /></Field>
+            {!isDelivery && <Field label="Ngày lập"><input type="date" className={inputCls} value={toYmd(data.date)} onChange={(e) => set({ date: fromYmd(e.target.value) })} /></Field>}
             {isDelivery && <Field label="Theo báo giá số"><input className={inputCls} value={data.refCode || ''} onChange={(e) => set({ refCode: e.target.value })} /></Field>}
           </div>
 
-          <Heading>{isDelivery ? 'Người nhận' : 'Khách hàng'}</Heading>
+          <Heading>Khách hàng</Heading>
           <div className="grid sm:grid-cols-2 gap-3">
-            <Field label={isDelivery ? 'Khách hàng / người nhận' : 'Tên khách hàng'}><input className={inputCls} value={data.customerName || ''} onChange={(e) => set({ customerName: e.target.value })} /></Field>
-            {isDelivery && <Field label="Điện thoại"><input className={inputCls} value={data.customerPhone || ''} onChange={(e) => set({ customerPhone: e.target.value })} /></Field>}
+            <Field label="Tên khách hàng"><input className={inputCls} value={data.customerName || ''} onChange={(e) => set({ customerName: e.target.value })} /></Field>
+            <Field label="Mã số thuế"><input className={inputCls} value={data.customerTaxCode || ''} onChange={(e) => set({ customerTaxCode: e.target.value })} /></Field>
+            <Field label="Điện thoại"><input className={inputCls} value={data.customerPhone || ''} onChange={(e) => set({ customerPhone: e.target.value })} /></Field>
           </div>
 
           {isDelivery ? (
@@ -110,8 +111,10 @@ export default function DocForm({ type, data, setData, disabled, orderMode = fal
               <div className="grid sm:grid-cols-2 gap-3">
                 <Field label="Địa chỉ giao hàng" className="sm:col-span-2"><input className={inputCls} value={data.deliveryAddress || ''} onChange={(e) => set({ deliveryAddress: e.target.value })} /></Field>
                 <Field label="Ngày giao"><input type="date" className={inputCls} value={data.deliveryDate || ''} onChange={(e) => set({ deliveryDate: e.target.value })} /></Field>
-                <Field label="Người nhận hàng (ký nhận)"><input className={inputCls} value={data.receiver || ''} onChange={(e) => set({ receiver: e.target.value })} /></Field>
+                <Field label="Thuế bán hàng (%)"><input type="number" min="0" className={inputCls} value={data.taxRate ?? 0} onChange={(e) => set({ taxRate: Math.max(0, Number(e.target.value) || 0) })} /></Field>
               </div>
+              <Heading>Người nhận hàng</Heading>
+              <Field label="Tên người nhận (ký nhận)"><input className={inputCls} value={data.receiver || ''} onChange={(e) => set({ receiver: e.target.value })} /></Field>
             </>
           ) : (
             <>
@@ -145,6 +148,52 @@ export default function DocForm({ type, data, setData, disabled, orderMode = fal
           </fieldset>
         )}
       </Card>
+
+      <Panel title={isDelivery ? 'Nội dung phiếu giao hàng' : 'Nội dung phiếu báo giá đơn hàng'} sub="Chỉnh sửa nội dung hiển thị trên phiếu" defaultOpen={false}>
+        <fieldset disabled={disabled} className="grid gap-3">
+          {isDelivery ? (
+            <Field label="Lời xác nhận giao hàng">
+              <textarea rows={3} className={inputCls} value={data.introText ?? DEFAULT_DELIVERY_INTRO} onChange={(e) => set({ introText: e.target.value })} />
+            </Field>
+          ) : orderMode && (
+            <>
+              <Field label="Tiêu đề phụ trên phiếu">
+                <input className={inputCls} value={data.orderTitle ?? DEFAULT_ORDER_QUOTE_CONTENT.orderTitle} onChange={(e) => set({ orderTitle: e.target.value })} />
+              </Field>
+              <Field label="Lời mở đầu">
+                <textarea rows={3} className={inputCls} value={data.introText ?? DEFAULT_ORDER_QUOTE_CONTENT.introText} onChange={(e) => set({ introText: e.target.value })} />
+              </Field>
+              <Field label="Phương thức thanh toán">
+                <textarea rows={3} className={inputCls} value={data.paymentMethod ?? DEFAULT_ORDER_QUOTE_CONTENT.paymentMethod} onChange={(e) => set({ paymentMethod: e.target.value })} />
+              </Field>
+              <Field label="Tỷ lệ đặt cọc đợt 1 (%)">
+                <input type="number" min="0" max="100" className={inputCls} value={data.depositPercent ?? DEFAULT_ORDER_QUOTE_CONTENT.depositPercent} onChange={(e) => set({ depositPercent: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })} />
+              </Field>
+              <Field label="Ghi chú đợt 1">
+                <textarea rows={2} className={inputCls} value={data.depositNote ?? DEFAULT_ORDER_QUOTE_CONTENT.depositNote} onChange={(e) => set({ depositNote: e.target.value })} />
+              </Field>
+              <Field label="Ghi chú đợt 2">
+                <textarea rows={2} className={inputCls} value={data.remainingNote ?? DEFAULT_ORDER_QUOTE_CONTENT.remainingNote} onChange={(e) => set({ remainingNote: e.target.value })} />
+              </Field>
+              <Field label="Nội dung chuyển khoản">
+                <textarea rows={3} className={inputCls} value={data.paymentInfo ?? DEFAULT_ORDER_QUOTE_CONTENT.paymentInfo} onChange={(e) => set({ paymentInfo: e.target.value })} />
+              </Field>
+              <Field label="Chú thích dưới mã QR">
+                <input className={inputCls} value={data.qrCaption ?? DEFAULT_ORDER_QUOTE_CONTENT.qrCaption} onChange={(e) => set({ qrCaption: e.target.value })} />
+              </Field>
+              <Field label="Ghi chú về hóa đơn / đặt cọc">
+                <textarea rows={3} className={inputCls} value={data.paymentFootnote ?? DEFAULT_ORDER_QUOTE_CONTENT.paymentFootnote} onChange={(e) => set({ paymentFootnote: e.target.value })} />
+              </Field>
+              <Field label="Ghi chú và điều khoản cuối phiếu">
+                <textarea rows={5} className={inputCls} value={orderFinalNotes(data)} onChange={(e) => set({ finalNotes: e.target.value })} />
+              </Field>
+              <Field label="Lời cảm ơn">
+                <input className={inputCls} value={data.thankYou ?? DEFAULT_ORDER_QUOTE_CONTENT.thankYou} onChange={(e) => set({ thankYou: e.target.value })} />
+              </Field>
+            </>
+          )}
+        </fieldset>
+      </Panel>
 
       {!isDelivery && (orderMode ? (
         <Panel title="Điều khoản phiếu đơn hàng" sub="Chỉ áp dụng cho phiếu này, không thay đổi báo giá gốc" defaultOpen={false}>
