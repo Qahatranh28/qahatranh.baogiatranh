@@ -20,7 +20,7 @@ const CARDS = [
   },
   {
     id: 'docs',
-    title: 'Báo giá đơn đặt hàng và giao hàng', // 🌟 Rút gọn tiêu đề để không bị rớt dòng
+    title: 'Báo giá đơn đặt hàng và giao hàng', 
     desc: 'Mỗi báo giá có 1 phiếu báo giá và 1 phiếu giao hàng. Bấm vào chữ để sửa, xem lớn, in hoặc gửi khách.',
     badge: 'Cần đăng nhập',
     icon: (
@@ -62,9 +62,10 @@ export default function ModeLanding({ onPick }) {
             <span className={`inline-flex w-11 h-11 rounded-xl items-center justify-center mb-4 ${c.primary ? 'bg-white/20' : 'bg-[#f3f4f6]'}`}>
               <svg width="22" height="22" viewBox="0 0 24 24">{c.icon}</svg>
             </span>
-            {/* 🌟 Ép tiêu đề nằm trên 1 dòng (whitespace-nowrap) và giới hạn độ rộng để tự động thêm dấu "..." nếu quá dài (truncate) */}
-            <h2 className="font-bold text-lg whitespace-nowrap truncate w-full" title={c.title}>{c.title}</h2>
-            {/* 🌟 Thêm flex-grow vào phần mô tả để đẩy badge xuống cuối cùng, giúp các thẻ luôn bằng nhau */}
+            
+            {/* Đã bỏ whitespace-nowrap và truncate, thêm leading-snug để xuống dòng đẹp hơn */}
+            <h2 className="font-bold text-lg w-full leading-snug">{c.title}</h2>
+            
             <p className={`text-sm mt-1.5 leading-relaxed flex-grow ${c.primary ? 'text-white/85' : 'text-[#6b7280]'}`}>{c.desc}</p>
             {c.badge && (
               <span className={`inline-block mt-4 text-[11px] font-semibold px-2.5 py-1 rounded-full w-max ${c.primary ? 'bg-white text-[#ff4f25]' : 'bg-[#f3f4f6] text-[#4b5563]'}`}>
