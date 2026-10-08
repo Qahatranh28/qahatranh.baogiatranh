@@ -212,13 +212,7 @@ export default function QuoteEditor({
             <h3 className="font-bold text-sm">Điều khoản báo giá</h3>
             <p className="text-xs text-[#6b7280] mt-0.5">{terms?.title || 'Chưa đặt tiêu đề điều khoản'}</p>
           </div>
-          <Btn
-            className="!rounded-xl !border-2 !border-[#f28c28] !bg-white !px-5 !py-3 !text-base !font-bold !text-[#e87500] hover:!bg-orange-50"
-            onClick={onEditTerms}
-            disabled={!editable && !perms.canEditDefaults}
-          >
-            ✎ Tùy chỉnh điều khoản
-          </Btn>
+          <Btn onClick={onEditTerms} disabled={!editable && !perms.canEditDefaults}>✎ Tùy chỉnh điều khoản</Btn>
         </div>
       </Card>
 
@@ -375,14 +369,15 @@ export default function QuoteEditor({
               ] : []),
               ['Tổng thanh toán', fmtMoney(calc.grandTotal), true],
             ].map(([k, v, bold], index) => {
-              const isTotal = k === 'Tổng thanh toán';
+              // 🌟 Đã sửa điều kiện điểm nhấn sang "Tiền lời (sau CK)"
+              const isHighlighted = k === 'Tiền lời (sau CK)';
               return (
                 <div 
                   key={k} 
                   className={`flex justify-between items-center py-2.5 px-4 border-b border-[#eef0f3] last:border-b-0 ${index % 2 === 0 ? 'bg-white' : 'bg-[#fdf3ef]'}`}
                 >
-                  <dt className={`${bold ? 'font-bold' : ''} ${isTotal ? 'text-base font-bold' : ''}`}>{k}</dt>
-                  <dd className={`${bold ? 'font-bold' : 'font-medium'} ${isTotal ? 'text-xl font-black text-[#ff4f25]' : ''}`}>{v}</dd>
+                  <dt className={`${bold ? 'font-bold' : ''} ${isHighlighted ? 'text-base font-bold' : ''}`}>{k}</dt>
+                  <dd className={`${bold ? 'font-bold' : 'font-medium'} ${isHighlighted ? 'text-xl font-black text-[#ff4f25]' : ''}`}>{v}</dd>
                 </div>
               );
             })}
