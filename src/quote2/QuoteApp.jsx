@@ -13,6 +13,7 @@ import { DEFAULT_MIN_MARGIN, DEFAULT_TAX_RATE } from './lib/defaults.js'
 import LoginScreen from './components/LoginScreen.jsx'
 import ChangePasswordModal from './components/ChangePasswordModal.jsx'
 import QuotePreview from './components/QuotePreview.jsx'
+import TermsEditModal from './components/TermsEditModal.jsx'
 import QuoteSheet from './components/sheets/QuoteSheet.jsx'
 import CompanyEditModal from './components/CompanyEditModal.jsx'
 import { Btn, Card, Empty } from './components/ui.jsx'
@@ -60,6 +61,7 @@ function Workspace({ auth }) {
   const [saving, setSaving] = useState(false)
   const [pwOpen, setPwOpen] = useState(false)
   const [companyOpen, setCompanyOpen] = useState(false)
+  const [termsEditing, setTermsEditing] = useState(false)
   const dialog = useDialog()
   const { toast } = dialog
 
@@ -78,6 +80,7 @@ function Workspace({ auth }) {
   const draft = quoteId ? qd.drafts[quoteId] ?? savedQuote ?? null : null
   const dirty = !!quoteId && (quoteId === 'moi' ? !!draft : !!qd.drafts[quoteId] && snap(qd.drafts[quoteId]) !== snap(savedQuote))
   const defaults = { taxRate: DEFAULT_TAX_RATE, minMargin: DEFAULT_MIN_MARGIN }
+  const quoteTerms = { ...settings.terms, ...(draft?.previewOverrides?.terms || {}) }
 
   // Mở thẳng #/moi/bao-gia/moi (vd tải lại trang) mà chưa có bản nháp -> tạo báo giá trống
   useEffect(() => {
@@ -85,6 +88,15 @@ function Workspace({ auth }) {
   }, [quoteId, perms.canCreateQuote]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const setQuote = (u) => qd.setDraft(quoteId, u, savedQuote)
+  const setQuoteTerms = (value) => setQuote((q) => ({
+    ...q,
+    previewOverrides: { ...(q.previewOverrides || {}), terms: value },
+  }))
+  const resetQuoteTerms = () => setQuote((q) => {
+    const previewOverrides = { ...(q.previewOverrides || {}) }
+    delete previewOverrides.terms
+    return { ...q, previewOverrides }
+  })
   const openQuote = (q) => navigate(['moi', SLUG.quotes, q.id])
   const askDiscardDraft = (actionText) => dialog.confirm({
     tone: 'warning', icon: 'warning', title: 'Có báo giá mới chưa lưu',
@@ -248,6 +260,7 @@ function Workspace({ auth }) {
               <div className="min-w-0">
                 <QuoteEditor
                   quote={draft} setQuote={setQuote} dirty={dirty} saving={saving} user={user} perms={perms} allQuotes={quotes}
+                  terms={quoteTerms} onEditTerms={() => setTermsEditing(true)}
                   onSave={saveCurrent} onBack={() => goBack(['moi', SLUG.quotes])} onNew={() => startNew()} onClone={() => startClone(draft)}
                   onDelete={deleteCurrent}
                   orderExists={!!draft.id && !!orderOf(draft.id)} onOpenOrder={openOrderFromEditor}
@@ -266,7 +279,7 @@ function Workspace({ auth }) {
                     <QuoteSheet
                       data={{ ...draft, date: draft.createdAt }}
                       company={settings.company}
-                      terms={{ ...settings.terms, ...(draft.previewOverrides?.terms || {}) }}
+                      terms={quoteTerms}
                     />
                   </div>
                 </Card>
@@ -289,12 +302,23 @@ function Workspace({ auth }) {
         {tab === 'accounts' && perms.canManageAccounts && <AccountsPage me={user} />}
       </main>
 
+      {tab === 'quotes' && quoteId && draft && termsEditing && (
+        <TermsEditModal
+          current={quoteTerms}
+          hasOverride={!!draft.previewOverrides?.terms}
+          canEditQuote={canEditQuote(user, draft)}
+          canEditDefaults={perms.canEditDefaults}
+          onSaveQuote={(value) => { setQuoteTerms(value); return { ok: true } }}
+          onSaveDefault={(value) => settings.saveTerms(value, user)}
+          onResetQuote={resetQuoteTerms}
+          onClose={() => setTermsEditing(false)}
+        />
+      )}
+
       {tab === 'quotes' && previewOpen && draft && (
         <QuotePreview
-          quote={draft} setQuote={setQuote}
-          company={settings.company} terms={settings.terms}
-          canEditThisQuote={canEditQuote(user, draft)} canEditDefaults={perms.canEditDefaults}
-          onSaveDefaultTerms={(v) => settings.saveTerms(v, user)}
+          quote={draft}
+          company={settings.company} terms={quoteTerms}
           onClose={() => goBack(['moi', SLUG.quotes, quoteId])}
         />
       )}

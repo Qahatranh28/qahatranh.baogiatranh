@@ -85,7 +85,7 @@ function CustomerPicker({ quote, set, allQuotes, disabled }) {
 
 export default function QuoteEditor({
   quote, setQuote, dirty, saving, user, perms, allQuotes,
-  onSave, onBack, onNew, onClone, onDelete, orderExists, onOpenOrder,
+  terms, onEditTerms, onSave, onBack, onNew, onClone, onDelete, orderExists, onOpenOrder,
 }) {
   const calc = useMemo(() => calcQuote(quote), [quote])
   const editable = canEditQuote(user, quote)
@@ -201,6 +201,16 @@ export default function QuoteEditor({
             )}
           </div>
         )}
+      </Card>
+
+      <Card className="!py-3.5">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h3 className="font-bold text-sm">Điều khoản báo giá</h3>
+            <p className="text-xs text-[#6b7280] mt-0.5">{terms?.title || 'Chưa đặt tiêu đề điều khoản'}</p>
+          </div>
+          <Btn onClick={onEditTerms} disabled={!editable && !perms.canEditDefaults}>✎ Tùy chỉnh điều khoản</Btn>
+        </div>
       </Card>
 
       {/* Sản phẩm */}
