@@ -212,7 +212,16 @@ export default function QuoteEditor({
             <h3 className="font-bold text-sm">Điều khoản báo giá</h3>
             <p className="text-xs text-[#6b7280] mt-0.5">{terms?.title || 'Chưa đặt tiêu đề điều khoản'}</p>
           </div>
-          <Btn onClick={onEditTerms} disabled={!editable && !perms.canEditDefaults}>✎ Tùy chỉnh điều khoản</Btn>
+          <Btn
+            onClick={onEditTerms}
+            disabled={!editable && !perms.canEditDefaults}
+            className="!justify-center !gap-2 !rounded-xl !border-2 !border-[#f28c28] !bg-white !px-5 !py-3 !text-base !font-bold !text-[#e87500] hover:!bg-orange-50"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Zm17.71-10.04a1 1 0 0 0 0-1.41l-2.5-2.5a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.99-1.67Z" />
+            </svg>
+            Tùy chỉnh điều khoản
+          </Btn>
         </div>
       </Card>
 
