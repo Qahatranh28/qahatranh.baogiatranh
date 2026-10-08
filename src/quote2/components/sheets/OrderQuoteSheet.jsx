@@ -171,9 +171,9 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
             <div className="grid grid-cols-[1fr_170px] gap-4 items-center">
               <div className="text-[12px] leading-relaxed">
                 <h2 className="text-[10px] uppercase tracking-wide text-[#6b7280] font-bold mb-1">Thông tin chuyển khoản</h2>
-                <div><span>Số tài khoản: </span>{inlineField(company.bankAccount, (value) => setCompany('bankAccount', value), 'font-extrabold text-[26px] text-[#ff4f25]')}</div>
-                <div>Chủ tài khoản: {inlineField(company.bankHolder, (value) => setCompany('bankHolder', value), 'font-bold')}</div>
-                <div>Ngân hàng: {inlineField(company.bankName, (value) => setCompany('bankName', value), 'font-bold')}</div>
+                <div><span>Số tài khoản: </span><strong className="font-extrabold text-[26px] text-[#ff4f25]">{inlineField(company.bankAccount, (value) => setCompany('bankAccount', value), 'font-extrabold text-[26px] text-[#ff4f25]')}</strong></div>
+                <div>Chủ tài khoản: <strong>{inlineField(company.bankHolder, (value) => setCompany('bankHolder', value), 'font-bold')}</strong></div>
+                <div>Ngân hàng: <strong>{inlineField(company.bankName, (value) => setCompany('bankName', value), 'font-bold')}</strong></div>
                 <div className="font-bold text-[#c2410c] text-left mt-2">
                   {company.paymentNotice ?? content.paymentNotice}
                 </div>
