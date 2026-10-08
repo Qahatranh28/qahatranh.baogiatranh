@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAdminAuth } from '../hooks/useAdminAuth.js'
 import { navigate } from '../router.js'
 import { useQuotes2 } from './hooks/useQuotes2.js'
@@ -32,6 +32,9 @@ function Shell({ auth }) {
   const [pwOpen, setPwOpen] = useState(false)
   const [companyOpen, setCompanyOpen] = useState(false)
   const dialog = useDialog()
+  useEffect(() => {
+    if (!perms.canViewSheets) navigate(['moi', 'bao-gia'], { replace: true })
+  }, [perms.canViewSheets])
 
   // Báo giá đã có đơn -> mở đơn đó; chưa có -> tạo đơn (phiếu báo giá + phiếu giao hàng) với cửa sổ tiến trình rồi mở
   const createFromQuote = async (quote) => {
@@ -61,6 +64,10 @@ function Shell({ auth }) {
     p.set(3)
     await p.done(created.existed ? 'Báo giá này đã có phiếu — đang mở lại.' : 'Đã tạo phiếu báo giá và phiếu giao hàng.', created.existed ? 'Đã có sẵn phiếu' : 'Khởi tạo thành công')
     navigate(['phieu', created.order.id])
+  }
+
+  if (!perms.canViewSheets) {
+    return null
   }
 
   return (

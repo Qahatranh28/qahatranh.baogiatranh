@@ -69,7 +69,7 @@ const QuoteSheet = forwardRef(function QuoteSheet({ data, company, terms, editor
                 {rows.length === 0 ? (
                   <tr><td colSpan={6} className="px-3 py-6 text-center text-[#9ca3af]">Chưa có sản phẩm</td></tr>
                 ) : rows.map((l, i) => (
-                  <tr key={l.id} className="border-t border-[#f3e4df]">
+                  <tr key={l.id} className={`border-t border-[#f3e4df] ${i % 2 ? 'bg-[#f4f4f4]' : 'bg-white'}`}>
                     <td className="px-3 py-2.5 text-[#6b7280]">{i + 1}</td>
                     <td className="px-3 py-2.5 font-medium">{edit
                       ? <Ed value={l.name} onChange={(v) => setItem(l.id, { name: v })} multiline wrapText placeholder="Tên sản phẩm" />

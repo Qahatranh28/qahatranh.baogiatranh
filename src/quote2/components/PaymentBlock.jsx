@@ -1,44 +1,51 @@
-import { Ed, ImgEd } from './Ed.jsx'
+import { ImgEd } from './Ed.jsx'
 import { DEFAULT_PAYMENT_NOTICE } from '../lib/defaults.js'
 
-// Thông tin thanh toán: ngân hàng, số tài khoản, chủ tài khoản, nội dung CK — bên cạnh là mã QR.
-// edit: mọi dòng là ô nhập. onCompany(k,v): sửa ngân hàng/STK/chủ TK/QR. transferNote + onNote: nội dung CK (mặc định = số phiếu)
-export default function PaymentBlock({ company, code, edit = false, onCompany, transferNote, onNote, paymentNotice }) {
+// Thông tin thanh toán: ngân hàng, số tài khoản, chủ tài khoản — bên cạnh là mã QR.
+export default function PaymentBlock({ company, edit = false, onCompany, paymentNotice }) {
   const rows = [
-    ['bankName', 'Ngân hàng'],
     ['bankAccount', 'Số tài khoản'],
     ['bankHolder', 'Chủ tài khoản'],
+    ['bankName', 'Ngân hàng'],
   ]
   const empty = !rows.some(([k]) => company[k]) && !company.qrUrl
   if (empty && !edit) return null
+  const bankField = (key, label) => edit
+    ? <input
+      type="text"
+      value={company[key] ?? ''}
+      onChange={(event) => onCompany(key, event.target.value)}
+      placeholder={label}
+      className={`q2-ed q2-inline-input ${key === 'bankAccount' ? 'font-extrabold text-[26px] text-[#ff4f25]' : 'font-bold'}`}
+      style={{ width: `${Math.max(4, String(company[key] || label).length + 3)}ch`, maxWidth: '100%' }}
+    />
+    : company[key]
   return (
-    <section className={`rounded-2xl border border-[#e5e7eb] px-6 py-5 ${empty ? 'q2-empty' : ''}`}>
-      <div className="text-[12px] leading-relaxed font-bold text-[#c2410c] text-left mb-3">
-        {paymentNotice ?? company.paymentNotice ?? DEFAULT_PAYMENT_NOTICE}
-      </div>
-      <h2 className="text-base font-bold mb-3 text-center">Thông tin thanh toán</h2>
-      <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-[13.5px]">
-        <dl className="space-y-1.5 min-w-[320px]">
-          {rows.map(([k, label]) => (
-            (edit || company[k]) && (
-              <div key={k} className={`flex gap-3 items-baseline ${edit && !company[k] ? 'q2-empty' : ''}`}>
-                <dt className="w-28 text-[#6b7280] shrink-0">{label}:</dt>
-                <dd className={`flex-1 font-bold ${k === 'bankAccount' ? 'text-base tracking-wide' : ''}`}>
-                  {edit ? <Ed value={company[k]} onChange={(v) => onCompany(k, v)} placeholder={label} /> : company[k]}
-                </dd>
-              </div>
-            )
-          ))}
-          <div className="flex gap-3 items-baseline">
-            <dt className="w-28 text-[#6b7280] shrink-0">Nội dung CK:</dt>
-            <dd className="flex-1 font-semibold">{edit ? <Ed value={transferNote ?? code} onChange={onNote} /> : (transferNote ?? code)}</dd>
+    <section className={`rounded-xl bg-[#fdf3ef] px-5 py-4 ${empty ? 'q2-empty' : ''}`}>
+      <div className="grid grid-cols-[1fr_170px] gap-4 items-center">
+        <div className="text-[12px] leading-relaxed">
+          <h2 className="text-[10px] uppercase tracking-wide text-[#6b7280] font-bold mb-1">Thông tin chuyển khoản</h2>
+          <div>
+            {rows.map(([k, label]) => (
+              (edit || company[k]) && (
+                <div key={k} className={edit && !company[k] ? 'q2-empty' : ''}>
+                  <span>{label}: </span>
+                  <strong className={k === 'bankAccount' ? 'font-extrabold text-[26px] text-[#ff4f25]' : ''}>
+                    {bankField(k, label)}
+                  </strong>
+                </div>
+              )
+            ))}
           </div>
-        </dl>
+          <div className="font-bold text-[#c2410c] text-left mt-2">
+            {paymentNotice ?? company.paymentNotice ?? DEFAULT_PAYMENT_NOTICE}
+          </div>
+        </div>
         {(company.qrUrl || edit) && (
-          <div className={`text-center shrink-0 ${edit && !company.qrUrl ? 'q2-empty' : ''}`}>
+          <div className="text-center rounded-xl bg-white p-2">
             <ImgEd value={company.qrUrl} onChange={(v) => onCompany('qrUrl', v)} edit={edit} label="Mã QR" max={500}
-              className="w-36 h-36 mx-auto" imgClassName="w-36 h-36 object-contain border border-[#e5e7eb] rounded-lg p-1 bg-white mx-auto" />
-            {company.qrUrl && <p className="text-[11px] text-[#6b7280] mt-1">Quét mã để thanh toán</p>}
+              className="w-[150px] h-[150px] mx-auto" imgClassName="w-[150px] h-[150px] object-contain" />
+            {company.qrUrl && <p className="text-[10px] leading-tight mt-1">Quét mã để thanh toán</p>}
           </div>
         )}
       </div>

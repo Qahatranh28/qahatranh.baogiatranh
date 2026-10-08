@@ -44,14 +44,18 @@ const CARDS = [
 ]
 
 export default function ModeLanding({ onPick }) {
+  const currentUser = JSON.parse(localStorage.getItem('adminUser') || 'null')
+  const isSale = currentUser?.role === 'sale'
+  const cards = CARDS.filter((card) => !isSale || card.id !== 'docs')
+
   return (
     <div className="min-h-screen bg-[#eef1f4] flex flex-col items-center justify-center px-4 py-10">
       <img src="/images/logoCompany.png" alt="Qaha Tranh" className="w-20 h-20 rounded-2xl shadow-md mb-4" />
       <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1f2c] text-center">Hệ thống báo giá Qaha Tranh</h1>
       <p className="text-[#6b7280] mt-1 mb-8 text-center">Chọn cách bạn muốn vào hệ thống</p>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 w-full max-w-6xl">
-        {CARDS.map((c) => (
+      <div className={`grid gap-4 sm:grid-cols-2 ${isSale ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} w-full max-w-6xl`}>
+        {cards.map((c) => (
           <button
             key={c.id}
             onClick={() => onPick(c.id)}

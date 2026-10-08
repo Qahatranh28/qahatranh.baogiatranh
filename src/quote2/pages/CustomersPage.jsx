@@ -45,7 +45,7 @@ export default function CustomersPage({ quotes, perms, selKey, onSelectKey, onOp
                 <h2 className="font-bold text-lg">{sel.name || '(chưa có tên)'}</h2>
                 <p className="text-xs text-[#6b7280]">{sel.phone ? sel.phone : 'Chưa có số điện thoại'} · Khách từ {fmtDate(sel.firstAt)}</p>
               </div>
-              <Btn variant="primary" onClick={() => onNewForCustomer(sel)}>Tạo báo giá mới cho khách này</Btn>
+              {perms.canCreateQuote && <Btn variant="primary" onClick={() => onNewForCustomer(sel)}>Tạo báo giá mới cho khách này</Btn>}
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
               <StatBox label="Số báo giá" value={sel.total} />
@@ -76,7 +76,7 @@ export default function CustomersPage({ quotes, perms, selKey, onSelectKey, onOp
                         <td className="text-right">{fmtMoney(c.grandTotal)}</td>
                         {perms.canSeeCost && <td className="text-right px-2">{c.hasCost ? fmtPct(c.marginAfter) : '—'}</td>}
                         <td><StatusBadge status={x.status} />{x.status === 'lost' && x.lostReason.trim() && <div className="text-xs text-[#6b7280]">{x.lostReason}</div>}</td>
-                        <td className="text-right whitespace-nowrap"><Btn variant="sm" onClick={() => onOpen(x)}>Mở</Btn> <Btn variant="sm" onClick={() => onClone(x)}>Nhân bản</Btn></td>
+                        <td className="text-right whitespace-nowrap"><Btn variant="sm" onClick={() => onOpen(x)}>Mở</Btn> {perms.canCreateQuote && <Btn variant="sm" onClick={() => onClone(x)}>Nhân bản</Btn>}</td>
                       </tr>
                     )
                   })}

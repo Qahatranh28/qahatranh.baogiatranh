@@ -85,7 +85,7 @@ function CustomerPicker({ quote, set, allQuotes, disabled }) {
 
 export default function QuoteEditor({
   quote, setQuote, dirty, saving, user, perms, allQuotes,
-  onSave, onBack, onNew, onClone, onPreview, onDelete, orderExists, onOpenOrder,
+  onSave, onBack, onNew, onClone, onDelete, orderExists, onOpenOrder,
 }) {
   const calc = useMemo(() => calcQuote(quote), [quote])
   const editable = canEditQuote(user, quote)
@@ -136,10 +136,9 @@ export default function QuoteEditor({
           </div>
           <div className="flex gap-2 flex-wrap">
             {quote.id && perms.canDeleteQuote && <Btn variant="danger" onClick={onDelete}>Xoá</Btn>}
-            <Btn onClick={onClone} disabled={!quote.id}>Nhân bản</Btn>
-            <Btn onClick={onNew}>Báo giá mới</Btn>
-            <Btn onClick={onPreview}>Xem trước báo giá</Btn>
-            <Btn onClick={onOpenOrder}>{orderExists ? 'Mở phiếu' : 'Tạo phiếu'}</Btn>
+            {perms.canCreateQuote && <Btn onClick={onClone} disabled={!quote.id}>Nhân bản</Btn>}
+            {perms.canCreateQuote && <Btn onClick={onNew}>Báo giá mới</Btn>}
+            {perms.canViewSheets && <Btn onClick={onOpenOrder}>{orderExists ? 'Mở phiếu' : 'Tạo phiếu'}</Btn>}
             <Btn variant="primary" onClick={onSave} disabled={!editable || saving || (!dirty && !!quote.id)}>
               {saving ? 'Đang lưu…' : dirty || !quote.id ? 'Lưu báo giá' : 'Đã lưu ✓'}
             </Btn>
@@ -206,69 +205,104 @@ export default function QuoteEditor({
 
       {/* Sản phẩm */}
       <Card>
-        <CardTitle sub={cost ? 'Nhập theo thứ tự cột 1 → 5.' : 'Nhập theo thứ tự cột 1 → 4. Giá vốn do quản lý điền khi duyệt.'}>
+        <CardTitle sub={cost ? 'Vui lòng nhập theo thứ tự cột 1 → 5.' : 'Vui lòng nhập theo thứ tự cột 1 → 4. Giá vốn do quản lý điền khi duyệt.'}>
           Sản phẩm{cost ? ' và lợi nhuận' : ''}
         </CardTitle>
         <datalist id="q2-product-names">{names.map((n) => <option key={n} value={n} />)}</datalist>
-        <div className="space-y-3">
-          {calc.lines.map((l, idx) => (
-            <section key={l.id} className="min-w-0 rounded-lg border border-[#e3e7ec] bg-white p-3">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-[#4b5563]">Sản phẩm {idx + 1}</span>
-                {editable && calc.lines.length > 1 && (
-                  <button type="button" onClick={() => delRow(l.id)} className="text-xs text-gray-400 hover:text-red-600" aria-label="Xoá dòng">Xoá</button>
-                )}
-              </div>
-              <div className={`grid min-w-0 grid-cols-2 items-start gap-2 ${cost
-                ? 'min-[560px]:grid-cols-[minmax(0,2fr)_minmax(0,.9fr)_minmax(0,.65fr)_minmax(0,1fr)_minmax(0,1fr)]'
-                : 'min-[560px]:grid-cols-[minmax(0,2fr)_minmax(0,.9fr)_minmax(0,.65fr)_minmax(0,1fr)]'}`}>
-                <label className="block min-w-0">
-                  <span className="mb-1 block h-7 text-[10px] leading-3 text-[#6b7280]">Tên sản phẩm</span>
-                <ProductNameInput
-                  disabled={!editable}
-                  value={l.name}
-                  onChange={(value) => setItem(l.id, { name: value })}
-                />
-                </label>
-                <label className="block min-w-0">
-                  <span className="mb-1 block h-7 text-[10px] leading-3 text-[#6b7280]">Kích thước</span>
-                  <input className={`${inputCls} h-10 min-w-0 px-2 text-xs`} disabled={!editable} value={l.size} placeholder="55x80" onChange={(e) => setItem(l.id, { size: e.target.value })} onBlur={(e) => setItem(l.id, { size: withCentimeterUnit(e.target.value) })} />
-                </label>
-                <label className="block min-w-0">
-                  <span className="mb-1 block h-7 text-[10px] leading-3 text-[#6b7280]">Số lượng</span>
-                  <input type="number" min="0" className={`${inputCls} h-10 min-w-0 px-2 text-right text-xs`} disabled={!editable} value={l.quantity} onChange={(e) => setItem(l.id, { quantity: e.target.value === '' ? 0 : Number(e.target.value) })} />
-                </label>
+        
+        {/* Bảng sản phẩm chung */}
+        <div className="overflow-x-auto">
+          <table className={`w-full text-sm ${cost ? 'min-w-[1280px]' : 'min-w-[860px]'}`}>
+            <thead>
+              <tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] bg-gray-50/50">
+                <th className="text-left font-semibold py-3 px-2 w-10">STT</th>
+                {/* 🌟 Tăng độ rộng cột Tên sản phẩm */}
+                <th className="text-left font-semibold py-3 px-2 min-w-[280px]"><Num n={1} />Tên sản phẩm</th>
+                {/* 🌟 Giảm độ rộng cột Kích thước */}
+                <th className="text-left font-semibold py-3 px-2 w-28"><Num n={2} />Kích thước</th>
+                {/* 🌟 Giảm độ rộng cột Số lượng */}
+                <th className="text-right font-semibold py-3 px-2 w-16"><Num n={3} />SL</th>
+                {cost && <th className="text-right font-semibold py-3 px-2 w-32"><Num n={4} />Giá vốn (1sp)</th>}
+                <th className="text-right font-semibold py-3 px-2 w-32"><Num n={cost ? 5 : 4} />Đơn giá (1sp)</th>
+                <th className="text-right font-semibold py-3 px-2 w-32">Thành tiền</th>
                 {cost && (
-                  <label className="block min-w-0">
-                    <span className="mb-1 block h-7 text-[10px] leading-3 text-[#6b7280]">Giá vốn (1sp)</span>
-                    <MoneyInput className="h-10 min-w-0 px-2 text-xs" value={l.unitCost} disabled={!editable} onChange={(v) => setItem(l.id, { unitCost: v })} />
-                  </label>
+                  <>
+                    <th className="text-right font-semibold py-3 px-2 w-28 whitespace-nowrap">Tiền lời (1sp)</th>
+                    <th className="text-right font-semibold py-3 px-2 w-32 whitespace-nowrap">Tổng giá vốn</th>
+                    <th className="text-right font-semibold py-3 px-2 w-36 whitespace-nowrap">Tổng lời (Biên LN)</th>
+                  </>
                 )}
-                <label className="block min-w-0">
-                  <span className="mb-1 block h-7 text-[10px] leading-3 text-[#6b7280]">Đơn giá (1sp)</span>
-                  <MoneyInput className="h-10 min-w-0 px-2 text-xs" value={l.unitPrice} disabled={!editable} onChange={(v) => setItem(l.id, { unitPrice: v })}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && idx === calc.lines.length - 1) { e.preventDefault(); addRow() } }} />
-                </label>
-              </div>
-              <div className={`mt-2 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-[#eef0f3] pt-2 text-[11px] text-[#6b7280] ${cost ? 'sm:grid-cols-4' : 'sm:grid-cols-2'}`}>
-                <div>Thành tiền: <b className="text-[#1a1f2c]">{fmtMoney(l.revenue)}</b></div>
-                {cost && <>
-                  <div>Tiền lời (1sp): <b className={l.profitUnit < 0 ? 'text-red-600' : 'text-emerald-700'}>{fmtMoney(l.profitUnit)}</b></div>
-                  <div>Tổng giá vốn: <b className="text-[#1a1f2c]">{fmtMoney(l.cost)}</b></div>
-                  <div className="flex flex-wrap items-center gap-1">Tổng tiền lời: <b className={l.profit < 0 ? 'text-red-600' : 'text-emerald-700'}>{fmtMoney(l.profit)}</b>
-                    <span className={`font-semibold ${l.unitCost > 0 && l.revenue > 0 ? (l.marginAfter >= quote.minMargin ? 'text-emerald-700' : 'text-red-600') : 'text-[#9ca3af]'}`}>
-                      {l.unitCost > 0 && l.revenue > 0 ? `(${fmtPct(l.marginAfter, 1)})` : '(—)'}
-                    </span>
-                  </div>
-                </>}
-              </div>
-            </section>
-          ))}
+                <th className="w-10 px-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {calc.lines.map((l, idx) => (
+                <tr key={l.id} className="border-b border-[#eef0f3] align-top hover:bg-gray-50/20">
+                  <td className="py-3 px-2 text-[#6b7280] font-medium pt-4">{idx + 1}</td>
+                  <td className="py-3 px-2">
+                    <ProductNameInput
+                      disabled={!editable}
+                      value={l.name}
+                      onChange={(value) => setItem(l.id, { name: value })}
+                    />
+                  </td>
+                  <td className="py-3 px-2">
+                    <input className={`${inputCls} min-w-0`} disabled={!editable} value={l.size} placeholder="55x80" onChange={(e) => setItem(l.id, { size: e.target.value })} onBlur={(e) => setItem(l.id, { size: withCentimeterUnit(e.target.value) })} />
+                  </td>
+                  <td className="py-3 px-2">
+                    <input type="number" min="0" className={`${inputCls} min-w-0 text-right`} disabled={!editable} value={l.quantity} onChange={(e) => setItem(l.id, { quantity: e.target.value === '' ? 0 : Number(e.target.value) })} />
+                  </td>
+                  {cost && (
+                    <td className="py-3 px-2">
+                      <MoneyInput className="min-w-0" value={l.unitCost} disabled={!editable} onChange={(v) => setItem(l.id, { unitCost: v })} />
+                    </td>
+                  )}
+                  <td className="py-3 px-2">
+                    <MoneyInput className="min-w-0" value={l.unitPrice} disabled={!editable} onChange={(v) => setItem(l.id, { unitPrice: v })}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && idx === calc.lines.length - 1) { e.preventDefault(); addRow() } }} />
+                  </td>
+                  <td className="py-3 px-2 text-right font-bold text-[#1a1f2c] pt-5">
+                    {fmtMoney(l.revenue)}
+                  </td>
+                  {cost && (
+                    <>
+                      <td className={`py-3 px-2 text-right font-semibold pt-5 ${l.profitUnit < 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                        {fmtMoney(l.profitUnit)}
+                      </td>
+                      <td className="py-3 px-2 text-right font-semibold text-[#1a1f2c] pt-5">
+                        {fmtMoney(l.cost)}
+                      </td>
+                      <td className="py-3 px-2 text-right pt-5">
+                        <span className={`font-semibold mr-1.5 ${l.profit < 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                          {fmtMoney(l.profit)}
+                        </span>
+                        <span className={`text-[11px] font-bold ${l.unitCost > 0 && l.revenue > 0 ? (l.marginAfter >= quote.minMargin ? 'text-emerald-700' : 'text-red-600') : 'text-[#9ca3af]'}`}>
+                          {l.unitCost > 0 && l.revenue > 0 ? `(${fmtPct(l.marginAfter, 1)})` : '(—)'}
+                        </span>
+                      </td>
+                    </>
+                  )}
+                  <td className="py-3 px-2 text-center pt-4">
+                    {editable && calc.lines.length > 1 && (
+                      <button type="button" onClick={() => delRow(l.id)} className="text-gray-400 hover:text-red-600 font-bold text-lg" aria-label="Xoá dòng" title="Xóa sản phẩm">×</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={cost ? 6 : 5} className="pt-4 px-2 pb-2">
+                  {editable && <Btn variant="sm" onClick={addRow}>+ Thêm sản phẩm</Btn>}
+                </td>
+                <td className="pt-4 px-2 pb-2 text-right font-extrabold text-base whitespace-nowrap text-[#1a1f2c]" colSpan={cost ? 5 : 2}>
+                  Tổng tiền: {fmtMoney(calc.subtotal)}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          {editable && <Btn variant="sm" onClick={addRow}>+ Thêm sản phẩm</Btn>}
-          <div className="ml-auto text-sm font-bold">Tổng tiền: {fmtMoney(calc.subtotal)}</div>
-        </div>
+
         <div className="mt-4 max-w-xl">
           <Field label="Ghi chú hiển thị trên bản gửi khách (không bắt buộc)" className="mt-3">
             <textarea rows={2} className={inputCls} disabled={!editable} value={quote.note} onChange={(e) => set({ note: e.target.value })} />

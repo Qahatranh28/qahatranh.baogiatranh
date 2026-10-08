@@ -27,7 +27,7 @@ export default function QuotesPage({ quotes, loading, error, perms, onOpen, onNe
         </div>
         <div className="flex gap-2">
           <Btn onClick={onRefresh}>Làm mới</Btn>
-          <Btn variant="primary" onClick={onNew}>+ Báo giá mới</Btn>
+          {perms.canCreateQuote && <Btn variant="primary" onClick={onNew}>+ Báo giá mới</Btn>}
         </div>
       </div>
       <div className="grid sm:grid-cols-3 gap-2 mb-4">
@@ -76,7 +76,7 @@ export default function QuotesPage({ quotes, loading, error, perms, onOpen, onNe
                   </td>
                   <td className="text-right whitespace-nowrap">
                     <Btn variant="sm" onClick={() => onOpen(x)}>Mở</Btn>{' '}
-                    <Btn variant="sm" onClick={() => onClone(x)}>Nhân bản</Btn>
+                    {perms.canCreateQuote && <Btn variant="sm" onClick={() => onClone(x)}>Nhân bản</Btn>}
                   </td>
                 </tr>
               ))}

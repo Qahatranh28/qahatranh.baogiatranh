@@ -13,6 +13,8 @@ export function getPerms(user) {
     isAdmin,
     isEditor,
     isSale,
+    canCreateQuote: isAdmin || isEditor || isSale,
+    canViewSheets: isAdmin || isEditor,
     // Xem/nhập giá vốn, lợi nhuận, biên lợi nhuận (giống hệ thống cũ: chỉ admin)
     canSeeCost: isAdmin,
     // Sale chỉ thấy báo giá của mình; admin & editor thấy tất cả

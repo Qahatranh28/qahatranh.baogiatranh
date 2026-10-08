@@ -71,6 +71,9 @@ function Workspace({ auth }) {
 
   /* ---------------- Báo giá ---------------- */
   const quoteId = tab === 'quotes' ? idSeg : null
+  useEffect(() => {
+    if (quoteId === 'moi' && !perms.canCreateQuote) navigate(['moi', SLUG.quotes], { replace: true })
+  }, [quoteId, perms.canCreateQuote])
   const savedQuote = quoteId && quoteId !== 'moi' ? quotes.find((q) => q.id === quoteId) : null
   const draft = quoteId ? qd.drafts[quoteId] ?? savedQuote ?? null : null
   const dirty = !!quoteId && (quoteId === 'moi' ? !!draft : !!qd.drafts[quoteId] && snap(qd.drafts[quoteId]) !== snap(savedQuote))
@@ -78,8 +81,8 @@ function Workspace({ auth }) {
 
   // Mở thẳng #/moi/bao-gia/moi (vd tải lại trang) mà chưa có bản nháp -> tạo báo giá trống
   useEffect(() => {
-    if (quoteId === 'moi' && !qd.drafts.moi) qd.setDraft('moi', newQuote(user, defaults))
-  }, [quoteId]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (quoteId === 'moi' && perms.canCreateQuote && !qd.drafts.moi) qd.setDraft('moi', newQuote(user, defaults))
+  }, [quoteId, perms.canCreateQuote]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const setQuote = (u) => qd.setDraft(quoteId, u, savedQuote)
   const openQuote = (q) => navigate(['moi', SLUG.quotes, q.id])
@@ -89,11 +92,13 @@ function Workspace({ auth }) {
     confirmText: 'Bỏ bản nháp & tiếp tục', cancelText: 'Giữ lại',
   })
   const startNew = async (patch = {}) => {
+    if (!perms.canCreateQuote) return navigate(['moi', SLUG.quotes], { replace: true })
     if (qd.drafts.moi && !(await askDiscardDraft('tạo báo giá mới'))) return
     qd.setDraft('moi', { ...newQuote(user, defaults), ...patch })
     navigate(['moi', SLUG.quotes, 'moi'])
   }
   const startClone = async (q) => {
+    if (!perms.canCreateQuote) return navigate(['moi', SLUG.quotes], { replace: true })
     if (qd.drafts.moi && !(await askDiscardDraft('nhân bản báo giá'))) return
     qd.setDraft('moi', cloneQuote(q, user))
     navigate(['moi', SLUG.quotes, 'moi'])
@@ -146,6 +151,7 @@ function Workspace({ auth }) {
   const orderOf = (qid) => ordersApi.orders.find((o) => o.quoteId === qid)
   // Nút "Tạo phiếu / Mở phiếu" trong màn hình báo giá: tự lưu báo giá, rồi mở đơn có sẵn hoặc tạo mới (có cửa sổ tiến trình)
   const openOrderFromEditor = async () => {
+    if (!perms.canViewSheets) return navigate(['moi', SLUG.quotes], { replace: true })
     const msg = validateDraft()
     if (msg) return dialog.alert({ tone: 'warning', title: 'Chưa thể tạo phiếu', message: msg })
     const needSave = !draft.id || dirty
@@ -235,19 +241,26 @@ function Workspace({ auth }) {
 
       <main className={`${tab === 'quotes' && quoteId ? 'max-w-[1700px]' : 'max-w-7xl 2xl:max-w-[1500px]'} mx-auto px-4 pb-10 pt-2`}>
         {tab === 'quotes' && (quoteId ? (
-          draft ? (
+          quoteId === 'moi' && !perms.canCreateQuote ? (
+            <Card><Empty>Tài khoản sale không có quyền tạo báo giá mới.</Empty></Card>
+          ) : draft ? (
             <div className="grid gap-4 items-start lg:grid-cols-[minmax(0,.95fr)_minmax(0,1.05fr)]">
               <div className="min-w-0">
                 <QuoteEditor
                   quote={draft} setQuote={setQuote} dirty={dirty} saving={saving} user={user} perms={perms} allQuotes={quotes}
                   onSave={saveCurrent} onBack={() => goBack(['moi', SLUG.quotes])} onNew={() => startNew()} onClone={() => startClone(draft)}
-                  onPreview={() => navigate(['moi', SLUG.quotes, quoteId, 'xem-truoc'])} onDelete={deleteCurrent}
+                  onDelete={deleteCurrent}
                   orderExists={!!draft.id && !!orderOf(draft.id)} onOpenOrder={openOrderFromEditor}
                 />
               </div>
               <aside className="min-w-0">
                 <Card className="!p-2">
-                  <h2 className="font-bold text-sm mb-2">Xem trước báo giá</h2>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <h2 className="font-bold text-sm">Xem trước báo giá</h2>
+                    <Btn variant="primary" className="!py-1.5 !px-2.5 !text-xs" onClick={() => navigate(['moi', SLUG.quotes, quoteId, 'xem-truoc'])}>
+                      Xem & xuất file
+                    </Btn>
+                  </div>
                   <p className="text-xs text-[#6b7280] mb-2">Bản xem trước cập nhật theo nội dung đang chỉnh sửa.</p>
                   <div className="overflow-x-clip">
                     <QuoteSheet
