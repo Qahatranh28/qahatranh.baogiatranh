@@ -11,6 +11,7 @@ export const TAX_OPTIONS = [
 
 export const STATUS = {
   pending: { label: 'Chờ duyệt', short: 'Chờ duyệt', cls: 'bg-amber-100 text-amber-800' },
+  approved: { label: 'Đã duyệt', short: 'Đã duyệt', cls: 'bg-blue-100 text-blue-700' },
   won: { label: 'Đã chốt (Win)', short: 'Đã chốt', cls: 'bg-emerald-100 text-emerald-700' },
   lost: { label: 'Thất bại (Loss)', short: 'Thất bại', cls: 'bg-red-100 text-red-700' },
 }

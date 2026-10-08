@@ -102,15 +102,18 @@ export default function QuoteEditor({
   const changeStatus = async (next) => {
     setStatusMsg('')
     if (next === quote.status) return
-    if (next === 'won') {
-      if (!perms.canApprove) return setStatusMsg('Chỉ quản lý được duyệt/chốt báo giá.')
+    if (next === 'approved' && !perms.canApprove) {
+      return setStatusMsg('Chỉ quản lý được duyệt báo giá.')
+    }
+    if (next === 'approved' || next === 'won') {
       if (!calc.passes) {
         const ok = await dialog.confirm({
           tone: 'warning', icon: 'warning', title: 'Biên lợi nhuận chưa đạt mức tối thiểu',
           message: calc.hasCost
-            ? `Biên lợi nhuận sau chiết khấu hiện là ${fmtPct(calc.marginAfter)}, thấp hơn mức tối thiểu ${quote.minMargin}%. Bạn vẫn muốn chốt báo giá này?`
-            : `Chưa nhập giá vốn nên chưa thể kiểm tra biên lợi nhuận (mức tối thiểu ${quote.minMargin}%). Bạn vẫn muốn chốt báo giá này?`,
-          confirmText: 'Vẫn chốt đơn', cancelText: 'Xem lại',
+            ? `Biên lợi nhuận sau chiết khấu hiện là ${fmtPct(calc.marginAfter)}, thấp hơn mức tối thiểu ${quote.minMargin}%. Bạn vẫn muốn ${next === 'approved' ? 'duyệt báo giá' : 'chốt báo giá'} này?`
+            : `Chưa nhập giá vốn nên chưa thể kiểm tra biên lợi nhuận (mức tối thiểu ${quote.minMargin}%). Bạn vẫn muốn ${next === 'approved' ? 'duyệt báo giá' : 'chốt báo giá'} này?`,
+          confirmText: next === 'approved' ? 'Vẫn duyệt báo giá' : 'Vẫn chốt đơn',
+          cancelText: 'Xem lại',
         })
         if (!ok) return
       }
@@ -175,7 +178,7 @@ export default function QuoteEditor({
               <button key={k} type="button" disabled={!editable}
                 onClick={() => changeStatus(k)}
                 className={`px-3 py-1.5 text-sm font-medium border-r last:border-r-0 border-[#dfe3e8] disabled:opacity-60 ${
-                  quote.status === k ? (k === 'pending' ? 'bg-amber-100 text-amber-800' : k === 'won' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700') : 'bg-white hover:bg-[#f3f4f6]'}`}>
+                  quote.status === k ? s.cls : 'bg-white hover:bg-[#f3f4f6]'}`}>
                 {s.label}
               </button>
             ))}
@@ -209,7 +212,13 @@ export default function QuoteEditor({
             <h3 className="font-bold text-sm">Điều khoản báo giá</h3>
             <p className="text-xs text-[#6b7280] mt-0.5">{terms?.title || 'Chưa đặt tiêu đề điều khoản'}</p>
           </div>
-          <Btn onClick={onEditTerms} disabled={!editable && !perms.canEditDefaults}>✎ Tùy chỉnh điều khoản</Btn>
+          <Btn
+            className="!rounded-xl !border-2 !border-[#f28c28] !bg-white !px-5 !py-3 !text-base !font-bold !text-[#e87500] hover:!bg-orange-50"
+            onClick={onEditTerms}
+            disabled={!editable && !perms.canEditDefaults}
+          >
+            ✎ Tùy chỉnh điều khoản
+          </Btn>
         </div>
       </Card>
 
@@ -226,11 +235,8 @@ export default function QuoteEditor({
             <thead>
               <tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] bg-gray-50/50">
                 <th className="text-left font-semibold py-3 px-2 w-10">STT</th>
-                {/* 🌟 Tăng độ rộng cột Tên sản phẩm */}
                 <th className="text-left font-semibold py-3 px-2 min-w-[280px]"><Num n={1} />Tên sản phẩm</th>
-                {/* 🌟 Giảm độ rộng cột Kích thước */}
                 <th className="text-left font-semibold py-3 px-2 w-28"><Num n={2} />Kích thước</th>
-                {/* 🌟 Giảm độ rộng cột Số lượng */}
                 <th className="text-right font-semibold py-3 px-2 w-16"><Num n={3} />SL</th>
                 {cost && <th className="text-right font-semibold py-3 px-2 w-32"><Num n={4} />Giá vốn (1sp)</th>}
                 <th className="text-right font-semibold py-3 px-2 w-32"><Num n={cost ? 5 : 4} />Đơn giá (1sp)</th>
@@ -351,29 +357,37 @@ export default function QuoteEditor({
               )}
             </div>
           )}
-          <dl className="text-sm">
+          
+          <dl className="text-sm overflow-hidden rounded-xl border border-[#eef0f3]">
             {[
-              ['Tổng tiền (trước CK)', fmtMoney(calc.subtotal), false, true],
+              ['Tổng tiền (trước CK)', fmtMoney(calc.subtotal), false],
               ...(cost ? [
-                ['Giá vốn (theo số lượng)', fmtMoney(calc.totalCost), false, true],
-                ['Tiền lời (theo số lượng)', fmtMoney(calc.profitBefore), false, true],
-                ['Biên lợi nhuận đơn hàng', fmtPct(calc.marginBefore), false, true],
+                ['Giá vốn (theo số lượng)', fmtMoney(calc.totalCost), false],
+                ['Tiền lời (theo số lượng)', fmtMoney(calc.profitBefore), false],
+                ['Biên lợi nhuận đơn hàng', fmtPct(calc.marginBefore), false],
               ] : []),
-              [`Chiết khấu (${fmtNum(calc.discountPercent)}%)`, `− ${fmtMoney(calc.discountAmount)}`, false, true],
-              ['Tổng tiền sau CK', fmtMoney(calc.afterDiscount), false, true],
-              [quote.taxRate ? `VAT ${quote.taxRate}% (thu hộ)` : 'Thuế', fmtMoney(calc.taxAmount), false, true],
+              [`Chiết khấu (${fmtNum(calc.discountPercent)}%)`, `− ${fmtMoney(calc.discountAmount)}`, false],
+              ['Tổng tiền sau CK', fmtMoney(calc.afterDiscount), false],
+              [quote.taxRate ? `VAT ${quote.taxRate}% (thu hộ)` : 'Thuế', fmtMoney(calc.taxAmount), false],
               ...(cost ? [
-                ['Tiền lời (sau CK)', fmtMoney(calc.profitAfter), true, true],
-                ['Biên lợi nhuận (sau CK)', fmtPct(calc.marginAfter), true, true],
+                ['Tiền lời (sau CK)', fmtMoney(calc.profitAfter), true],
+                ['Biên lợi nhuận (sau CK)', fmtPct(calc.marginAfter), true],
               ] : []),
-              ['Tổng thanh toán', fmtMoney(calc.grandTotal), true, true],
-            ].map(([k, v, bold]) => (
-              <div key={k} className="flex justify-between py-2 border-b border-[#eef0f3]">
-                <dt className={bold ? 'font-bold' : ''}>{k}</dt>
-                <dd className={bold ? 'font-bold' : 'font-medium'}>{v}</dd>
-              </div>
-            ))}
+              ['Tổng thanh toán', fmtMoney(calc.grandTotal), true],
+            ].map(([k, v, bold], index) => {
+              const isTotal = k === 'Tổng thanh toán';
+              return (
+                <div 
+                  key={k} 
+                  className={`flex justify-between items-center py-2.5 px-4 border-b border-[#eef0f3] last:border-b-0 ${index % 2 === 0 ? 'bg-white' : 'bg-[#fdf3ef]'}`}
+                >
+                  <dt className={`${bold ? 'font-bold' : ''} ${isTotal ? 'text-base font-bold' : ''}`}>{k}</dt>
+                  <dd className={`${bold ? 'font-bold' : 'font-medium'} ${isTotal ? 'text-xl font-black text-[#ff4f25]' : ''}`}>{v}</dd>
+                </div>
+              );
+            })}
           </dl>
+          
         </div>
       </Card>
     </div>

@@ -86,7 +86,7 @@ function Shell({ auth }) {
             {perms.canEditDefaults && <Btn variant="sm" onClick={() => setCompanyOpen(true)}>🏢 Thông tin công ty</Btn>}
             <Btn variant="sm" onClick={() => setPwOpen(true)}>Đổi mật khẩu</Btn>
             <Btn variant="sm" onClick={logout}>Đăng xuất</Btn>
-            <Btn variant="sm" onClick={exit}>⇄ Đổi chế độ</Btn>
+            <Btn variant="sm" className="!rounded-xl !border-2 !border-[#f28c28] !bg-white !px-4 !py-2 !text-sm !font-bold !text-[#e87500] hover:!bg-orange-50" onClick={exit}>⇄ Đổi chế độ</Btn>
           </div>
         </div>
       </header>

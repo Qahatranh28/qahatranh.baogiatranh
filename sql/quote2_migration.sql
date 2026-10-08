@@ -27,6 +27,9 @@ create table if not exists quote2_quotes (
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now()
 );
+alter table quote2_quotes drop constraint if exists quote2_quotes_status_check;
+alter table quote2_quotes add constraint quote2_quotes_status_check
+  check (status in ('pending','approved','won','lost'));
 create index if not exists quote2_quotes_owner_idx   on quote2_quotes (owner_id);
 create index if not exists quote2_quotes_created_idx on quote2_quotes (created_at desc);
 

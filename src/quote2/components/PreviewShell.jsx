@@ -5,15 +5,15 @@ import { Btn } from './ui.jsx'
 
 const PRINT_CSS = `
 @media print {
-  html, body { background: #fff !important; }
+  html, body { background: #fff !important; margin: 0 !important; }
   body > *:not(#q2-print-root) { display: none !important; }
   #q2-print-root { position: static !important; inset: auto !important; background: #fff !important; padding: 0 !important; overflow: visible !important; display: block !important; }
   .q2-noprint { display: none !important; }
   .q2-fit { height: auto !important; }
-  .q2-fit-inner { transform: none !important; margin: 0 !important; zoom: 0.72; }
+  .q2-fit-inner { transform: none !important; margin: 0 auto !important; zoom: 0.72; }
   .q2-sheet { box-shadow: none !important; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  @page { size: A4; margin: 10mm; }
+  @page { size: A4; margin: 0; }
 }`
 
 // Khung xem trước toàn màn hình + thanh nút (copy ảnh, tải ảnh, in/PDF). Dùng cho cả báo giá, phiếu báo giá, phiếu giao hàng.

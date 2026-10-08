@@ -19,7 +19,7 @@ export function getPerms(user) {
     canSeeCost: isAdmin,
     // Sale chỉ thấy báo giá của mình; admin & editor thấy tất cả
     seeAllQuotes: isAdmin || isEditor,
-    // Chuyển trạng thái "Đã chốt" (duyệt) — chỉ quản lý
+    // Duyệt hoặc chốt báo giá — chỉ quản lý
     canApprove: isAdmin,
     canDeleteQuote: isAdmin,
     // Sửa thông tin công ty / điều khoản MẶC ĐỊNH cho mọi báo giá
