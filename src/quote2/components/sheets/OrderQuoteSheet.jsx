@@ -73,7 +73,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
             <div className="font-bold text-[17px] text-[#ff4f25]">{inlineField(data.customerName, (value) => set({ customerName: value }), 'font-bold text-[#ff4f25]', 'Tên khách hàng')}</div>
             <div><b>Mã số thuế: </b>{inlineField(content.customerTaxCode, (value) => set({ customerTaxCode: value }), 'font-semibold', 'Mã số thuế')}</div>
             <div><b>Điện thoại: </b>{inlineField(data.customerPhone, (value) => set({ customerPhone: value }), 'font-semibold', 'Số điện thoại')}</div>
-            {(edit || content.customerAddress) && <div><b>Địa chỉ: </b>{inlineField(content.customerAddress, (value) => set({ customerAddress: value }), 'font-semibold', 'Địa chỉ khách hàng')}</div>}
+            <div><b>Địa chỉ: </b>{inlineField(content.customerAddress, (value) => set({ customerAddress: value }), 'font-semibold', 'Địa chỉ khách hàng')}</div>
           </section>
 
           <p className="text-[14px] leading-relaxed">{field(content.introText, (value) => set({ introText: value }), '', true)}</p>
