@@ -30,13 +30,6 @@ function Shell({ auth }) {
   const ordersApi = useOrders2(user, perms.seeAllQuotes)
   const settings = useQuote2Settings()
   const [pwOpen, setPwOpen] = useState(false)
-  if (settings.loading) {
-    return (
-      <div className="min-h-screen bg-[#eef1f4] text-[#1a1f2c] flex items-center justify-center">
-        <div className="text-sm font-medium text-[#4b5563]">Đang tải cấu hình phiếu…</div>
-      </div>
-    )
-  }
   const [companyOpen, setCompanyOpen] = useState(false)
   const dialog = useDialog()
   useEffect(() => {

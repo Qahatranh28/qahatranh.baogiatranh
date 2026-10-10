@@ -52,13 +52,6 @@ function Workspace({ auth }) {
   const ordersApi = useOrders2(user, perms.seeAllQuotes)
   const settings = useQuote2Settings()
   const qd = useDrafts('quotes')
-  if (settings.loading) {
-    return (
-      <div className="min-h-screen bg-[#eef1f4] text-[#1a1f2c] flex items-center justify-center">
-        <div className="text-sm font-medium text-[#4b5563]">Đang tải cấu hình báo giá…</div>
-      </div>
-    )
-  }
 
   const route = useRoute() // ['moi', slug, id, sub]
   const [, slug, idSeg, subSeg] = route
