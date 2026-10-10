@@ -47,7 +47,7 @@ export default function PreviewShell({ title, fileName, onClose, closeLabel = '�
     const el = sheetRef.current
     // Gỡ margin auto/bóng đổ khỏi ảnh và chốt đúng kích thước thật của tờ phiếu
     const opts = {
-      pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: true,
+      pixelRatio: 5, backgroundColor: '#ffffff', cacheBust: true,
       width: el.offsetWidth, height: el.offsetHeight,
       style: { margin: '0', boxShadow: 'none', transform: 'none', maxWidth: 'none', width: `${el.offsetWidth}px` },
       filter: (n) => !(n.classList && n.classList.contains('q2-noprint')),
