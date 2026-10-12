@@ -45,7 +45,7 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
       className="q2-delivery-sheet"
     >
 
-          <section className="rounded-2xl bg-[#fdf3ef] px-5 py-4 grid grid-cols-2 gap-8">
+          <section className="rounded-2xl bg-[#fdf3ef] px-5 py-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-8">
             <div>
               <h2 className="text-[12px] uppercase font-bold tracking-wide text-[#6b7280] mb-1">Bên mua</h2>
               <div className="text-[19px] font-extrabold leading-tight text-[#ff4f25]">{edit ? <Ed value={data.customerName} onChange={(v) => set({ customerName: v })} placeholder="Tên khách hàng" /> : (data.customerName || '—')}</div>
@@ -116,19 +116,10 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
           </div>
           {edit && <div className="q2-noprint -mt-2"><button type="button" onClick={addItem} className="text-xs font-semibold text-[#c2410c] border border-dashed border-[#ffc7b6] rounded-lg px-3 py-1.5 hover:bg-[#fff4ef]">+ Thêm sản phẩm</button></div>}
 
-          <section className="q2-delivery-summary grid grid-cols-[.9fr_1.1fr] gap-5 items-start">
-            <div className="space-y-4">
-              <div className="rounded-xl bg-[#fdf3ef] px-4 py-3">
-                <h2 className="text-[11px] uppercase tracking-wide text-[#6b7280] font-bold">Tổng tiền bằng chữ</h2>
-                <p className="font-bold text-[14px]">{moneyToWords(grandTotal)}.</p>
-              </div>
-              {(edit || data.note?.trim() || deliveryNotes.trim()) && (
-                <div className="text-[13px] leading-relaxed">
-                  <h2 className="font-bold text-[15px] mb-1">Lưu ý</h2>
-                  {(edit || data.note?.trim()) && <div className="whitespace-pre-line">{edit ? <Ed value={data.note} onChange={(v) => set({ note: v })} multiline placeholder="Ghi chú giao hàng" /> : data.note.trim()}</div>}
-                  {(edit || deliveryNotes.trim()) && <div className="whitespace-pre-line">{edit ? <Ed value={deliveryNotes} onChange={(v) => set({ confirmText: v })} multiline placeholder="Lưu ý khi bàn giao" /> : deliveryNotes.trim()}</div>}
-                </div>
-              )}
+          <section className="q2-delivery-summary grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-5 items-stretch">
+            <div className="rounded-xl bg-[#fdf3ef] px-4 py-3 flex flex-col justify-center">
+              <h2 className="text-[11px] uppercase tracking-wide text-[#6b7280] font-bold">Tổng tiền bằng chữ</h2>
+              <p className="font-bold text-[14px]">{moneyToWords(grandTotal)}.</p>
             </div>
             <section className="rounded-2xl bg-[#fafafa] px-6 py-4 space-y-1.5">
               <div className="flex justify-between items-center gap-3 py-1.5 text-[14px]">
@@ -148,13 +139,20 @@ const DeliverySheet = forwardRef(function DeliverySheet({ data, company, editor 
                 </div>
               </div>
             </section>
+            {(edit || data.note?.trim() || deliveryNotes.trim()) && (
+              <div className="col-span-2 text-[13px] leading-relaxed">
+                <h2 className="font-bold text-[15px] mb-1">Lưu ý</h2>
+                {(edit || data.note?.trim()) && <div className="whitespace-pre-line">{edit ? <Ed value={data.note} onChange={(v) => set({ note: v })} multiline placeholder="Ghi chú giao hàng" /> : data.note.trim()}</div>}
+                {(edit || deliveryNotes.trim()) && <div className="whitespace-pre-line">{edit ? <Ed value={deliveryNotes} onChange={(v) => set({ confirmText: v })} multiline placeholder="Lưu ý khi bàn giao" /> : deliveryNotes.trim()}</div>}
+              </div>
+            )}
           </section>
 
           <footer className="pt-2">
             <p className="text-right italic font-semibold mb-5">{data.deliveryDate
               ? `TP.HCM, ngày ${data.deliveryDate.slice(8, 10)} tháng ${data.deliveryDate.slice(5, 7)} năm ${data.deliveryDate.slice(0, 4)}`
               : ''}</p>
-            <div className="grid grid-cols-2 gap-8 text-center">
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-8 text-center">
               <div>
                 <p className="font-bold">Đại diện Bên Bán</p>
                 <p className="font-bold">{company.name}</p>

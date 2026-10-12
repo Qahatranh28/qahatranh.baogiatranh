@@ -46,7 +46,7 @@ export default function QuotesPage({ quotes, loading, error, perms, onOpen, onNe
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[760px]">
             <thead>
-              <tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] text-left">
+              <tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] text-left [&>th:first-child]:pl-3 [&>th:last-child]:pr-3">
                 <th className="py-2 font-semibold">Số báo giá</th>
                 <th className="font-semibold">Ngày</th>
                 <th className="font-semibold">Khách hàng</th>
@@ -60,8 +60,8 @@ export default function QuotesPage({ quotes, loading, error, perms, onOpen, onNe
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ q: x, c }) => (
-                <tr key={x.id} className="border-b border-[#eef0f3] hover:bg-[#fafbfc]">
+              {rows.map(({ q: x, c }, index) => (
+                <tr key={x.id} className={`border-b border-[#eef0f3] hover:bg-[#fbe6dd] [&>td:first-child]:pl-3 [&>td:last-child]:pr-3 ${index % 2 === 0 ? 'bg-white' : 'bg-[#fdf3ef]'}`}>
                   <td className="py-2.5 font-bold">{x.code}</td>
                   <td>{fmtDate(x.createdAt)}</td>
                   <td>{x.customerName || <span className="text-[#9ca3af]">—</span>}{x.customerPhone && <div className="text-xs text-[#6b7280]">{x.customerPhone}</div>}</td>

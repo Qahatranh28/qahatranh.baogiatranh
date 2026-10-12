@@ -21,10 +21,10 @@ export default function CustomersPage({ quotes, perms, selKey, onSelectKey, onOp
         <input className={`${inputCls} mb-3`} placeholder="VD: Ngọc Lai hoặc 0909…" value={search} onChange={(e) => setSearch(e.target.value)} />
         {filtered.length === 0 ? <Empty>Không có khách nào.</Empty> : (
           <ul className="max-h-[60vh] overflow-auto -mx-1">
-            {filtered.map((c) => (
+            {filtered.map((c, index) => (
               <li key={c.key}>
                 <button onClick={() => onSelectKey(c.key)}
-                  className={`w-full text-left px-2 py-2.5 rounded-lg border-b border-[#eef0f3] flex justify-between gap-2 ${sel?.key === c.key ? 'bg-[#fff1ed]' : 'hover:bg-[#f7f8fa]'}`}>
+                  className={`w-full text-left px-2 py-2.5 rounded-lg border-b border-[#eef0f3] flex justify-between gap-2 ${sel?.key === c.key ? 'bg-[#ffe3d9] ring-1 ring-inset ring-[#ffc7b6]' : `${index % 2 === 0 ? 'bg-white' : 'bg-[#fdf3ef]'} hover:bg-[#fbe6dd]`}`}>
                   <span>
                     <span className="block font-semibold text-sm">{c.name || '(chưa có tên)'}</span>
                     <span className="block text-xs text-[#6b7280]">{c.phone || 'Chưa có SĐT'}</span>

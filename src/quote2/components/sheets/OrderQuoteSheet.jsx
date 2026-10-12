@@ -15,6 +15,10 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
   const depositPercent = Math.min(100, Math.max(0, Number(content.depositPercent) || 0))
   const depositAmount = Math.round(totals.grand * depositPercent / 100)
   const remainingAmount = totals.grand - depositAmount
+  // Đơn giá & thành tiền trên phiếu là giá ĐÃ chiết khấu
+  const discountRate = totals.calc.discountPercent
+  const hasDiscount = discountRate > 0
+  const discountedUnit = (line) => Math.round((Number(line.unitPrice) || 0) * (1 - discountRate / 100))
 
   const set = (patch) => editor.setData((d) => ({ ...d, ...patch }))
   const setCompany = (key, value) => editor.setData((d) => ({ ...d, company: { ...d.company, [key]: value } }))
@@ -111,10 +115,10 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
                     <td className="px-2 py-2.5 text-center">{edit
                       ? <NumEd value={line.quantity} onChange={(value) => setItem(line.id, { quantity: value })} className="!inline-block !w-8 text-center" />
                       : fmtNum(line.quantity)}</td>
-                    <td className="px-3 py-2.5 text-right">{edit
+                    <td className="px-3 py-2.5 text-right">{edit && !hasDiscount
                       ? <MoneyEd value={line.unitPrice} onChange={(value) => setItem(line.id, { unitPrice: value })} className="!inline-block !w-24 text-right" />
-                      : fmtNum(line.unitPrice)}</td>
-                    <td className="px-3 py-2.5 text-right">{fmtNum(line.revenue)}</td>
+                      : fmtNum(discountedUnit(line))}</td>
+                    <td className="px-3 py-2.5 text-right">{fmtNum(line.revenueAfter)}</td>
                   </tr>
                 ))}
                 {!lines.length && <tr><td colSpan={6} className="px-3 py-5 text-center text-gray-400">Chưa có sản phẩm</td></tr>}
@@ -123,7 +127,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
           </div>
           {edit && <div className="q2-noprint -mt-2"><button type="button" onClick={addItem} className="text-xs font-semibold text-[#c2410c] border border-[#ffc7b6] rounded-lg px-3 py-1 hover:bg-[#fff4ef]">+ Thêm sản phẩm</button></div>}
 
-          <div className="grid grid-cols-[.9fr_1.1fr] gap-5 items-start">
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-5 items-start">
             <div className="space-y-4">
               <section className="rounded-xl bg-[#fdf3ef] px-4 py-3">
                 <h2 className="text-[10px] uppercase tracking-wide text-[#6b7280]">Tổng tiền bằng chữ</h2>
@@ -137,7 +141,7 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
               </section>
             </div>
             <section className="rounded-xl bg-[#fafafa] px-4 py-3 space-y-1.5">
-              {totalRow('Cộng tiền hàng (chưa bao gồm thuế):', totals.subtotal)}
+              {totalRow('Cộng tiền hàng (chưa bao gồm thuế):', totals.afterDiscount)}
               {totalRow(<>Thuế bán hàng: {percentage('taxRate', content.taxRate)}</>, totals.tax)}
               <div className="rounded-lg bg-[#ff4f25] px-3 py-2.5 mt-2">
                 <div className="flex items-center justify-between gap-2 text-white">
@@ -151,14 +155,14 @@ const OrderQuoteSheet = forwardRef(function OrderQuoteSheet({ data, company, edi
           <section className="text-[11px] leading-relaxed">
             <h2 className="font-bold text-[12px] mb-1">Phương thức thanh toán</h2>
             {field(content.paymentMethod, (value) => set({ paymentMethod: value }), '', true)}
-            <div className="grid grid-cols-2 gap-3 mt-2">
-              <div className="rounded-xl bg-[#fafafa] px-4 py-3 text-[11px] leading-relaxed">
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-stretch gap-3 mt-2">
+              <div className="min-w-0 rounded-xl bg-[#fafafa] px-4 py-3 text-[11px] leading-relaxed">
                 <div className="font-extrabold text-[#ff4f25]">ĐỢT 1 - ĐẶT CỌC {percentage('depositPercent', depositPercent)}</div>
                 <div className="text-[22px] font-extrabold leading-tight">{fmtMoney(depositAmount)}</div>
                 <div className="italic text-[#6b7280]">({moneyToWords(depositAmount)})</div>
                 {field(content.depositNote, (value) => set({ depositNote: value }), 'mt-1', true)}
               </div>
-              <div className="rounded-xl bg-[#fafafa] px-4 py-3 text-[11px] leading-relaxed">
+              <div className="min-w-0 rounded-xl bg-[#fafafa] px-4 py-3 text-[11px] leading-relaxed">
                 <div className="font-extrabold text-[#ff4f25]">ĐỢT 2 - CÒN LẠI {fmtNum(100 - depositPercent)}%</div>
                 <div className="text-[22px] font-extrabold leading-tight">{fmtMoney(remainingAmount)}</div>
                 <div className="italic text-[#6b7280]">({moneyToWords(remainingAmount)})</div>

@@ -172,9 +172,9 @@ export default function OrdersPage({ user, perms, orders, loading, error, quotes
             {error && <div className="text-xs bg-red-50 border border-red-100 text-red-700 rounded-lg p-2.5 mb-2">{error}</div>}
             {loading ? <Empty>Đang tải…</Empty> : shown.length === 0 ? <Empty>Chưa có đơn nào. Bấm «+ Đơn mới» để tạo từ một báo giá.</Empty> : (
               <ul className="max-h-[260px] overflow-auto -mx-1">
-                {shown.map((o) => (
+                {shown.map((o, index) => (
                   <li key={o.id}>
-                    <button onClick={() => go(o.id)} className={`w-full text-left px-2 py-2.5 rounded-lg flex items-center gap-3 justify-between ${o.id === idSeg ? 'bg-[#fff1ed]' : 'hover:bg-[#f7f8fa]'}`}>
+                    <button onClick={() => go(o.id)} className={`w-full text-left px-2 py-2.5 rounded-lg flex items-center gap-3 justify-between ${o.id === idSeg ? 'bg-[#ffe3d9] ring-1 ring-inset ring-[#ffc7b6]' : `${index % 2 === 0 ? 'bg-white' : 'bg-[#fdf3ef]'} hover:bg-[#fbe6dd]`}`}>
                       <span className="min-w-0"><b className="mr-2">{o.quoteCode || '—'}</b><span className="text-sm text-[#4b5563]">{o.customerName || '(chưa có tên)'}</span></span>
                       <span className="flex items-center gap-2 shrink-0"><span className="text-sm font-semibold">{o.amount > 0 ? fmtMoney(o.amount) : ''}</span><StatusPill s={o.status} /></span>
                     </button>

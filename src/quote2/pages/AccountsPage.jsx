@@ -84,12 +84,12 @@ export default function AccountsPage({ me }) {
         {loading ? <Empty>Đang tải…</Empty> : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[560px]">
-              <thead><tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] text-left">
+              <thead><tr className="text-xs text-[#4b5563] border-b border-[#e3e7ec] text-left [&>th:first-child]:pl-3">
                 <th className="py-2 font-semibold">Họ tên</th><th className="font-semibold">Tên đăng nhập</th>
                 <th className="font-semibold">Vai trò</th><th className="font-semibold">Trạng thái</th><th /></tr></thead>
               <tbody>
-                {staff.map((r) => (
-                  <tr key={r.id} className="border-b border-[#eef0f3]">
+                {staff.map((r, index) => (
+                  <tr key={r.id} className={`border-b border-[#eef0f3] [&>td:first-child]:pl-3 [&>td:last-child]:pr-3 ${index % 2 === 0 ? 'bg-white' : 'bg-[#fdf3ef]'}`}>
                     <td className="py-2.5 font-semibold">{r.full_name || '—'}{isMe(r) && <span className="text-xs font-normal text-[#6b7280]"> (bạn)</span>}</td>
                     <td>{r.user}</td>
                     <td>

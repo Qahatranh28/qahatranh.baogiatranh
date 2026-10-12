@@ -97,9 +97,9 @@ const QuoteSheet = forwardRef(function QuoteSheet({ data, company, terms, editor
             </div>
           )}
 
-          <div className={`grid gap-5 items-start ${hasTerms ? 'grid-cols-[1.2fr_1fr]' : 'grid-cols-[1fr_1fr]'}`}>
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-5 items-stretch">
             {hasTerms ? (
-              <div className="relative">
+              <div className="relative min-w-0 [&>section]:h-full">
                 <TermsBlock terms={terms} compact />
                 {edit && <button type="button" onClick={editor.onEditTerms} className="q2-noprint absolute top-3 right-3 text-xs font-semibold bg-white border border-[#ffc7b6] text-[#c2410c] rounded-lg px-2.5 py-1 hover:bg-[#fff4ef]">✎ Sửa điều khoản</button>}
               </div>
@@ -109,7 +109,7 @@ const QuoteSheet = forwardRef(function QuoteSheet({ data, company, terms, editor
               </div>
             )}
 
-            <div className="px-1">
+            <div className="px-1 min-w-0 flex flex-col">
               <dl className="text-[14px]">
                 <div className="flex justify-between items-center py-3 border-b border-[#eceef1]"><dt className="text-[#374151]">Tổng tiền:</dt><dd>{money('subtotal', t.subtotal)}</dd></div>
                 <div className="flex justify-between items-center py-3 border-b border-[#eceef1]">
@@ -124,11 +124,13 @@ const QuoteSheet = forwardRef(function QuoteSheet({ data, company, terms, editor
                   <dd>{money('tax', t.tax)}</dd>
                 </div>
               </dl>
-              <div className="mt-3 rounded-2xl bg-[#ff4f25] text-white px-5 py-4 flex items-center justify-between gap-3">
+              <div className="mt-auto pt-3">
+              <div className="rounded-2xl bg-[#ff4f25] text-white px-5 py-4 flex items-center justify-between gap-3">
                 <span className="font-bold text-[14px] leading-tight shrink-0 whitespace-nowrap">Tổng số tiền<br />thanh toán:</span>
                 {money('grand', t.grand, true)}
               </div>
               <p className="italic text-[12.5px] mt-2 text-[#4b5563]"><span className="text-[#6b7280]">Bằng chữ:</span> {moneyToWords(t.grand)}</p>
+              </div>
             </div>
           </div>
 
@@ -142,7 +144,7 @@ const QuoteSheet = forwardRef(function QuoteSheet({ data, company, terms, editor
             paymentNotice={company.paymentNotice ?? data.paymentNotice}
           />
 
-          <footer className="grid grid-cols-2 text-center pt-2">
+          <footer className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] text-center pt-2">
             <div><p className="font-semibold">Khách hàng xác nhận</p><p className="text-[11px] text-[#6b7280]">(Ký, ghi rõ họ tên)</p><div className="h-16" /></div>
             <div><p className="font-semibold">Đại diện {company.brandName || company.name}</p><p className="text-[11px] text-[#6b7280]">(Ký, ghi rõ họ tên)</p><div className="h-16" /></div>
           </footer>
