@@ -57,6 +57,8 @@ export default function ResultPanel({
   const showImage = Boolean(imageSrc) && !(isAdminRole && materialsOpen)
 
   const phuThuHoanThien = toggles?.hoanThien ? unitPrice - Math.round(unitPrice / 1.3) : 0
+  const customSuggestedSellPrice =
+    mode === 'custom' && costResult ? Math.round(costResult.grandTotal / 0.3) : null
 
   return (
     <section
@@ -145,6 +147,12 @@ export default function ResultPanel({
               {!isAdmin && <span className="text-paper/40"> (tham khảo)</span>}
             </dt>
             <dd className="font-mono">{formatVND(costDisplay)}</dd>
+          </div>
+        )}
+        {customSuggestedSellPrice != null && (
+          <div className="flex justify-between text-sm">
+            <dt className="text-paper/60">Giá bán tham khảo (giá vốn / 0.3)</dt>
+            <dd className="font-mono">{formatVND(customSuggestedSellPrice)}</dd>
           </div>
         )}
       </dl>

@@ -289,12 +289,13 @@ export function useSimpleCustomQuoteState({
         0, 0, 0, '', 0, '', khungCategory, glassSheetMultiplier,
         selections.customTierOption || '1',
         fomexMat.price,
-        fomexMat.label
+        fomexMat.label,
+        giayBoQuantity
       ),
     [
       activeWidth, activeHeight, activeToggles, settings, isKinh, khungRate, isNhom,
       tranhInMat, glassMat, vanMat, giayBoMat, satXiMat, mode, khungCategory, glassSheetMultiplier,
-      selections.customTierOption, fomexMat
+      selections.customTierOption, fomexMat, giayBoQuantity
     ]
   )
 

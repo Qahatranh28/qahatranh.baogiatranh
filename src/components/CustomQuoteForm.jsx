@@ -2,6 +2,76 @@ import React, { useEffect } from 'react'
 import ProductNameCombobox from './ProductNameCombobox.jsx'
 import LuxurySelect from './LuxurySelect.jsx'
 
+function ToggleCard({
+  toggleKey,
+  label,
+  thumbnailKey,
+  children,
+  caption,
+  disabled = false,
+  toggles,
+  onToggleChange,
+  renderCornerThumbnail,
+}) {
+  return (
+    <div className={`relative rounded-lg border border-gray-200 shadow-sm bg-white mt-3 ${disabled ? 'opacity-70' : ''}`}>
+      {thumbnailKey && renderCornerThumbnail(toggles[toggleKey], thumbnailKey)}
+
+      <div
+        className={`bg-white px-3.5 py-2.5 flex items-center justify-between rounded-lg select-none ${
+          thumbnailKey && toggles[toggleKey] ? 'pr-14' : ''
+        } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 transition-colors'}`}
+        onClick={(e) => {
+          e.preventDefault()
+          if (disabled && (toggleKey === 'van' || toggleKey === 'giayBo') && toggles.vienFomex) {
+            alert('⚠️ Không thể tắt Ván lót hoặc Giấy bo khi đang bật Nền trắng!')
+            return
+          }
+          if (!disabled) onToggleChange(toggleKey, !toggles[toggleKey])
+        }}
+      >
+        <div className="min-w-0 pointer-events-none">
+          <span className="font-bold text-xs uppercase text-gray-800 tracking-widest">
+            {label}
+          </span>
+          {caption && (
+            <p className="text-[10px] text-gray-400 mt-0.5 truncate">{caption}</p>
+          )}
+        </div>
+
+        <button
+          type="button"
+          role="switch"
+          disabled={disabled}
+          aria-checked={Boolean(toggles[toggleKey])}
+          onClick={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+            if (disabled && (toggleKey === 'van' || toggleKey === 'giayBo') && toggles.vienFomex) {
+              alert('⚠️ Không thể tắt Ván lót hoặc Giấy bo khi đang bật Nền trắng!')
+              return
+            }
+            if (!disabled) onToggleChange(toggleKey, !toggles[toggleKey])
+          }}
+          className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+            toggles[toggleKey] ? 'bg-[#ff4f25]' : 'bg-gray-300'
+          } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+              toggles[toggleKey] ? 'translate-x-4' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </div>
+
+      {toggles[toggleKey] && children && (
+        <div className="p-3 bg-gray-50/60 border-t border-gray-100 rounded-b-lg">{children}</div>
+      )}
+    </div>
+  )
+}
+
 export default function CustomQuoteForm({
   productName,
   width,
@@ -102,67 +172,7 @@ export default function CustomQuoteForm({
     )
   }
 
-  // 🌟 ToggleCard đã khôi phục lại khả năng click toàn khung div mà KHÔNG bị nhảy cuộn trang
-  const ToggleCard = ({ toggleKey, label, thumbnailKey, children, caption, disabled = false }) => (
-    <div className={`relative rounded-lg border border-gray-200 shadow-sm bg-white mt-3 ${disabled ? 'opacity-70' : ''}`}>
-      {/* Thumbnail nổi lên trên góc phải */}
-      {thumbnailKey && renderCornerThumbnail(toggles[toggleKey], thumbnailKey)}
-
-      <div
-        className={`bg-white px-3.5 py-2.5 flex items-center justify-between rounded-lg select-none ${
-          thumbnailKey && toggles[toggleKey] ? 'pr-14' : ''
-        } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 transition-colors'}`}
-        onClick={(e) => {
-          e.preventDefault(); // Chặn hành vi mặc định gây cuộn nhảy trang của trình duyệt
-          if (disabled && (toggleKey === 'van' || toggleKey === 'giayBo') && toggles.vienFomex) {
-            alert('⚠️ Không thể tắt Ván lót hoặc Giấy bo khi đang bật Nền trắng!');
-            return;
-          }
-          if (!disabled) onToggleChange(toggleKey, !toggles[toggleKey]);
-        }}
-      >
-        {/* Nhóm tiêu đề */}
-        <div className="min-w-0 pointer-events-none">
-          <span className="font-bold text-xs uppercase text-gray-800 tracking-widest">
-            {label}
-          </span>
-          {caption && (
-            <p className="text-[10px] text-gray-400 mt-0.5 truncate">{caption}</p>
-          )}
-        </div>
-
-        {/* Nút công tắc */}
-        <button
-          type="button"
-          role="switch"
-          disabled={disabled}
-          aria-checked={Boolean(toggles[toggleKey])}
-          onClick={(e) => {
-            e.stopPropagation(); // Cô lập sự kiện để không bị đúp click
-            e.preventDefault();
-            if (disabled && (toggleKey === 'van' || toggleKey === 'giayBo') && toggles.vienFomex) {
-              alert('⚠️ Không thể tắt Ván lót hoặc Giấy bo khi đang bật Nền trắng!');
-              return;
-            }
-            if (!disabled) onToggleChange(toggleKey, !toggles[toggleKey]);
-          }}
-          className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-            toggles[toggleKey] ? 'bg-[#ff4f25]' : 'bg-gray-300'
-          } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-        >
-          <span
-            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-              toggles[toggleKey] ? 'translate-x-4' : 'translate-x-0'
-            }`}
-          />
-        </button>
-      </div>
-
-      {toggles[toggleKey] && children && (
-        <div className="p-3 bg-gray-50/60 border-t border-gray-100 rounded-b-lg">{children}</div>
-      )}
-    </div>
-  )
+  const toggleCardProps = { toggles, onToggleChange, renderCornerThumbnail }
 
   // 🌟 TÍNH TOÁN KHÓA GIẤY BO THEO KÍCH THƯỚC
   const w = Number(width || 0);
@@ -238,7 +248,7 @@ export default function CustomQuoteForm({
       <div className="space-y-3 pt-2">
 
         {/* 1. KHUNG */}
-        <ToggleCard toggleKey="khung" label="Khung">
+        <ToggleCard {...toggleCardProps} toggleKey="khung" label="Khung">
           <div className="flex flex-col gap-2.5">
             <LuxurySelect
               id="khungCategory"
@@ -344,7 +354,7 @@ export default function CustomQuoteForm({
         </ToggleCard>
 
         {/* 2. IN TRANH */}
-        <ToggleCard toggleKey="tranhIn" label="In tranh" thumbnailKey={selections.tranhInType}>
+        <ToggleCard {...toggleCardProps} toggleKey="tranhIn" label="In tranh" thumbnailKey={selections.tranhInType}>
           <LuxurySelect
             id="tranhInType"
             label="Loại tranh in"
@@ -357,6 +367,7 @@ export default function CustomQuoteForm({
 
         {/* 3. MICA */}
         <ToggleCard
+          {...toggleCardProps}
           toggleKey="micaKinh"
           label="Mica"
           thumbnailKey="kinh"
@@ -388,6 +399,7 @@ export default function CustomQuoteForm({
 
         {/* 4. VÁN LÓT (Bị khóa khi Nền trắng đang bật) */}
         <ToggleCard
+          {...toggleCardProps}
           toggleKey="van"
           label="Ván lót"
           thumbnailKey="van_4ly"
@@ -396,7 +408,8 @@ export default function CustomQuoteForm({
         />
 
         {/* 5. GIẤY BO (Bị khóa khi quá khổ HOẶC Nền trắng đang bật) */}
-        <ToggleCard 
+        <ToggleCard
+          {...toggleCardProps}
           toggleKey="giayBo" 
           label="Giấy bo" 
           thumbnailKey={selections.giayBoType}
@@ -458,13 +471,14 @@ export default function CustomQuoteForm({
         </ToggleCard>
 
         {/* 6. SẮT XI */}
-        <ToggleCard toggleKey="satXi" label="Sắt xi" thumbnailKey="sat_xi" />
+        <ToggleCard {...toggleCardProps} toggleKey="satXi" label="Sắt xi" thumbnailKey="sat_xi" />
 
         {/* 7. SƠN */}
-        <ToggleCard toggleKey="son" label="Sơn" thumbnailKey="son" />
+        <ToggleCard {...toggleCardProps} toggleKey="son" label="Sơn" thumbnailKey="son" />
 
         {/* 8. ĐÓNG GÓI */}
         <ToggleCard
+          {...toggleCardProps}
           toggleKey="dongGoi"
           label="Đóng gói sản phẩm"
           thumbnailKey="dong_goi"
@@ -473,6 +487,7 @@ export default function CustomQuoteForm({
 
         {/* 9. HOÀN THIỆN SẢN PHẨM CỦA KHÁCH */}
         <ToggleCard
+          {...toggleCardProps}
           toggleKey="hoanThien"
           label="Phí hoàn thiện sản phẩm của khách"
           caption={toggles.hoanThien ? 'Đã cộng thêm 30% vào tổng giá bán' 

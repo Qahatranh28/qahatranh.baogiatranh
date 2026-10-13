@@ -18,7 +18,8 @@ export function computeFrameCost(
   // 🌟 Thêm tham số nhận cấu hình từ form Custom
   customTierOption = '1',
   customFomexPrice = 0,
-  customFomexLabel = 'Viền Fomex'
+  customFomexLabel = 'Viền Fomex',
+  customGiayBoQuantity = 1
 ) {
   // 🌟 Đẩy luồng tính Khăn Lụa sang file riêng
   const isKhanLua = typeof khungCategory === 'string' && khungCategory.includes('Khăn Lụa')
@@ -42,6 +43,7 @@ export function computeFrameCost(
   const h = Number(heightCm) || 0
   const areaM2 = (w * h) / 10000
   const chuViM = (2 * (w + h)) / 100
+  const giayBoSheetCount = Math.max(1, Number.parseInt(customGiayBoQuantity, 10) || 1)
   
   const inW = Number(innerWidthCm) || 0
   const inH = Number(innerHeightCm) || 0
@@ -120,7 +122,10 @@ export function computeFrameCost(
     }
 
     if (toggles?.giayBo && customGiayBoPrice > 0) {
-      nvlTotal += addRow(customGiayBoLabel, 'm²', areaM2, customGiayBoPrice)
+      const label = giayBoSheetCount > 1
+        ? `${customGiayBoLabel} (${giayBoSheetCount} tấm)`
+        : customGiayBoLabel
+      nvlTotal += addRow(label, 'm²', areaM2 * giayBoSheetCount, customGiayBoPrice)
     }
     if (toggles?.satXi && customSatXiPrice > 0) {
       nvlTotal += addRow(customSatXiLabel, 'm', tongSatXiM, customSatXiPrice)
@@ -190,7 +195,7 @@ export function computeFrameCost(
 
   if (mode !== 'moebe') {
     if (toggles?.giayBo) {
-      laborTotal += addLabor('Chi phí giờ công làm giấy bo', areaM2 * 0.25)
+      laborTotal += addLabor('Chi phí giờ công làm giấy bo', areaM2 * 0.25 * giayBoSheetCount)
     }
     if (toggles?.son) {
       laborTotal += addLabor('Chi phí giờ công sơn', chuViM * 0.17)
