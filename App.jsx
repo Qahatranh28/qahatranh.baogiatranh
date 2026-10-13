@@ -98,6 +98,7 @@ export default function App() {
         onCreateAdminClick={() => setIsCreateAdminModalOpen(true)}
         onManageProductsClick={() => setIsManageProductsModalOpen(true)}
         onCostCalculatorClick={() => changeView('costTool')}
+        onSwitchMode={handleModeChange}
       />
 
       <div className="flex-1 min-w-0 pb-28 lg:pb-10">

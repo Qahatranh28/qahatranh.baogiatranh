@@ -2,9 +2,9 @@ export default function Sidebar({
   view,
   onViewChange,
   isAdmin,
-  canSeeCost,            
-  canSeeMargin,          
-  user,                  
+  canSeeCost,
+  canSeeMargin,
+  user,
   isOpen,
   onClose,
   onLoginClick,
@@ -32,7 +32,7 @@ export default function Sidebar({
         }`}
       >
         <div className="p-5 border-b border-line">
-          <div className={`w-20 h-20 rounded-lg bg-blueprint flex items-center justify-center overflow-hidden ${isAdmin && user ? 'mb-4' : ''}`}>
+          <div className={`w-20 h-20 rounded-lg bg-blueprint flex items-center justify-center overflow-hidden ${user ? 'mb-4' : ''}`}>
             <img 
               src="/images/logoCompany.png" 
               alt="Logo" 
@@ -40,33 +40,41 @@ export default function Sidebar({
             />
           </div>
 
-          {/* 🌟 2. BỌC BẰNG FLEXBOX VÀ CHÈN NÚT VÀO CẠNH TÊN USER */}
-          {isAdmin && user && (
-            <div className="bg-gray-50 p-3 rounded-xl border border-line flex items-center justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-1">
-                  Đang đăng nhập
-                </p>
-                <p className="font-semibold text-sm text-gray-800 truncate">
-                  {user?.full_name || user?.username || 'qaha tranh'}
-                </p>
-                <span className="inline-block mt-1.5 text-[10px] px-2 py-0.5 rounded font-medium bg-[#ff4f25] text-white shadow-sm">
-                  Quản trị viên
-                </span>
-              </div>
+          {/* 🌟 BỌC BẰNG FLEXBOX VÀ CHÈN NÚT VÀO CẠNH TÊN USER */}
+{user && (
+  <div className="bg-gray-50 p-2.5 rounded-xl border border-line flex items-center justify-between gap-1.5">
+    <div className="min-w-0 flex-1">
+      {/* Thêm whitespace-nowrap và đổi thành tracking-wider để không rớt dòng */}
+      <p className="text-[10px] font-mono uppercase tracking-wider text-gray-400 mb-0.5 whitespace-nowrap truncate">
+        Đang đăng nhập
+      </p>
+      <p className="font-semibold text-sm text-gray-800 truncate">
+        {user?.full_name || user?.username || 'qaha tranh'}
+      </p>
+      
+      <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded font-medium bg-[#ff4f25] text-white shadow-sm capitalize">
+        {user?.role === 'admin' 
+          ? 'Quản trị viên' 
+          : user?.role === 'sale' 
+            ? 'Nhân viên Sale' 
+            : user?.role === 'editor'
+              ? 'Biên tập viên'
+              : user?.role || 'Thành viên'}
+      </span>
+    </div>
 
-              {/* 🌟 Nút Đổi chế độ: Nền trắng, nằm ngang, thiết kế giống ảnh 2 */}
-              {onSwitchMode && (
-                <button
-                  onClick={onSwitchMode}
-                  className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 text-[11px] font-bold rounded-lg px-3 py-2 hover:bg-gray-100 hover:text-gray-900 transition-all shadow-sm shrink-0"
-                >
-                  <span className="text-sm font-normal leading-none">⇄</span>
-                  <span>Đổi chế độ</span>
-                </button>
-              )}
-            </div>
-          )}
+    {/* Nút Đổi chế độ: Thu nhỏ padding, text và gap */}
+    {onSwitchMode && (
+      <button
+        onClick={onSwitchMode}
+        className="flex items-center gap-1 bg-white border border-[#ff4f25] text-[#ff4f25] text-[10px] font-bold rounded-lg px-2 py-1.5 hover:bg-orange-50 transition-all shadow-sm shrink-0"
+      >
+        <span className="text-sm font-normal leading-none">⇄</span>
+        <span>Đổi chế độ</span>
+      </button>
+    )}
+  </div>
+)}
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
@@ -214,7 +222,8 @@ export default function Sidebar({
         </nav>
 
         <div className="p-3 border-t border-line">
-          {isAdmin ? (
+          {/* Đã sửa: Cho phép bất kỳ user nào cũng thấy nút Đăng xuất */}
+          {user ? (
             <button
               onClick={onLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-blueprint/60 hover:bg-paper transition-colors"
@@ -228,7 +237,7 @@ export default function Sidebar({
                   strokeLinejoin="round"
                 />
               </svg>
-              Đăng xuất ({user?.full_name || user?.user || 'Admin'})
+              Đăng xuất ({user?.full_name || user?.username || 'User'})
             </button>
           ) : (
             <button

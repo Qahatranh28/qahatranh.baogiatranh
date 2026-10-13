@@ -98,6 +98,10 @@ export default function App() {
         onCreateAdminClick={() => setIsCreateAdminModalOpen(true)}
         onManageProductsClick={() => setIsManageProductsModalOpen(true)}
         onCostCalculatorClick={() => changeView('costTool')}
+        onSwitchMode={() => {
+          navigate([]); // Lệnh này đưa thẳng về trang chọn chế độ (/)
+          setSidebarOpen(false); // Kèm theo đóng sidebar trên mobile
+        }}
       />
 
       <div className="flex-1 min-w-0 pb-28 lg:pb-10">

@@ -23,12 +23,7 @@ function Routes() {
     return (
       <>
         <App />
-        <button
-          onClick={() => navigate([])}
-          className="fixed z-50 bottom-20 right-3 lg:bottom-4 lg:right-4 bg-[#ff4f25] text-white text-xs font-semibold rounded-full px-3.5 py-2 shadow-lg opacity-80 hover:opacity-100"
-        >
-          ⇄ Đổi chế độ
-        </button>
+        
       </>
     )
   }
